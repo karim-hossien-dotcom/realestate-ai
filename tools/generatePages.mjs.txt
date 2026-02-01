@@ -1,0 +1,166 @@
+// tools/generatePages.mjs
+import { promises as fs } from "fs";
+import path from "path";
+
+const __dirname = new URL(".", import.meta.url).pathname;
+
+// Root of your Next.js project
+const projectRoot = path.join(__dirname, "..");
+const appDir = path.join(projectRoot, "app");
+
+// Pages to generate (you can edit / extend this)
+const pages = [
+  {
+    route: "", // home page ("/")
+    title: "Dashboard",
+    description: "Main overview of your RealEstate AI activity.",
+  },
+  {
+    route: "leads",
+    title: "Leads Management",
+    description: "View and manage all your property owner leads.",
+  },
+  {
+    route: "campaigns",
+    title: "Campaigns",
+    description: "Create, monitor, and optimize your SMS campaigns.",
+  },
+  {
+    route: "follow-ups",
+    title: "Follow-Ups",
+    description:
+      "Track upcoming follow-ups and never miss a touchpoint with your leads.",
+  },
+  {
+    route: "conversations",
+    title: "Conversations",
+    description: "See all SMS conversations in one unified inbox.",
+  },
+  {
+    route: "calendar",
+    title: "Calendar",
+    description: "Manage property showings, calls, and other appointments.",
+  },
+  {
+    route: "logs",
+    title: "Activity Logs & Metrics",
+    description:
+      "Monitor system events, errors, and compliance-related activity.",
+  },
+  {
+    route: "settings",
+    title: "Settings",
+    description: "Configure your profile, providers, team, and platform.",
+  },
+  {
+    route: "onboarding",
+    title: "Setup Guide",
+    description: "Step-by-step onboarding to connect providers and import leads.",
+  },
+  {
+    route: "auth",
+    title: "Authentication",
+    description: "Sign in or sign up to access your RealEstate AI dashboard.",
+  },
+];
+
+// Helper: convert route to a PascalCase component name
+function toComponentName(route) {
+  if (!route) return "DashboardPage";
+  return (
+    route
+      .split("/")
+      .filter(Boolean)
+      .map((part) =>
+        part
+          .replace(/[-_]+/g, " ")
+          .split(" ")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join("")
+      )
+      .join("") + "Page"
+  );
+}
+
+// Template for each generated page
+function makePageContent(title, description, route) {
+  const componentName = toComponentName(route);
+
+  return `import React from "react";
+
+export default function ${componentName}() {
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">${title}</h1>
+          <p className="text-gray-500 mt-2">
+            ${description}
+          </p>
+        </header>
+
+        <section className="mt-8">
+          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+            <p className="text-gray-500">
+              This is an auto-generated placeholder for the <span className="font-semibold">"${route ||
+                "/"}"</span> page.
+            </p>
+            <p className="mt-2 text-sm text-gray-400">
+              Replace this content with the full JSX/HTML layout we designed.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+`;
+}
+
+async function ensureDir(dirPath) {
+  try {
+    await fs.mkdir(dirPath, { recursive: true });
+  } catch (err) {
+    console.error("Error creating directory:", dirPath, err);
+  }
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function generatePages() {
+  console.log("🔧 Generating Next.js pages...");
+
+  await ensureDir(appDir);
+
+  for (const page of pages) {
+    const routePath = page.route || ""; // "" for root
+    const routeDir = path.join(appDir, routePath);
+    const pageFile = path.join(routeDir, "page.tsx");
+
+    if (await fileExists(pageFile)) {
+      console.log(`✅ Skipping existing page: ${routePath || "(root)"}`);
+      continue;
+    }
+
+    await ensureDir(routeDir);
+
+    const content = makePageContent(page.title, page.description, routePath);
+    await fs.writeFile(pageFile, content, "utf8");
+
+    console.log(`✨ Created page: /${routePath}`);
+  }
+
+  console.log("✅ Done. You can now run: npm run dev");
+}
+
+generatePages().catch((err) => {
+  console.error("Failed to generate pages:", err);
+  process.exit(1);
+});

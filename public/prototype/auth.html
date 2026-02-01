@@ -1,0 +1,354 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex">
+        <!-- Left Panel -->
+        <div id="auth-left-panel" class="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary via-blue-600 to-blue-800"></div>
+            <div class="relative z-10 flex flex-col justify-center px-12 py-16">
+                <div class="mb-8">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                            <i class="fas fa-home text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">RealEstate AI</h1>
+                            <p class="text-blue-200">Agent Assistant</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="max-w-md">
+                    <h2 class="text-4xl font-bold text-white mb-6">Streamline Your Real Estate Business</h2>
+                    <p class="text-xl text-blue-100 mb-8">Automate lead management, SMS follow-ups, and appointment scheduling with our powerful AI-driven platform.</p>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-blue-100">Automated SMS campaigns & follow-ups</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-blue-100">Lead management & conversation tracking</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-blue-100">Compliance monitoring & A2P registration</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-blue-100">Calendar integration & appointment scheduling</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="absolute bottom-8 left-12 right-12">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah" class="w-12 h-12 rounded-full">
+                            <div>
+                                <p class="text-white font-medium">Sarah Thompson</p>
+                                <p class="text-blue-200 text-sm">Top Performing Agent</p>
+                            </div>
+                        </div>
+                        <p class="text-blue-100 italic">"RealEstate AI transformed my business. I've increased my lead conversion by 40% and saved 15 hours per week on follow-ups."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div id="auth-right-panel" class="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16">
+            <div class="mx-auto w-full max-w-md">
+                <!-- Mobile Logo -->
+                <div class="lg:hidden mb-8 text-center">
+                    <div class="flex items-center justify-center space-x-3 mb-4">
+                        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-home text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
+                            <p class="text-sm text-gray-500">Agent Assistant</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div id="auth-tabs" class="flex border-b border-gray-200 mb-8">
+                    <button id="signin-tab" class="flex-1 py-3 px-1 text-center border-b-2 border-primary text-primary font-medium">
+                        Sign In
+                    </button>
+                    <button id="signup-tab" class="flex-1 py-3 px-1 text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                        Sign Up
+                    </button>
+                </div>
+
+                <!-- Sign In Form -->
+                <div id="signin-form" class="space-y-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
+                        <p class="text-gray-600">Sign in to your account to continue</p>
+                    </div>
+
+                    <form class="space-y-6" method="post" action="/signin">
+                        <div>
+                            <label for="signin-email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input id="signin-email" name="email" type="email" required class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Enter your email">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="signin-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input id="signin-password" name="password" type="password" required class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Enter your password">
+                                <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                            </div>
+                            <a href="#" class="text-sm text-primary hover:text-primary/80">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                            Sign In
+                        </button>
+                    </form>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-google text-red-500 mr-2"></i>
+                            Google
+                        </button>
+                        <button class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-microsoft text-blue-600 mr-2"></i>
+                            Microsoft
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sign Up Form -->
+                <div id="signup-form" class="space-y-6 hidden">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
+                        <p class="text-gray-600">Start your 14-day free trial today</p>
+                    </div>
+
+                    <form class="space-y-6" method="post" action="/signup">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-2">First name</label>
+                                <input id="first-name" name="firstName" type="text" required class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="John">
+                            </div>
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-2">Last name</label>
+                                <input id="last-name" name="lastName" type="text" required class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Smith">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input id="signup-email" name="email" type="email" required class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="john@example.com">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company/Agency</label>
+                            <input id="company" name="company" type="text" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Real Estate Company">
+                        </div>
+
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input id="signup-password" name="password" type="password" required class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Create a password">
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">Must be at least 8 characters with numbers and letters</p>
+                        </div>
+
+                        <div class="flex items-start">
+                            <input id="terms" name="terms" type="checkbox" required class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-1">
+                            <label for="terms" class="ml-2 block text-sm text-gray-700">
+                                I agree to the <a href="#" class="text-primary hover:text-primary/80">Terms of Service</a> and <a href="#" class="text-primary hover:text-primary/80">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                            Create Account
+                        </button>
+                    </form>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-gray-50 text-gray-500">Or sign up with</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-google text-red-500 mr-2"></i>
+                            Google
+                        </button>
+                        <button class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-microsoft text-blue-600 mr-2"></i>
+                            Microsoft
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div id="auth-features" class="mt-8 pt-8 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Why choose RealEstate AI?</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-robot text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">AI-Powered Automation</p>
+                                <p class="text-sm text-gray-500">Smart lead scoring and automated follow-ups</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-green-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Compliance Ready</p>
+                                <p class="text-sm text-gray-500">Built-in A2P registration and monitoring</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-purple-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Performance Analytics</p>
+                                <p class="text-sm text-gray-500">Track campaigns and optimize conversion rates</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const signinTab = document.getElementById('signin-tab');
+            const signupTab = document.getElementById('signup-tab');
+            const signinForm = document.getElementById('signin-form');
+            const signupForm = document.getElementById('signup-form');
+
+            function switchToSignin() {
+                signinTab.classList.add('border-primary', 'text-primary');
+                signinTab.classList.remove('border-transparent', 'text-gray-500');
+                signupTab.classList.add('border-transparent', 'text-gray-500');
+                signupTab.classList.remove('border-primary', 'text-primary');
+                signinForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+            }
+
+            function switchToSignup() {
+                signupTab.classList.add('border-primary', 'text-primary');
+                signupTab.classList.remove('border-transparent', 'text-gray-500');
+                signinTab.classList.add('border-transparent', 'text-gray-500');
+                signinTab.classList.remove('border-primary', 'text-primary');
+                signupForm.classList.remove('hidden');
+                signinForm.classList.add('hidden');
+            }
+
+            signinTab.addEventListener('click', switchToSignin);
+            signupTab.addEventListener('click', switchToSignup);
+
+            const passwordToggle = document.querySelector('#signin-form button[type="button"]');
+            if (passwordToggle) {
+                passwordToggle.addEventListener('click', function() {
+                    const passwordInput = document.getElementById('signin-password');
+                    const icon = this.querySelector('i');
+                    
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+

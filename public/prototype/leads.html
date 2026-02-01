@@ -1,0 +1,452 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-home text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
+                        <p class="text-sm text-gray-500">Agent Assistant</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-6 px-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-line w-5 mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <!-- ACTIVE: Leads -->
+                        <a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Leads
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-bullhorn w-5 mr-3"></i>
+                            Campaigns
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-clock w-5 mr-3"></i>
+                            Follow-Ups
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-comments w-5 mr-3"></i>
+                            Conversations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-calendar w-5 mr-3"></i>
+                            Calendar
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-file-alt w-5 mr-3"></i>
+                            Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-cog w-5 mr-3"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header id="header" class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Leads Management</h2>
+                        <p class="text-gray-500">Manage and organize your property owner contacts</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">John Smith</p>
+                                <p class="text-xs text-gray-500">Senior Agent</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <section id="leads-header" class="mb-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 flex items-center space-x-2">
+                                <i class="fas fa-plus"></i>
+                                <span>Add Lead</span>
+                            </button>
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                                <i class="fas fa-upload"></i>
+                                <span>Import CSV</span>
+                            </button>
+                            <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center space-x-2">
+                                <i class="fas fa-download"></i>
+                                <span>Export</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Search leads..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <select class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option>All Tags</option>
+                                <option>Hot</option>
+                                <option>Cold</option>
+                                <option>Warm</option>
+                                <option>Expired Listing</option>
+                            </select>
+                            <button class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                <i class="fas fa-filter text-gray-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="leads-stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Total Leads</p>
+                                <p class="text-2xl font-bold text-gray-900">2,847</p>
+                            </div>
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Hot Leads</p>
+                                <p class="text-2xl font-bold text-red-600">342</p>
+                            </div>
+                            <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-fire text-red-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">New This Week</p>
+                                <p class="text-2xl font-bold text-green-600">156</p>
+                            </div>
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-plus text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Active Campaigns</p>
+                                <p class="text-2xl font-bold text-purple-600">24</p>
+                            </div>
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-bullhorn text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="leads-table" class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">All Leads</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-500">Showing 1-20 of 2,847</span>
+                                <div class="flex space-x-1">
+                                    <button class="p-1 hover:bg-gray-100 rounded">
+                                        <i class="fas fa-chevron-left text-gray-400"></i>
+                                    </button>
+                                    <button class="p-1 hover:bg-gray-100 rounded">
+                                        <i class="fas fa-chevron-right text-gray-400"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        Name <i class="fas fa-sort ml-1"></i>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        Phone <i class="fas fa-sort ml-1"></i>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        Email <i class="fas fa-sort ml-1"></i>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        Property Address <i class="fas fa-sort ml-1"></i>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        Last Contact <i class="fas fa-sort ml-1"></i>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Tags
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
+                                                <div class="text-sm text-gray-500">Property Owner</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 123-4567</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">sarah.j@email.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">123 Oak Street, Austin, TX</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Hot</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button>
+                                            <button class="text-green-600 hover:text-green-900"><i class="fas fa-sms"></i></button>
+                                            <button class="text-purple-600 hover:text-purple-900"><i class="fas fa-calendar"></i></button>
+                                            <button class="text-gray-600 hover:text-gray-900"><i class="fas fa-ellipsis-h"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Mike Davis</div>
+                                                <div class="text-sm text-gray-500">Investor</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 234-5678</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mike.davis@email.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">456 Pine Ave, Dallas, TX</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 day ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Warm</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button>
+                                            <button class="text-green-600 hover:text-green-900"><i class="fas fa-sms"></i></button>
+                                            <button class="text-purple-600 hover:text-purple-900"><i class="fas fa-calendar"></i></button>
+                                            <button class="text-gray-600 hover:text-gray-900"><i class="fas fa-ellipsis-h"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Emma Wilson</div>
+                                                <div class="text-sm text-gray-500">Homeowner</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 345-6789</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">emma.wilson@email.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">789 Elm Street, Houston, TX</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Cold</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button>
+                                            <button class="text-green-600 hover:text-green-900"><i class="fas fa-sms"></i></button>
+                                            <button class="text-purple-600 hover:text-purple-900"><i class="fas fa-calendar"></i></button>
+                                            <button class="text-gray-600 hover:text-gray-900"><i class="fas fa-ellipsis-h"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Tom Brown</div>
+                                                <div class="text-sm text-gray-500">Property Owner</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 456-7890</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">tom.brown@email.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">321 Maple Dr, San Antonio, TX</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 days ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Expired Listing</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button>
+                                            <button class="text-green-600 hover:text-green-900"><i class="fas fa-sms"></i></button>
+                                            <button class="text-purple-600 hover:text-purple-900"><i class="fas fa-calendar"></i></button>
+                                            <button class="text-gray-600 hover:text-gray-900"><i class="fas fa-ellipsis-h"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" class="rounded border-gray-300">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Lisa Garcia</div>
+                                                <div class="text-sm text-gray-500">Investor</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 567-8901</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">lisa.garcia@email.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">654 Cedar Lane, Fort Worth, TX</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 week ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Hot</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-900"><i class="fas fa-eye"></i></button>
+                                            <button class="text-green-600 hover:text-green-900"><i class="fas fa-sms"></i></button>
+                                            <button class="text-purple-600 hover:text-purple-900"><i class="fas fa-calendar"></i></button>
+                                            <button class="text-gray-600 hover:text-gray-900"><i class="fas fa-ellipsis-h"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="px-6 py-4 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <select class="border border-gray-300 rounded px-3 py-1 text-sm">
+                                    <option>20 per page</option>
+                                    <option>50 per page</option>
+                                    <option>100 per page</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Previous</button>
+                                <button class="px-3 py-1 bg-primary text-white rounded text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">3</button>
+                                <span class="px-2 text-gray-500">...</span>
+                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">143</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="lead-details-drawer" class="fixed inset-y-0 right-0 w-96 bg-white shadow-xl border-l border-gray-200 transform translate-x-full transition-transform duration-300 z-50 hidden">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Lead Details</h3>
+                <button class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="text-center mb-6">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Avatar" class="w-20 h-20 rounded-full mx-auto mb-4">
+                    <h4 class="text-xl font-semibold text-gray-900">Sarah Johnson</h4>
+                    <p class="text-gray-500">Property Owner</p>
+                </div>
+                <!-- You can extend drawer content here -->
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+

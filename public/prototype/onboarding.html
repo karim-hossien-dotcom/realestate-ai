@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-home text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
+                        <p class="text-sm text-gray-500">Agent Assistant</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-6 px-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-line w-5 mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Leads
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-bullhorn w-5 mr-3"></i>
+                            Campaigns
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-clock w-5 mr-3"></i>
+                            Follow-Ups
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-comments w-5 mr-3"></i>
+                            Conversations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-calendar w-5 mr-3"></i>
+                            Calendar
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-file-alt w-5 mr-3"></i>
+                            Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg">
+                            <i class="fas fa-cog w-5 mr-3"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header id="header" class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Setup Guide</h2>
+                        <p class="text-gray-500">Get started with your Real Estate Assistant in 3 easy steps</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">John Smith</p>
+                                <p class="text-xs text-gray-500">Senior Agent</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <section id="progress-indicator" class="mb-8">
+                    <div class="flex items-center justify-center space-x-4 mb-6">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">1</div>
+                            <span class="ml-3 text-sm font-medium text-gray-900">Connect Provider</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-300 rounded-full">
+                            <div class="w-0 h-1 bg-primary rounded-full transition-all duration-500"></div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-500 font-semibold">2</div>
+                            <span class="ml-3 text-sm font-medium text-gray-500">Import Leads</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-300 rounded-full">
+                            <div class="w-0 h-1 bg-primary rounded-full transition-all duration-500"></div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-500 font-semibold">3</div>
+                            <span class="ml-3 text-sm font-medium text-gray-500">Create Campaign</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="max-w-4xl mx-auto">
+                    <section id="step-1-content" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-plug text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Connect Your Messaging Provider</h3>
+                            <p class="text-gray-600 max-w-2xl mx-auto">Connect WhatsApp Cloud API to enable messaging capabilities. You'll need your Access Token and Phone Number ID from Meta.</p>
+                        </div>
+
+                        <div id="provider-setup-form" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Account SID</label>
+                                    <input type="text" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <p class="text-xs text-gray-500 mt-1">Found in your Meta App dashboard</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Auth Token</label>
+                                    <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <p class="text-xs text-gray-500 mt-1">Keep this secure and private</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Messaging Service SID (Optional)</label>
+                                <input type="text" placeholder="MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-xs text-gray-500 mt-1">For A2P compliance and better deliverability</p>
+                            </div>
+
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-start space-x-3">
+                                    <i class="fas fa-info-circle text-blue-600 mt-1"></i>
+                                    <div>
+                                        <h4 class="font-medium text-blue-900 mb-1">Need help finding your credentials?</h4>
+                                        <p class="text-sm text-blue-700 mb-2">Your Access Token and Phone Number ID are available in your Meta App dashboard.</p>
+                                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800 underline">View WhatsApp setup guide</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-6">
+                                <div class="flex items-center justify-between">
+                                    <button class="px-6 py-2 text-gray-600 hover:text-gray-800">Skip for now</button>
+                                    <div class="flex space-x-3">
+                                        <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Test Connection</button>
+                                        <button id="connect-continue-btn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90">Connect & Continue</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="step-2-preview" class="mt-6 bg-gray-100 rounded-xl p-6 opacity-50">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-semibold">2</div>
+                            <h4 class="text-lg font-semibold text-gray-600">Import Your Leads</h4>
+                        </div>
+                        <p class="text-gray-500">Upload a CSV file with your lead contacts or add them manually.</p>
+                    </section>
+
+                    <section id="step-3-preview" class="mt-4 bg-gray-100 rounded-xl p-6 opacity-50">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-semibold">3</div>
+                            <h4 class="text-lg font-semibold text-gray-600">Create Your First Campaign</h4>
+                        </div>
+                        <p class="text-gray-500">Set up your first SMS campaign to start engaging with your leads.</p>
+                    </section>
+                </div>
+
+                <section id="help-resources" class="mt-8 max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-book text-green-600 text-xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Documentation</h4>
+                            <p class="text-sm text-gray-600 mb-4">Comprehensive guides and tutorials to get you started.</p>
+                            <button class="text-sm text-primary hover:text-primary/80 font-medium">View Docs</button>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-video text-purple-600 text-xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Video Tutorials</h4>
+                            <p class="text-sm text-gray-600 mb-4">Step-by-step video guides for quick setup.</p>
+                            <button class="text-sm text-primary hover:text-primary/80 font-medium">Watch Videos</button>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-headset text-orange-600 text-xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Live Support</h4>
+                            <p class="text-sm text-gray-600 mb-4">Get help from our support team via chat or email.</p>
+                            <button class="text-sm text-primary hover:text-primary/80 font-medium">Contact Support</button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function updateProgress(step) {
+            const progressBars = document.querySelectorAll('#progress-indicator .w-16.h-1 > div');
+            const stepCircles = document.querySelectorAll('#progress-indicator .w-10.h-10');
+            const stepLabels = document.querySelectorAll('#progress-indicator span.ml-3');
+
+            for (let i = 0; i < progressBars.length; i++) {
+                progressBars[i].style.width = i < step - 1 ? '100%' : '0%';
+            }
+            
+            for (let i = 0; i < stepCircles.length; i++) {
+                if (i < step) {
+                    stepCircles[i].classList.remove('bg-gray-300', 'text-gray-500');
+                    stepCircles[i].classList.add('bg-primary', 'text-white');
+                }
+            }
+
+            for (let i = 0; i < stepLabels.length; i++) {
+                if (i < step) {
+                    stepLabels[i].classList.remove('text-gray-500');
+                    stepLabels[i].classList.add('text-gray-900');
+                }
+            }
+        }
+
+        document.getElementById('connect-continue-btn').addEventListener('click', function() {
+            updateProgress(2);
+            const step2 = document.getElementById('step-2-preview');
+            step2.classList.remove('opacity-50');
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+

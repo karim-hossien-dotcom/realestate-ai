@@ -1,0 +1,18 @@
+sms_text,email_subject,email_body,call_opener,voicemail_script,used_template
+"Hi there, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have buyers looking for similar spaces. Would you be open to discussing selling your property in the next 3 to 6 months?",Interest in Selling Your Property Near You,"Hi there,
+
+My name is Nadine Khalil with KW Commercial. I recently sold a property near your location and currently have buyers interested in similar commercial assets. I wanted to see if you might consider selling your property within the next 3 to 6 months.
+
+If you’re open to discussing this further, I’d love to connect and explore your options.
+
+Best regards,
+Nadine Khalil
+KW Commercial","Hi, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have buyers actively looking for similar commercial spaces. I wanted to see if you might be considering selling your property in the next few months.","Hi, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have several buyers interested in similar commercial properties. If you’re considering selling your property within the next 3 to 6 months, I’d love to discuss how I can help. Please call me back at [CALLBACK_NUMBER]. Thank you!",__default__
+"Hi there, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have buyers looking for similar spaces. Would you be open to discussing selling your property in the next 3 to 6 months?",Interest in Your Property Near Recent Sale,"Hi there,
+
+I’m Nadine Khalil with KW Commercial. I recently sold a property near your location and currently have buyers interested in similar assets. I wanted to see if you might consider selling your property within the next 3 to 6 months.
+
+If you’re open to a quick conversation, I’d love to discuss how we can help. Please let me know a good time to connect.
+
+Best regards,
+Nadine Khalil","Hi, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have buyers looking for similar spaces. I wanted to see if you might be open to discussing the possibility of selling your property in the next few months.","Hi, this is Nadine Khalil with KW Commercial. I recently sold a property near yours and have several buyers actively looking for similar commercial properties. If you’re considering selling within the next 3 to 6 months, I’d love to talk. Please give me a call back at [CALLBACK_NUMBER]. Thanks!",__default__

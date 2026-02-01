@@ -1,0 +1,456 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- SIDEBAR: shared across app, Conversations active -->
+        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-home text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
+                        <p class="text-sm text-gray-500">Agent Assistant</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-6 px-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-line w-5 mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Leads
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-bullhorn w-5 mr-3"></i>
+                            Campaigns
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-clock w-5 mr-3"></i>
+                            Follow-Ups
+                        </a>
+                    </li>
+                    <li>
+                        <!-- ACTIVE: Conversations -->
+                        <a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg">
+                            <i class="fas fa-comments w-5 mr-3"></i>
+                            Conversations
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-calendar w-5 mr-3"></i>
+                            Calendar
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-file-alt w-5 mr-3"></i>
+                            Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-cog w-5 mr-3"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- MAIN AREA -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header id="header" class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Conversations</h2>
+                        <p class="text-gray-500">Unified inbox for SMS conversations and lead interactions</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                New Message
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">John Smith</p>
+                                <p class="text-xs text-gray-500">Senior Agent</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 flex overflow-hidden">
+                <!-- LEFT: Conversation list -->
+                <section id="conversation-list" class="w-96 bg-white border-r border-gray-200 flex flex-col">
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search conversations..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div class="flex items-center space-x-4 mt-3">
+                            <button class="text-sm font-medium text-primary border-b-2 border-primary pb-1">All (47)</button>
+                            <button class="text-sm text-gray-500 hover:text-gray-700">Unread (12)</button>
+                            <button class="text-sm text-gray-500 hover:text-gray-700">Flagged (3)</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto">
+                        <div id="conversation-item-1" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer bg-blue-50">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah Johnson" class="w-10 h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-semibold text-gray-900">Sarah Johnson</p>
+                                        <div class="flex items-center space-x-1">
+                                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            <p class="text-xs text-gray-500">2m</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">+1 (555) 123-4567</p>
+                                    <p class="text-sm text-gray-700 truncate">Thank you for the property details! I'm interested in scheduling a viewing...</p>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Hot Lead</span>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Campaign: New Listings</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="conversation-item-2" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Mike Davis" class="w-10 h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-gray-900">Mike Davis</p>
+                                        <p class="text-xs text-gray-500">1h</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">+1 (555) 987-6543</p>
+                                    <p class="text-sm text-gray-600 truncate">Can you send me more information about the downtown condo?</p>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Warm Lead</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="conversation-item-3" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Emma Wilson" class="w-10 h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-gray-900">Emma Wilson</p>
+                                        <div class="flex items-center space-x-1">
+                                            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                            <p class="text-xs text-gray-500">3h</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">+1 (555) 456-7890</p>
+                                    <p class="text-sm text-gray-600 truncate">STOP</p>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Opted Out</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="conversation-item-4" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="Tom Brown" class="w-10 h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-gray-900">Tom Brown</p>
+                                        <p class="text-xs text-gray-500">5h</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">+1 (555) 321-0987</p>
+                                    <p class="text-sm text-gray-600 truncate">Looking forward to our meeting tomorrow at 10 AM</p>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Meeting Scheduled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="conversation-item-5" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="Lisa Chen" class="w-10 h-10 rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-gray-900">Lisa Chen</p>
+                                        <p class="text-xs text-gray-500">1d</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1">+1 (555) 654-3210</p>
+                                    <p class="text-sm text-gray-600 truncate">What's the price range for homes in that area?</p>
+                                    <div class="flex items-center space-x-2 mt-2">
+                                        <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Cold Lead</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CENTER: Chat view -->
+                <section id="chat-view" class="flex-1 flex flex-col">
+                    <div class="p-4 bg-white border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah Johnson" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Sarah Johnson</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm text-gray-500">+1 (555) 123-4567</p>
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        <span class="text-xs text-green-600">Online</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                    <i class="fas fa-calendar"></i>
+                                </button>
+                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                    <i class="fas fa-flag"></i>
+                                </button>
+                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-white rounded-lg shadow-sm p-3">
+                                    <p class="text-sm text-gray-900">Hi! I saw your listing for the 3-bedroom house on Oak Street. Is it still available?</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Yesterday 2:15 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-primary text-white rounded-lg shadow-sm p-3">
+                                    <p class="text-sm">Hi Sarah! Yes, the Oak Street property is still available. It's a beautiful 3-bedroom, 2-bathroom home with a large backyard. Would you like to schedule a viewing?</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 text-right">Yesterday 2:18 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-white rounded-lg shadow-sm p-3">
+                                    <p class="text-sm text-gray-900">That sounds perfect! What's the asking price? And yes, I'd love to schedule a viewing.</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Yesterday 2:22 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-primary text-white rounded-lg shadow-sm p-3">
+                                    <p class="text-sm">The asking price is $485,000. I have availability this weekend for viewings. Would Saturday at 2 PM or Sunday at 11 AM work better for you?</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 text-right">Yesterday 2:25 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-white rounded-lg shadow-sm p-3">
+                                    <p class="text-sm text-gray-900">Thank you for the property details! I'm interested in scheduling a viewing for Saturday at 2 PM. Can you send me the address?</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">2 minutes ago</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <div class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">
+                                Auto-reply: Meeting scheduled for Saturday 2 PM
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white border-t border-gray-200">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                                Schedule Meeting
+                            </button>
+                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                                Send Property Info
+                            </button>
+                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                                Follow-up Sequence
+                            </button>
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <div class="flex-1">
+                                <textarea placeholder="Type your message..." rows="3" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            </div>
+                            <button class="p-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RIGHT: Lead details panel -->
+                <section id="lead-details-panel" class="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto">
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Lead Details</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Name</label>
+                                    <p class="text-sm text-gray-900">Sarah Johnson</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Phone</label>
+                                    <p class="text-sm text-gray-900">+1 (555) 123-4567</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Email</label>
+                                    <p class="text-sm text-gray-900">sarah.johnson@email.com</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Property Interest</label>
+                                    <p class="text-sm text-gray-900">3-bedroom house, Oak Street</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Budget Range</label>
+                                    <p class="text-sm text-gray-900">$450k - $500k</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Tags</label>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Hot Lead</span>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">First Time Buyer</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Activity History</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-comment text-green-600 text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Replied to message</p>
+                                        <p class="text-xs text-gray-500">2 minutes ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-paper-plane text-blue-600 text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Sent property details</p>
+                                        <p class="text-xs text-gray-500">Yesterday 2:25 PM</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-plus text-purple-600 text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Added to campaign</p>
+                                        <p class="text-xs text-gray-500">2 days ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                            <div class="space-y-2">
+                                <button class="w-full flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                    <i class="fas fa-calendar mr-2"></i>
+                                    Schedule Meeting
+                                </button>
+                                <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    Add to Follow-up
+                                </button>
+                                <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-tag mr-2"></i>
+                                    Update Tags
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
+                            <textarea placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"></textarea>
+                            <button class="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                                Save Note
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
