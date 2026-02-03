@@ -8,7 +8,7 @@ import fcntl
 import requests
 from flask import Flask, request, Response, jsonify
 
-from tools.ai_inbound_agent import analyze_with_ai, is_stop_message
+from tools.ai_inbound_agent import generate_reply, is_stop_message
 
 
 app = Flask(__name__)
@@ -21,6 +21,8 @@ LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
 INBOUND_LOG = os.path.join(LOG_DIR, "inbound.csv")
 OUTBOUND_LOG = os.path.join(LOG_DIR, "outbound.csv")
 STOPPED_LOG = os.path.join(LOG_DIR, "stopped.csv")
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 
 def _ensure_dir(path: str) -> None:
@@ -86,6 +88,11 @@ def _send_whatsapp_message(to_number: str, body: str) -> dict:
     return {"ok": resp.ok, "status": resp.status_code, "body": resp.text}
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    return Response("ok", status=200, mimetype="text/plain")
+
+
 @app.route("/webhook", methods=["GET"])
 def webhook_verify():
     mode = request.args.get("hub.mode", "")
@@ -134,14 +141,14 @@ def webhook_inbound():
                     "body": body,
                 },
             )
+            _send_whatsapp_message(
+                wa_id,
+                "You're unsubscribed. You won't receive any further messages. "
+                "Thank you for letting us know.",
+            )
             continue
 
-        ai_result = analyze_with_ai(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
-        reply_text = ai_result.get(
-            "reply",
-            "Thanks for your message! I’ll follow up with you shortly.",
-        )
-
+        reply_text = generate_reply(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
         send_result = _send_whatsapp_message(wa_id, reply_text)
 
         _write_csv_row(
@@ -152,7 +159,8 @@ def webhook_inbound():
                 "wa_id": wa_id,
                 "message_id": msg_id,
                 "reply": reply_text,
-                "send_status": send_result.get("status") or ("demo" if send_result.get("demo") else ""),
+                "send_status": send_result.get("status")
+                or ("demo" if send_result.get("demo") else ""),
                 "send_body": send_result.get("body") or "",
             },
         )

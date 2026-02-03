@@ -167,6 +167,17 @@ Return ONLY valid JSON with this structure:
     return data
 
 
+def generate_reply(owner_message: str, from_number: str, to_number: str) -> str:
+    """
+    Minimal wrapper for webhook apps: returns reply text only.
+    """
+    result = analyze_with_ai(owner_message, from_number, to_number)
+    return result.get(
+        "reply",
+        "Thanks for your message! I’ll follow up with you shortly.",
+    )
+
+
 def log_inbound(
     from_number: str,
     to_number: str,
