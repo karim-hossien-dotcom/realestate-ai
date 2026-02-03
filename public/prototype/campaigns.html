@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <nav class="mt-6 px-4">
                 <ul class="space-y-2">
                     <li>
@@ -102,7 +102,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">Campaign Management</h2>
-                        <p class="text-gray-500">Create and manage your outbound messaging campaigns</p>
+                        <p class="text-gray-500">Send WhatsApp campaigns to your generated leads</p>
                     </div>
                     <div class="flex items-center space-x-4">
                         <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
@@ -120,400 +120,371 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">
-                <!-- Header actions -->
-                <section id="campaign-header" class="mb-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <button id="open-campaign-wizard" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                                <i class="fas fa-plus"></i>
-                                <span>Create Campaign</span>
-                            </button>
-                            <button disabled class="px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed flex items-center space-x-2">
-                                <i class="fas fa-filter"></i>
-                                <span>Filter</span>
-                            </button>
-                            <button disabled class="px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed flex items-center space-x-2">
-                                <i class="fas fa-download"></i>
-                                <span>Export</span>
-                            </button>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="relative">
-                                <input type="text" placeholder="Search campaigns..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                            </div>
-                            <div class="flex bg-gray-100 rounded-lg p-1">
-                                <button class="px-3 py-1 bg-white rounded shadow-sm">
-                                    <i class="fas fa-th-large text-gray-700"></i>
-                                </button>
-                                <button class="px-3 py-1">
-                                    <i class="fas fa-list text-gray-400"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
                 <!-- Stats -->
                 <section id="campaign-stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div class="flex items-center justify-between mb-3">
-                            <p class="text-sm font-medium text-gray-600">Total Campaigns</p>
+                            <p class="text-sm font-medium text-gray-600">Total Leads</p>
                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-bullhorn text-blue-600 text-sm"></i>
+                                <i class="fas fa-users text-blue-600 text-sm"></i>
                             </div>
                         </div>
-                        <p class="text-2xl font-bold text-gray-900">48</p>
-                        <p class="text-xs text-gray-500 mt-2">24 active, 24 completed</p>
+                        <p id="stat-total" class="text-2xl font-bold text-gray-900">-</p>
+                        <p class="text-xs text-gray-500 mt-2">From generated output</p>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div class="flex items-center justify-between mb-3">
-                            <p class="text-sm font-medium text-gray-600">Messages Sent</p>
+                            <p class="text-sm font-medium text-gray-600">Selected</p>
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-check-square text-purple-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <p id="stat-selected" class="text-2xl font-bold text-gray-900">0</p>
+                        <p class="text-xs text-gray-500 mt-2">Ready to send</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-600">Sent</p>
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-paper-plane text-green-600 text-sm"></i>
                             </div>
                         </div>
-                        <p class="text-2xl font-bold text-gray-900">12,456</p>
-                        <p class="text-xs text-green-600 mt-2"><i class="fas fa-arrow-up mr-1"></i>18% this month</p>
+                        <p id="stat-sent" class="text-2xl font-bold text-gray-900">0</p>
+                        <p class="text-xs text-gray-500 mt-2">This session</p>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                         <div class="flex items-center justify-between mb-3">
-                            <p class="text-sm font-medium text-gray-600">Response Rate</p>
-                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-chart-line text-purple-600 text-sm"></i>
+                            <p class="text-sm font-medium text-gray-600">Failed</p>
+                            <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-circle text-red-600 text-sm"></i>
                             </div>
                         </div>
-                        <p class="text-2xl font-bold text-gray-900">34.2%</p>
-                        <p class="text-xs text-purple-600 mt-2"><i class="fas fa-arrow-up mr-1"></i>5.3% increase</p>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                        <div class="flex items-center justify-between mb-3">
-                            <p class="text-sm font-medium text-gray-600">Pending Review</p>
-                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-exclamation-circle text-orange-600 text-sm"></i>
-                            </div>
-                        </div>
-                        <p class="text-2xl font-bold text-gray-900">3</p>
-                        <p class="text-xs text-orange-600 mt-2">Awaiting A2P approval</p>
+                        <p id="stat-failed" class="text-2xl font-bold text-gray-900">0</p>
+                        <p class="text-xs text-gray-500 mt-2">This session</p>
                     </div>
                 </section>
 
-                <!-- Campaign cards -->
-                <section id="campaign-list" class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <!-- Send Controls -->
+                <section id="send-controls" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <button id="btn-select-all" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                                <i class="fas fa-check-double"></i>
+                                <span>Select All</span>
+                            </button>
+                            <button id="btn-deselect-all" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                                <i class="fas fa-times"></i>
+                                <span>Deselect All</span>
+                            </button>
+                            <button id="btn-refresh" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                        <button id="btn-send-campaign" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Send Campaign</span>
+                        </button>
+                    </div>
+                    <div id="send-progress" class="hidden mt-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                            <span class="text-gray-600">Sending messages...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Leads Table -->
+                <section id="leads-section" class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">All Campaigns</h3>
-                            <div class="flex items-center space-x-3">
-                                <select class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option>All Statuses</option>
-                                    <option>Active</option>
-                                    <option>Draft</option>
-                                    <option>Pending</option>
-                                    <option>Completed</option>
-                                    <option>Rejected</option>
-                                </select>
-                                <select class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option>Sort by: Recent</option>
-                                    <option>Sort by: Name</option>
-                                    <option>Sort by: Status</option>
-                                    <option>Sort by: Leads</option>
-                                </select>
-                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Leads to Contact</h3>
+                            <span id="source-badge" class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hidden"></span>
                         </div>
                     </div>
 
-                    <div id="campaign-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                        <!-- Card 1 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">New Listings Alert</h4>
-                                    <p class="text-sm text-gray-500">Cold outreach campaign</p>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">1,245</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Sent</span>
-                                    <span class="font-medium text-gray-900">1,189</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Replies</span>
-                                    <span class="font-medium text-green-600">412 (34.6%)</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Last sent: 2 hours ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 2 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">Market Update Q1</h4>
-                                    <p class="text-sm text-gray-500">Property updates</p>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">856</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Sent</span>
-                                    <span class="font-medium text-gray-900">856</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Replies</span>
-                                    <span class="font-medium text-green-600">289 (33.8%)</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Last sent: 1 day ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 3 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">Open House Invites</h4>
-                                    <p class="text-sm text-gray-500">Appointment reminders</p>
-                                </div>
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Pending</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">432</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Sent</span>
-                                    <span class="font-medium text-gray-900">0</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Status</span>
-                                    <span class="font-medium text-yellow-600">A2P Review</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Created: 3 days ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 4 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">Price Drop Alert</h4>
-                                    <p class="text-sm text-gray-500">Cold outreach campaign</p>
-                                </div>
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Draft</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">0</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Messages</span>
-                                    <span class="font-medium text-gray-900">2 templates</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Status</span>
-                                    <span class="font-medium text-blue-600">Not scheduled</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Created: 5 days ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 5 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">Holiday Greetings</h4>
-                                    <p class="text-sm text-gray-500">Property updates</p>
-                                </div>
-                                <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">Completed</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">2,134</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Sent</span>
-                                    <span class="font-medium text-gray-900">2,134</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Replies</span>
-                                    <span class="font-medium text-green-600">687 (32.2%)</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Completed: 2 weeks ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 6 -->
-                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-1">Expired Listings</h4>
-                                    <p class="text-sm text-gray-500">Cold outreach campaign</p>
-                                </div>
-                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Rejected</span>
-                            </div>
-                            <div class="space-y-3 mb-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Leads</span>
-                                    <span class="font-medium text-gray-900">567</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Sent</span>
-                                    <span class="font-medium text-gray-900">0</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Issue</span>
-                                    <span class="font-medium text-red-600">Compliance</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                <span class="text-xs text-gray-500">Rejected: 1 week ago</span>
-                                <button class="text-primary hover:text-blue-700">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Loading State -->
+                    <div id="leads-loading" class="p-12 text-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-500">Loading leads...</p>
                     </div>
 
-                    <div class="p-6 border-t border-gray-200 flex items-center justify-between">
-                        <p class="text-sm text-gray-600">Showing 6 of 48 campaigns</p>
-                        <div class="flex items-center space-x-2">
-                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                <i class="fas fa-chevron-left text-sm"></i>
-                            </button>
-                            <button class="px-3 py-2 bg-primary text-white rounded-lg">1</button>
-                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
-                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">3</button>
-                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-chevron-right text-sm"></i>
-                            </button>
+                    <!-- Empty State -->
+                    <div id="leads-empty" class="hidden p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-csv text-2xl text-gray-400"></i>
                         </div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Leads Available</h4>
+                        <p class="text-gray-500 mb-4">Run "Generate" on the Leads page first to create your leads list.</p>
+                        <a href="/prototype/leads" target="_top" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-arrow-right mr-2"></i>
+                            Go to Leads Page
+                        </a>
+                    </div>
+
+                    <!-- Leads Table -->
+                    <div id="leads-table-container" class="hidden overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left">
+                                        <input type="checkbox" id="check-all" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leads-tbody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Campaign Log -->
+                <section id="campaign-log" class="hidden mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Campaign Results</h3>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-tbody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </main>
         </div>
     </div>
 
-    <!-- Simple Create Campaign modal shell (not wired to backend yet) -->
-    <div id="campaign-wizard-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-900">Create New Campaign</h3>
-                    <p class="text-sm text-gray-500 mt-1">Step 1 of 4: Campaign Details</p>
-                </div>
-                <button id="close-campaign-wizard" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-
-            <div class="p-6 space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Name</label>
-                    <input type="text" placeholder="e.g., Spring Property Showcase" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea rows="3" placeholder="Brief description of your campaign purpose..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Use Case</label>
-                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                            <option>Cold Outreach Campaign</option>
-                            <option>Property Updates</option>
-                            <option>Appointment Reminders</option>
-                            <option>Follow-up Sequence</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                            <option>US Local - (212) 555-0123</option>
-                            <option>US Toll-Free - (800) 555-0199</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <button id="cancel-campaign-wizard" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
-                        Save Draft
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Very simple open/close for Create Campaign modal
+        let allLeads = [];
+        let selectedPhones = new Set();
+
         document.addEventListener("DOMContentLoaded", function () {
-            const openBtn = document.getElementById("open-campaign-wizard");
-            const closeBtn = document.getElementById("close-campaign-wizard");
-            const cancelBtn = document.getElementById("cancel-campaign-wizard");
-            const modal = document.getElementById("campaign-wizard-modal");
+            loadLeads();
 
-            function hideModal() {
-                if (modal) modal.classList.add("hidden");
-            }
-
-            if (openBtn && modal) {
-                openBtn.addEventListener("click", () => {
-                    modal.classList.remove("hidden");
-                });
-            }
-
-            if (closeBtn) closeBtn.addEventListener("click", hideModal);
-            if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
+            document.getElementById("btn-select-all").addEventListener("click", selectAll);
+            document.getElementById("btn-deselect-all").addEventListener("click", deselectAll);
+            document.getElementById("btn-refresh").addEventListener("click", loadLeads);
+            document.getElementById("btn-send-campaign").addEventListener("click", sendCampaign);
+            document.getElementById("check-all").addEventListener("change", function(e) {
+                if (e.target.checked) {
+                    selectAll();
+                } else {
+                    deselectAll();
+                }
+            });
         });
+
+        async function loadLeads() {
+            const loading = document.getElementById("leads-loading");
+            const empty = document.getElementById("leads-empty");
+            const table = document.getElementById("leads-table-container");
+            const sourceBadge = document.getElementById("source-badge");
+
+            loading.classList.remove("hidden");
+            empty.classList.add("hidden");
+            table.classList.add("hidden");
+            sourceBadge.classList.add("hidden");
+
+            try {
+                const res = await fetch("/api/campaigns/leads");
+                const data = await res.json();
+
+                loading.classList.add("hidden");
+
+                if (!data.ok || !data.leads || data.leads.length === 0) {
+                    empty.classList.remove("hidden");
+                    document.getElementById("stat-total").textContent = "0";
+                    allLeads = [];
+                    updateSelectedCount();
+                    return;
+                }
+
+                allLeads = data.leads;
+                document.getElementById("stat-total").textContent = allLeads.length;
+
+                if (data.source) {
+                    sourceBadge.textContent = "Source: " + data.source;
+                    sourceBadge.classList.remove("hidden");
+                }
+
+                renderLeadsTable();
+                table.classList.remove("hidden");
+                updateSelectedCount();
+
+            } catch (err) {
+                loading.classList.add("hidden");
+                empty.classList.remove("hidden");
+                console.error("Failed to load leads:", err);
+            }
+        }
+
+        function renderLeadsTable() {
+            const tbody = document.getElementById("leads-tbody");
+            tbody.innerHTML = "";
+
+            allLeads.forEach((lead, idx) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+
+                const phone = lead.phone || "";
+                const isChecked = selectedPhones.has(phone);
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <input type="checkbox"
+                               data-phone="${escapeHtml(phone)}"
+                               data-idx="${idx}"
+                               class="lead-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                               ${isChecked ? "checked" : ""}
+                               ${!phone ? "disabled" : ""}>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${escapeHtml(lead.owner_name || "-")}</div>
+                        ${lead.email ? `<div class="text-xs text-gray-500">${escapeHtml(lead.email)}</div>` : ""}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm ${phone ? "text-gray-900" : "text-red-500"}">${phone ? escapeHtml(phone) : "No phone"}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 max-w-xs truncate">${escapeHtml(lead.property_address || "-")}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-600 max-w-md truncate" title="${escapeHtml(lead.sms_text || "")}">${escapeHtml(truncate(lead.sms_text || "-", 80))}</div>
+                    </td>
+                `;
+
+                const checkbox = tr.querySelector(".lead-checkbox");
+                checkbox.addEventListener("change", function() {
+                    if (this.checked) {
+                        selectedPhones.add(phone);
+                    } else {
+                        selectedPhones.delete(phone);
+                    }
+                    updateSelectedCount();
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function selectAll() {
+            selectedPhones.clear();
+            allLeads.forEach(lead => {
+                if (lead.phone) {
+                    selectedPhones.add(lead.phone);
+                }
+            });
+            document.querySelectorAll(".lead-checkbox").forEach(cb => {
+                if (!cb.disabled) cb.checked = true;
+            });
+            document.getElementById("check-all").checked = true;
+            updateSelectedCount();
+        }
+
+        function deselectAll() {
+            selectedPhones.clear();
+            document.querySelectorAll(".lead-checkbox").forEach(cb => {
+                cb.checked = false;
+            });
+            document.getElementById("check-all").checked = false;
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedPhones.size;
+            document.getElementById("stat-selected").textContent = count;
+            document.getElementById("btn-send-campaign").disabled = count === 0;
+        }
+
+        async function sendCampaign() {
+            if (selectedPhones.size === 0) return;
+
+            const btn = document.getElementById("btn-send-campaign");
+            const progress = document.getElementById("send-progress");
+            const logSection = document.getElementById("campaign-log");
+            const logTbody = document.getElementById("log-tbody");
+
+            btn.disabled = true;
+            progress.classList.remove("hidden");
+
+            const leadsToSend = allLeads.filter(lead => selectedPhones.has(lead.phone));
+
+            try {
+                const res = await fetch("/api/campaigns/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leads: leadsToSend })
+                });
+
+                const data = await res.json();
+
+                progress.classList.add("hidden");
+
+                // Update stats
+                const prevSent = parseInt(document.getElementById("stat-sent").textContent) || 0;
+                const prevFailed = parseInt(document.getElementById("stat-failed").textContent) || 0;
+                document.getElementById("stat-sent").textContent = prevSent + (data.sent || 0);
+                document.getElementById("stat-failed").textContent = prevFailed + (data.failed || 0);
+
+                // Show log
+                logSection.classList.remove("hidden");
+
+                if (data.results && Array.isArray(data.results)) {
+                    data.results.forEach(result => {
+                        const tr = document.createElement("tr");
+                        const statusClass = result.ok ? "text-green-600" : "text-red-600";
+                        const statusIcon = result.ok ? "fa-check-circle" : "fa-times-circle";
+                        const statusText = result.ok ? (result.demo ? "Sent (Demo)" : "Sent") : "Failed";
+
+                        tr.innerHTML = `
+                            <td class="px-6 py-3 text-sm text-gray-900">${escapeHtml(result.phone || "-")}</td>
+                            <td class="px-6 py-3">
+                                <span class="${statusClass} flex items-center space-x-1">
+                                    <i class="fas ${statusIcon}"></i>
+                                    <span>${statusText}</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-500">${escapeHtml(result.error || (result.demo ? "Demo mode - no actual message sent" : "Message delivered"))}</td>
+                        `;
+                        logTbody.insertBefore(tr, logTbody.firstChild);
+                    });
+                }
+
+                // Clear selection
+                deselectAll();
+
+            } catch (err) {
+                progress.classList.add("hidden");
+                alert("Failed to send campaign: " + err.message);
+            }
+
+            btn.disabled = selectedPhones.size === 0;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncate(str, len) {
+            if (!str) return str;
+            return str.length > len ? str.substring(0, len) + "..." : str;
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
-
