@@ -120,20 +120,8 @@
             <main class="flex-1 overflow-y-auto p-6">
                 <section id="leads-header" class="mb-6">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div class="flex items-center space-x-4">
-                            <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed flex items-center space-x-2">
-                                <i class="fas fa-plus"></i>
-                                <span>Add Lead</span>
-                            </button>
-                            <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed flex items-center space-x-2">
-                                <i class="fas fa-upload"></i>
-                                <span>Import CSV</span>
-                            </button>
-                            <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed flex items-center space-x-2">
-                                <i class="fas fa-download"></i>
-                                <span>Export</span>
-                            </button>
-                        </div>
+                        <input type="file" id="import-file" accept=".csv,.json" class="hidden">
+                        <div class="flex items-center space-x-4"></div>
                         <div class="flex items-center space-x-3">
                             <div class="relative">
                                 <input type="text" placeholder="Search leads..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
@@ -200,10 +188,71 @@
                     </div>
                 </section>
 
+                <section id="pipeline-steps" class="mb-6">
+                    <div class="bg-white rounded-lg border border-gray-200 p-5">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Getting Started</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-start">
+                            <!-- Step 1 -->
+                            <div class="flex flex-col items-center text-center">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                                    <span class="text-sm font-bold text-primary">1</span>
+                                </div>
+                                <p class="text-xs font-medium text-gray-900 mb-1">Import Leads</p>
+                                <p class="text-xs text-gray-500 mb-2">Upload your CSV file</p>
+                                <button onclick="document.getElementById('import-file').click()" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
+                                    <i class="fas fa-upload mr-1"></i> Import
+                                </button>
+                            </div>
+                            <!-- Arrow -->
+                            <div class="hidden md:flex items-center justify-center pt-4">
+                                <i class="fas fa-arrow-right text-gray-300"></i>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="flex flex-col items-center text-center">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                                    <span class="text-sm font-bold text-primary">2</span>
+                                </div>
+                                <p class="text-xs font-medium text-gray-900 mb-1">Initialize</p>
+                                <p class="text-xs text-gray-500 mb-2">Load CSV into state</p>
+                                <button id="init-btn" onclick="runPipeline('/api/leads/init','init-btn','Initialize')" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
+                                    <i class="fas fa-database mr-1"></i> Init
+                                </button>
+                            </div>
+                            <!-- Arrow -->
+                            <div class="hidden md:flex items-center justify-center pt-4">
+                                <i class="fas fa-arrow-right text-gray-300"></i>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="flex flex-col items-center text-center">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                                    <span class="text-sm font-bold text-primary">3</span>
+                                </div>
+                                <p class="text-xs font-medium text-gray-900 mb-1">Generate &amp; Enrich</p>
+                                <p class="text-xs text-gray-500 mb-2">AI creates &amp; enhances messages</p>
+                                <div class="flex items-center space-x-2">
+                                    <button id="generate-btn" onclick="runPipeline('/api/listing-agent/basic-run','generate-btn','Generate')" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
+                                        <i class="fas fa-pen mr-1"></i> Generate
+                                    </button>
+                                    <button id="enrich-btn" onclick="runPipeline('/api/listing-agent/run','enrich-btn','Enrich')" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
+                                        <i class="fas fa-magic mr-1"></i> Enrich
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span id="pipeline-status" class="text-sm text-gray-600 mt-3 block hidden"></span>
+                    </div>
+                </section>
+
                 <section id="leads-table" class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">All Leads</h3>
+                            <div class="flex items-center space-x-3">
+                                <h3 class="text-lg font-semibold text-gray-900">All Leads</h3>
+                                <button onclick="handleExport()" class="text-xs text-primary hover:underline flex items-center space-x-1">
+                                    <i class="fas fa-download"></i>
+                                    <span>Export</span>
+                                </button>
+                            </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-sm text-gray-500">Showing 1-20 of 2,847</span>
                                 <div class="flex space-x-1">
@@ -441,6 +490,75 @@
             </div>
         </div>
     </div>
+    <script>
+        const ioStatus = document.getElementById('io-status');
+        function showStatus(msg) {
+            ioStatus.textContent = msg;
+            ioStatus.classList.remove('hidden');
+            setTimeout(() => ioStatus.classList.add('hidden'), 4000);
+        }
+
+        document.getElementById('import-file').addEventListener('change', async function () {
+            const file = this.files[0];
+            if (!file) return;
+            this.value = '';
+            showStatus('Importing...');
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/api/leads/import', { method: 'POST', body: fd });
+                const data = await res.json();
+                showStatus(data.message || data.error || 'Done.');
+            } catch {
+                showStatus('Import failed.');
+            }
+        });
+
+        const pipelineStatus = document.getElementById('pipeline-status');
+        function showPipelineStatus(msg) {
+            pipelineStatus.textContent = msg;
+            pipelineStatus.classList.remove('hidden');
+            setTimeout(() => pipelineStatus.classList.add('hidden'), 4000);
+        }
+
+        async function runPipeline(url, btnId, label) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            showPipelineStatus(label + ': Running...');
+            try {
+                const res = await fetch(url, { method: 'POST' });
+                const data = await res.json();
+                showPipelineStatus(label + ': ' + (data.message || data.error || 'Done.'));
+            } catch {
+                showPipelineStatus(label + ': Failed.');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+        }
+
+        async function handleExport() {
+            try {
+                const res = await fetch('/api/leads/export');
+                if (!res.ok) {
+                    const data = await res.json();
+                    showStatus(data.error || 'Export failed.');
+                    return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'leads_state.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showStatus('Exported.');
+            } catch {
+                showStatus('Export failed.');
+            }
+        }
+    </script>
 </body>
 </html>
 

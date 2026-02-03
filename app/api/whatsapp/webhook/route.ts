@@ -76,7 +76,7 @@ async function forwardToInboundAgent(payload: unknown) {
   const timeoutId = setTimeout(() => controller.abort(), 5000);
   let response: Response;
   try {
-    response = await fetch('http://localhost:5000/whatsapp/webhook', {
+    response = await fetch('http://localhost:5001/whatsapp/webhook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload ?? {}),
