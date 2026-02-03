@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 const pythonDir =
-  process.env.FOLLOWUPS_PY_DIR || 'C:\\Users\\karim\\OneDrive\\Desktop\\Agent AI';
+  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const scriptName = 'ai_inbound_agent.py';
 const pidFile = path.join(process.cwd(), '.inbound-agent.pid');
 

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { spawnSync } from 'child_process';
+import path from 'path';
 
 const pythonDir =
-  process.env.FOLLOWUPS_PY_DIR || 'C:\\Users\\karim\\OneDrive\\Desktop\\Agent AI';
+  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const scriptName = 'send_calendar_invite.py';
 
 function runPython(command: string, input: string) {

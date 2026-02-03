@@ -106,17 +106,16 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <div class="flex items-center space-x-2">
-                            <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <button disabled class="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
                                 <i class="fas fa-paper-plane mr-2"></i>
                                 New Message
                             </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                            <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                                 <i class="fas fa-filter"></i>
                             </button>
                         </div>
-                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                        <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
                             <i class="fas fa-bell text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
                         </button>
                         <div class="flex items-center space-x-3">
                             <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
@@ -255,16 +254,16 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-calendar"></i>
                                 </button>
-                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-user"></i>
                                 </button>
-                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-flag"></i>
                                 </button>
-                                <button class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-archive"></i>
                                 </button>
                             </div>
@@ -326,21 +325,21 @@
 
                     <div class="p-4 bg-white border-t border-gray-200">
                         <div class="flex items-center space-x-3 mb-3">
-                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
                                 Schedule Meeting
                             </button>
-                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
                                 Send Property Info
                             </button>
-                            <button class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">
+                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
                                 Follow-up Sequence
                             </button>
                         </div>
                         <div class="flex items-end space-x-3">
                             <div class="flex-1">
-                                <textarea placeholder="Type your message..." rows="3" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                                <textarea disabled placeholder="Type your message..." rows="3" class="w-full p-3 border border-gray-200 rounded-lg resize-none bg-gray-50 text-gray-400 cursor-not-allowed"></textarea>
                             </div>
-                            <button class="p-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <button disabled class="p-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
@@ -419,15 +418,15 @@
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h4>
                             <div class="space-y-2">
-                                <button class="w-full flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <button disabled class="w-full flex items-center justify-center px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-calendar mr-2"></i>
                                     Schedule Meeting
                                 </button>
-                                <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <button disabled class="w-full flex items-center justify-center px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-clock mr-2"></i>
                                     Add to Follow-up
                                 </button>
-                                <button class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <button disabled class="w-full flex items-center justify-center px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-tag mr-2"></i>
                                     Update Tags
                                 </button>
@@ -436,8 +435,8 @@
 
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-                            <textarea placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"></textarea>
-                            <button class="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                            <textarea disabled placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-200 rounded-lg resize-none bg-gray-50 text-gray-400 text-sm cursor-not-allowed"></textarea>
+                            <button disabled class="mt-2 px-4 py-2 bg-gray-50 text-gray-400 rounded-lg cursor-not-allowed text-sm">
                                 Save Note
                             </button>
                         </div>

@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { spawnSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 const pythonDir =
-  process.env.FOLLOWUPS_PY_DIR || 'C:\\Users\\karim\\OneDrive\\Desktop\\Agent AI';
+  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const scriptName = 'ai_listing_agent_full.py';
 
 const inputCsv = process.env.LISTING_AGENT_INPUT || 'output.csv';
@@ -24,6 +26,18 @@ function runPython(command: string) {
 }
 
 export async function POST() {
+  const inputPath = path.join(pythonDir, inputCsv);
+  if (!fs.existsSync(inputPath)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Run "Step 1: Generate" first. Missing ${inputCsv}.`,
+        data: null,
+      },
+      { status: 400 }
+    );
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({
       ok: true,

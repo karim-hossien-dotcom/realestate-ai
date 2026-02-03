@@ -49,7 +49,7 @@ export default function InboundAgentControls() {
   };
 
   return (
-    <div className="rounded-lg bg-white/90 px-3 py-2 text-xs shadow-sm">
+    <div className="text-xs">
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-semibold ${

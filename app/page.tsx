@@ -219,12 +219,9 @@ export default function AuthPage() {
                       Remember me
                     </label>
                   </div>
-                  <a
-                    href="#"
-                    className="text-sm text-primary hover:text-primary/80"
-                  >
+                  <span className="text-sm text-gray-400 cursor-default">
                     Forgot password?
-                  </a>
+                  </span>
                 </div>
 
                 <button
@@ -247,12 +244,12 @@ export default function AuthPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <i className="fab fa-google text-red-500 mr-2" />
+                <button disabled title="Coming soon" className="w-full inline-flex justify-center py-3 px-4 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                  <i className="fab fa-google text-gray-400 mr-2" />
                   Google
                 </button>
-                <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <i className="fab fa-microsoft text-blue-600 mr-2" />
+                <button disabled title="Coming soon" className="w-full inline-flex justify-center py-3 px-4 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                  <i className="fab fa-microsoft text-gray-400 mr-2" />
                   Microsoft
                 </button>
               </div>
@@ -375,13 +372,13 @@ export default function AuthPage() {
                     className="ml-2 block text-sm text-gray-700"
                   >
                     I agree to the{' '}
-                    <a href="#" className="text-primary hover:text-primary/80">
+                    <span className="text-gray-400">
                       Terms of Service
-                    </a>{' '}
+                    </span>{' '}
                     and{' '}
-                    <a href="#" className="text-primary hover:text-primary/80">
+                    <Link href="/privacy-policy" className="text-primary hover:text-primary/80">
                       Privacy Policy
-                    </a>
+                    </Link>
                   </label>
                 </div>
 
@@ -405,12 +402,12 @@ export default function AuthPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <i className="fab fa-google text-red-500 mr-2" />
+                <button disabled title="Coming soon" className="w-full inline-flex justify-center py-3 px-4 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                  <i className="fab fa-google text-gray-400 mr-2" />
                   Google
                 </button>
-                <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <i className="fab fa-microsoft text-blue-600 mr-2" />
+                <button disabled title="Coming soon" className="w-full inline-flex justify-center py-3 px-4 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                  <i className="fab fa-microsoft text-gray-400 mr-2" />
                   Microsoft
                 </button>
               </div>

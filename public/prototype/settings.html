@@ -108,9 +108,8 @@
                         <p class="text-gray-500">Manage your profile, integrations, and platform configuration</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                        <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
                             <i class="fas fa-bell text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
                         </button>
                         <div class="flex items-center space-x-3">
                             <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
@@ -174,14 +173,14 @@
                         <div id="profile-info" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div class="flex items-center justify-between mb-6">
                                 <h3 class="text-lg font-semibold text-gray-900">Profile Information</h3>
-                                <button class="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
+                                <button disabled class="text-sm bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">
                                     Save Changes
                                 </button>
                             </div>
                             <div class="flex items-center space-x-6 mb-6">
                                 <div class="relative">
                                     <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-20 h-20 rounded-full">
-                                    <button class="absolute bottom-0 right-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center">
+                                    <button disabled class="absolute bottom-0 right-0 w-6 h-6 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center cursor-not-allowed">
                                         <i class="fas fa-camera text-xs"></i>
                                     </button>
                                 </div>
@@ -260,7 +259,7 @@
                                 </p>
                             </div>
                             <div class="flex justify-end mt-6">
-                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">Test Connection</button>
+                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">Test Connection</button>
                             </div>
                         </div>
                     </section>
@@ -291,8 +290,8 @@
                                 </div>
                             </div>
                             <div class="flex justify-between items-center mt-6">
-                                <button class="text-primary hover:text-primary/80">Use OAuth instead</button>
-                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">Send Test Email</button>
+                                <button disabled class="text-gray-400 cursor-not-allowed">Use OAuth instead</button>
+                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">Send Test Email</button>
                             </div>
                         </div>
                     </section>
@@ -302,7 +301,7 @@
                         <div id="team-management" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div class="flex items-center justify-between mb-6">
                                 <h3 class="text-lg font-semibold text-gray-900">Team Management</h3>
-                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
+                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">
                                     <i class="fas fa-plus mr-2"></i>
                                     Add Member
                                 </button>
@@ -406,7 +405,7 @@
                             </div>
 
                             <div class="flex justify-end mt-6">
-                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">Save Auto-Reply</button>
+                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">Save Auto-Reply</button>
                             </div>
                         </div>
                     </section>
@@ -419,7 +418,7 @@
                                     <h3 class="text-lg font-semibold text-gray-900">Billing & Subscription</h3>
                                     <p class="text-sm text-gray-500 mt-1">View your current plan and manage payment details.</p>
                                 </div>
-                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
+                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed">
                                     Update Payment Method
                                 </button>
                             </div>
@@ -461,7 +460,7 @@
                                                     <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">Paid</span>
                                                 </td>
                                                 <td class="py-2 px-2">
-                                                    <button class="text-primary hover:text-primary/80">Download</button>
+                                                    <button disabled class="text-gray-400 cursor-not-allowed">Download</button>
                                                 </td>
                                             </tr>
                                             <tr class="border-b border-gray-100">
@@ -472,7 +471,7 @@
                                                     <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">Paid</span>
                                                 </td>
                                                 <td class="py-2 px-2">
-                                                    <button class="text-primary hover:text-primary/80">Download</button>
+                                                    <button disabled class="text-gray-400 cursor-not-allowed">Download</button>
                                                 </td>
                                             </tr>
                                         </tbody>

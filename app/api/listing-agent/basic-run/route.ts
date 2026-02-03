@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { spawnSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 const pythonDir =
-  process.env.FOLLOWUPS_PY_DIR || 'C:\\Users\\karim\\OneDrive\\Desktop\\Agent AI';
+  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const scriptName = 'ai_listing_agent.py';
 
 const inputCsv =
@@ -27,6 +29,20 @@ function runPython(command: string) {
 }
 
 export async function POST() {
+  const missing: string[] = [];
+  if (!fs.existsSync(path.join(pythonDir, inputCsv))) missing.push(inputCsv);
+  if (!fs.existsSync(path.join(pythonDir, baseScript))) missing.push(baseScript);
+  if (missing.length) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Missing files in tools/: ${missing.join(', ')}. Run "Init Leads" first or add base_script.txt.`,
+        data: null,
+      },
+      { status: 400 }
+    );
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({
       ok: true,

@@ -25,7 +25,7 @@ export default function RunInitLeadsButton() {
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-white/90 px-3 py-2 text-xs shadow-sm">
+    <div className="flex items-center gap-3 text-xs">
       <button
         type="button"
         onClick={runInit}

@@ -35,37 +35,40 @@ export default function RunListingAgentButton() {
       const res = await fetch('/api/listing-agent/basic-run', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
-        setBasicStatus(data?.error || 'Listing agent (basic) failed.');
+        setBasicStatus(data?.error || 'Step 1 failed.');
       } else if (data?.demo) {
         setBasicStatus(data?.message || 'Demo mode.');
       } else {
-        setBasicStatus('Listing agent (basic) completed.');
+        setBasicStatus('Step 1 done.');
       }
     } catch (err) {
-      setBasicStatus('Listing agent (basic) failed.');
+      setBasicStatus('Step 1 failed.');
     } finally {
       setBasicBusy(false);
     }
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-white/90 px-3 py-2 text-xs shadow-sm">
-      <button
-        type="button"
-        onClick={runListingAgentBasic}
-        disabled={basicBusy}
-        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Run Listing Agent (Basic)
-      </button>
-      <button
-        type="button"
-        onClick={runListingAgent}
-        disabled={busy}
-        className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Run Listing Agent
-      </button>
+    <div className="flex flex-col gap-2 text-xs">
+      <span className="font-semibold text-gray-600">Listing Agent</span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={runListingAgentBasic}
+          disabled={basicBusy || busy}
+          className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Step 1: Generate
+        </button>
+        <button
+          type="button"
+          onClick={runListingAgent}
+          disabled={busy || basicBusy}
+          className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Step 2: Enrich
+        </button>
+      </div>
       {basicStatus && <span className="text-gray-700">{basicStatus}</span>}
       {status && <span className="text-gray-700">{status}</span>}
     </div>
