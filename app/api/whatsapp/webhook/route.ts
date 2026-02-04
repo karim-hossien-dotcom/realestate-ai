@@ -72,11 +72,12 @@ function extractInboundMessages(payload: unknown): NormalizedInbound[] {
 }
 
 async function forwardToInboundAgent(payload: unknown) {
+  const agentUrl = process.env.INBOUND_AGENT_URL || 'http://localhost:5001';
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
   let response: Response;
   try {
-    response = await fetch('http://localhost:5001/whatsapp/webhook', {
+    response = await fetch(`${agentUrl}/whatsapp/webhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload ?? {}),

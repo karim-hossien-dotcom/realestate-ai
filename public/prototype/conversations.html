@@ -105,15 +105,9 @@
                         <p class="text-gray-500">Unified inbox for SMS conversations and lead interactions</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <div class="flex items-center space-x-2">
-                            <button disabled class="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                New Message
-                            </button>
-                            <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-filter"></i>
-                            </button>
-                        </div>
+                        <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                            <i class="fas fa-filter"></i>
+                        </button>
                         <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
                             <i class="fas fa-bell text-xl"></i>
                         </button>
@@ -418,15 +412,15 @@
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h4>
                             <div class="space-y-2">
-                                <button disabled class="w-full flex items-center justify-center px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
+                                <button id="btn-schedule-meeting" class="w-full flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition">
                                     <i class="fas fa-calendar mr-2"></i>
                                     Schedule Meeting
                                 </button>
-                                <button disabled class="w-full flex items-center justify-center px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
+                                <button id="btn-add-followup" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                                     <i class="fas fa-clock mr-2"></i>
                                     Add to Follow-up
                                 </button>
-                                <button disabled class="w-full flex items-center justify-center px-4 py-2 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
+                                <button id="btn-update-tags" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                                     <i class="fas fa-tag mr-2"></i>
                                     Update Tags
                                 </button>
@@ -435,8 +429,8 @@
 
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-                            <textarea disabled placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-200 rounded-lg resize-none bg-gray-50 text-gray-400 text-sm cursor-not-allowed"></textarea>
-                            <button disabled class="mt-2 px-4 py-2 bg-gray-50 text-gray-400 rounded-lg cursor-not-allowed text-sm">
+                            <textarea id="lead-notes" placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg resize-none text-sm focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            <button id="btn-save-notes" class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition text-sm">
                                 Save Note
                             </button>
                         </div>
@@ -445,6 +439,336 @@
             </div>
         </div>
     </div>
+    <!-- Schedule Meeting Modal -->
+    <div id="modal-meeting" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Schedule Meeting</h3>
+                <button onclick="closeModal('modal-meeting')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="meeting-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                    <input type="time" id="meeting-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+                    <input type="text" id="meeting-note" placeholder="e.g., Property viewing at Oak Street" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal('modal-meeting')" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveMeeting()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">Schedule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Follow-up Modal -->
+    <div id="modal-followup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Add to Follow-up</h3>
+                <button onclick="closeModal('modal-followup')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" id="followup-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+                    <input type="text" id="followup-note" placeholder="e.g., Check if still interested" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal('modal-followup')" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveFollowup()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">Add Follow-up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Tags Modal -->
+    <div id="modal-tags" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Update Tags</h3>
+                <button onclick="closeModal('modal-tags')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Tags</label>
+                    <div id="tag-options" class="flex flex-wrap gap-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="Hot Lead" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Hot Lead</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="Warm Lead" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Warm Lead</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="Cold Lead" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Cold Lead</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="First Time Buyer" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">First Time Buyer</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="Investor" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Investor</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" value="Pre-approved" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Pre-approved</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Add Custom Tag</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="custom-tag" placeholder="Enter tag name" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <button onclick="addCustomTag()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Add</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal('modal-tags')" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveTags()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">Save Tags</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // Current lead phone (would be dynamic in real app)
+        let currentLeadPhone = "+15551234567";
+
+        // Modal functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toast-message");
+            toastMsg.textContent = message;
+            toast.className = toast.className.replace("bg-gray-900", isError ? "bg-red-600" : "bg-green-600");
+            toast.classList.remove("translate-y-20", "opacity-0");
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+                toast.className = toast.className.replace(isError ? "bg-red-600" : "bg-green-600", "bg-gray-900");
+            }, 3000);
+        }
+
+        // API call helper
+        async function callLeadAction(payload) {
+            try {
+                const res = await fetch("/api/leads/actions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone: currentLeadPhone, ...payload })
+                });
+                return await res.json();
+            } catch (err) {
+                return { ok: false, error: err.message };
+            }
+        }
+
+        // Load lead data
+        async function loadLeadData() {
+            try {
+                const res = await fetch(`/api/leads/actions?phone=${encodeURIComponent(currentLeadPhone)}`);
+                const data = await res.json();
+                if (data.ok && data.data) {
+                    // Load notes
+                    if (data.data.notes) {
+                        document.getElementById("lead-notes").value = data.data.notes;
+                    }
+                    // Load tags into checkboxes
+                    if (data.data.tags) {
+                        document.querySelectorAll(".tag-checkbox").forEach(cb => {
+                            cb.checked = data.data.tags.includes(cb.value);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load lead data:", err);
+            }
+        }
+
+        // Schedule Meeting
+        document.getElementById("btn-schedule-meeting").addEventListener("click", () => {
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById("meeting-date").value = tomorrow.toISOString().split("T")[0];
+            document.getElementById("meeting-time").value = "14:00";
+            document.getElementById("meeting-note").value = "";
+            openModal("modal-meeting");
+        });
+
+        async function saveMeeting() {
+            const date = document.getElementById("meeting-date").value;
+            const time = document.getElementById("meeting-time").value;
+            const note = document.getElementById("meeting-note").value;
+
+            if (!date || !time) {
+                showToast("Please select date and time", true);
+                return;
+            }
+
+            const result = await callLeadAction({ action: "schedule_meeting", date, time, note });
+            if (result.ok) {
+                showToast("Meeting scheduled successfully!");
+                closeModal("modal-meeting");
+            } else {
+                showToast(result.error || "Failed to schedule meeting", true);
+            }
+        }
+
+        // Add Follow-up
+        document.getElementById("btn-add-followup").addEventListener("click", () => {
+            // Set default date to 3 days from now
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 3);
+            document.getElementById("followup-date").value = dueDate.toISOString().split("T")[0];
+            document.getElementById("followup-note").value = "";
+            openModal("modal-followup");
+        });
+
+        async function saveFollowup() {
+            const dueDate = document.getElementById("followup-date").value;
+            const note = document.getElementById("followup-note").value;
+
+            if (!dueDate) {
+                showToast("Please select a due date", true);
+                return;
+            }
+
+            const result = await callLeadAction({ action: "add_followup", dueDate, note });
+            if (result.ok) {
+                showToast("Follow-up added successfully!");
+                closeModal("modal-followup");
+            } else {
+                showToast(result.error || "Failed to add follow-up", true);
+            }
+        }
+
+        // Update Tags
+        document.getElementById("btn-update-tags").addEventListener("click", () => {
+            openModal("modal-tags");
+        });
+
+        function addCustomTag() {
+            const input = document.getElementById("custom-tag");
+            const tagName = input.value.trim();
+            if (!tagName) return;
+
+            // Check if tag already exists
+            const existing = document.querySelector(`.tag-checkbox[value="${tagName}"]`);
+            if (existing) {
+                existing.checked = true;
+                input.value = "";
+                return;
+            }
+
+            // Add new checkbox
+            const container = document.getElementById("tag-options");
+            const label = document.createElement("label");
+            label.className = "inline-flex items-center";
+            label.innerHTML = `
+                <input type="checkbox" value="${tagName}" class="tag-checkbox rounded border-gray-300 text-primary focus:ring-primary" checked>
+                <span class="ml-2 text-sm text-gray-700">${tagName}</span>
+            `;
+            container.appendChild(label);
+            input.value = "";
+        }
+
+        async function saveTags() {
+            const tags = [];
+            document.querySelectorAll(".tag-checkbox:checked").forEach(cb => {
+                tags.push(cb.value);
+            });
+
+            const result = await callLeadAction({ action: "update_tags", tags });
+            if (result.ok) {
+                showToast("Tags updated successfully!");
+                closeModal("modal-tags");
+                // Update displayed tags
+                updateDisplayedTags(tags);
+            } else {
+                showToast(result.error || "Failed to update tags", true);
+            }
+        }
+
+        function updateDisplayedTags(tags) {
+            const container = document.querySelector("#lead-details-panel .flex.flex-wrap.gap-1");
+            if (container) {
+                container.innerHTML = tags.map(tag => {
+                    const colors = getTagColors(tag);
+                    return `<span class="text-xs ${colors} px-2 py-1 rounded-full">${tag}</span>`;
+                }).join("");
+            }
+        }
+
+        function getTagColors(tag) {
+            const colorMap = {
+                "Hot Lead": "bg-green-100 text-green-800",
+                "Warm Lead": "bg-yellow-100 text-yellow-800",
+                "Cold Lead": "bg-gray-100 text-gray-800",
+                "First Time Buyer": "bg-blue-100 text-blue-800",
+                "Investor": "bg-purple-100 text-purple-800",
+                "Pre-approved": "bg-indigo-100 text-indigo-800"
+            };
+            return colorMap[tag] || "bg-gray-100 text-gray-800";
+        }
+
+        // Save Notes
+        document.getElementById("btn-save-notes").addEventListener("click", async () => {
+            const notes = document.getElementById("lead-notes").value;
+            const result = await callLeadAction({ action: "save_notes", notes });
+            if (result.ok) {
+                showToast("Notes saved successfully!");
+            } else {
+                showToast(result.error || "Failed to save notes", true);
+            }
+        });
+
+        // Close modals on backdrop click
+        document.querySelectorAll("[id^='modal-']").forEach(modal => {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // Load data on page load
+        document.addEventListener("DOMContentLoaded", loadLeadData);
+    </script>
 </body>
 </html>
 

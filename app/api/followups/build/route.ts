@@ -39,9 +39,12 @@ export async function POST() {
     });
   }
 
-  let result = runPython('python');
+  let result = runPython('python3');
   if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = runPython('py');
+    result = runPython('python');
+    if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+      result = runPython('py');
+    }
   }
 
   const stdout = (result.stdout || '').toString().trim();

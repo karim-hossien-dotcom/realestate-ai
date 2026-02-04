@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { parse } from 'csv-parse/sync';
 
 const toolsDir =
   process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
+
+type CsvRecord = {
+  property_address?: string;
+  owner_name?: string;
+  phone?: string;
+  email?: string;
+  sms_text?: string;
+  [key: string]: string | undefined;
+};
 
 type Lead = {
   owner_name: string;
@@ -12,64 +22,6 @@ type Lead = {
   sms_text: string;
   email: string;
 };
-
-function parseCSV(content: string): Lead[] {
-  const lines = content.split('\n').filter((line) => line.trim());
-  if (lines.length < 2) return [];
-
-  const headerLine = lines[0];
-  const headers = parseCSVLine(headerLine).map((h) => h.toLowerCase().trim());
-
-  const ownerIdx = headers.findIndex((h) => h === 'owner_name' || h === 'owner name');
-  const phoneIdx = headers.findIndex((h) => h === 'phone');
-  const addressIdx = headers.findIndex((h) => h === 'property_address' || h === 'property address');
-  const smsIdx = headers.findIndex((h) => h === 'sms_text' || h === 'sms text');
-  const emailIdx = headers.findIndex((h) => h === 'email');
-
-  const leads: Lead[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    const lead: Lead = {
-      owner_name: ownerIdx >= 0 ? (values[ownerIdx] || '').trim() : '',
-      phone: phoneIdx >= 0 ? (values[phoneIdx] || '').trim() : '',
-      property_address: addressIdx >= 0 ? (values[addressIdx] || '').trim() : '',
-      sms_text: smsIdx >= 0 ? (values[smsIdx] || '').trim() : '',
-      email: emailIdx >= 0 ? (values[emailIdx] || '').trim() : '',
-    };
-    if (lead.phone || lead.owner_name) {
-      leads.push(lead);
-    }
-  }
-
-  return leads;
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  result.push(current);
-
-  return result;
-}
 
 export async function GET() {
   const fullPath = path.join(toolsDir, 'output_full.csv');
@@ -94,12 +46,36 @@ export async function GET() {
     );
   }
 
-  const content = fs.readFileSync(csvPath, 'utf-8');
-  const leads = parseCSV(content);
+  try {
+    const content = fs.readFileSync(csvPath, 'utf-8');
+    const records = parse(content, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+      relax_quotes: true,
+      relax_column_count: true,
+    }) as CsvRecord[];
 
-  return NextResponse.json({
-    ok: true,
-    source: path.basename(csvPath),
-    leads,
-  });
+    const leads: Lead[] = records
+      .filter(r => r.phone || r.owner_name)
+      .map(r => ({
+        owner_name: r.owner_name || '',
+        phone: r.phone || '',
+        property_address: r.property_address || '',
+        sms_text: r.sms_text || '',
+        email: r.email || '',
+      }));
+
+    return NextResponse.json({
+      ok: true,
+      source: path.basename(csvPath),
+      leads,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to parse CSV';
+    return NextResponse.json(
+      { ok: false, error: message, leads: [] },
+      { status: 500 }
+    );
+  }
 }

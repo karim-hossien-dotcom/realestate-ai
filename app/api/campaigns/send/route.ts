@@ -1,5 +1,27 @@
 import { NextResponse } from 'next/server';
 import { sendWhatsAppTemplate } from '@/app/lib/whatsapp';
+import fs from 'fs';
+import path from 'path';
+
+const toolsDir = process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
+const sentLogPath = path.join(toolsDir, 'sent_campaigns.csv');
+
+function logSentMessage(lead: LeadInput, success: boolean) {
+  const timestamp = new Date().toISOString();
+  const row = [
+    timestamp,
+    lead.phone || '',
+    lead.owner_name || '',
+    (lead.sms_text || '').replace(/"/g, '""'),
+    success ? 'sent' : 'failed',
+  ].map(v => `"${v}"`).join(',');
+
+  // Create header if file doesn't exist
+  if (!fs.existsSync(sentLogPath)) {
+    fs.writeFileSync(sentLogPath, 'timestamp,phone,owner_name,message,status\n');
+  }
+  fs.appendFileSync(sentLogPath, row + '\n');
+}
 
 type LeadInput = {
   phone: string;
@@ -49,21 +71,32 @@ export async function POST(request: Request) {
 
     if (isDemoMode) {
       console.log(`[DEMO MODE] WhatsApp campaign message to ${phone}`);
+      logSentMessage(lead, true);
       results.push({ phone, ok: true, demo: true });
       sent++;
       continue;
     }
 
+    // Only pass body parameters if NOT using hello_world template
+    // hello_world doesn't accept parameters, custom templates do
+    const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || '';
+    const bodyParams = (effectiveTemplate !== 'hello_world' && lead.sms_text)
+      ? [lead.sms_text]
+      : [];
+
     const result = await sendWhatsAppTemplate({
       to: phone,
       templateName,
       languageCode,
+      bodyParams,
     });
 
     if (result.ok) {
+      logSentMessage(lead, true);
       results.push({ phone, ok: true });
       sent++;
     } else {
+      logSentMessage(lead, false);
       results.push({ phone, ok: false, error: result.error });
       failed++;
     }

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <nav class="mt-6 px-4">
                 <ul class="space-y-2">
                     <li>
@@ -101,8 +101,8 @@
             <header id="header" class="bg-white border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Follow-Up Sequences</h2>
-                        <p class="text-gray-500">Automate personalized text sequences for your leads</p>
+                        <h2 class="text-2xl font-bold text-gray-900">Follow-Up Management</h2>
+                        <p class="text-gray-500">Build and send automated follow-up sequences</p>
                     </div>
                     <div class="flex items-center space-x-4">
                         <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
@@ -120,526 +120,342 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">
-                <!-- Action bar: view toggle + create -->
-                <section id="action-bar" class="mb-6 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <button id="view-list-btn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                            <i class="fas fa-list mr-2"></i>
-                            Sequence List
-                        </button>
-                        <button id="view-calendar-btn" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
-                            <i class="fas fa-calendar-alt mr-2"></i>
-                            Calendar View
-                        </button>
+                <!-- Stats -->
+                <section id="followup-stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-600">Need Follow-Up</p>
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-list text-blue-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <p id="stat-total" class="text-2xl font-bold text-gray-900">-</p>
+                        <p class="text-xs text-gray-500 mt-2">From sent campaigns</p>
                     </div>
-                    <button id="create-sequence-btn" class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center">
-                        <i class="fas fa-plus mr-2"></i>
-                        Create Sequence
-                    </button>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-600">No Response</p>
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-yellow-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <p id="stat-no-response" class="text-2xl font-bold text-gray-900">-</p>
+                        <p class="text-xs text-gray-500 mt-2">Awaiting reply</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-600">Needs Action</p>
+                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation text-orange-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <p id="stat-needs-followup" class="text-2xl font-bold text-gray-900">-</p>
+                        <p class="text-xs text-gray-500 mt-2">Scheduled follow-up</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-600">Replied</p>
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-comment text-green-600 text-sm"></i>
+                            </div>
+                        </div>
+                        <p id="stat-replied" class="text-2xl font-bold text-gray-900">-</p>
+                        <p class="text-xs text-gray-500 mt-2">Need review</p>
+                    </div>
                 </section>
 
-                <!-- LIST VIEW -->
-                <div id="list-view">
-                    <section id="active-sequences" class="mb-8">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Active Sequences</h3>
-                            <div class="flex items-center space-x-3">
-                                <input type="text" placeholder="Search sequences..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option>All Sequences</option>
-                                    <option>Active</option>
-                                    <option>Paused</option>
-                                    <option>Completed</option>
-                                </select>
-                            </div>
+                <!-- Info Banner -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-blue-900">Smart Follow-Ups</h4>
+                            <p class="text-sm text-blue-700 mt-1">This page shows leads from your sent campaigns that need follow-up. Leads are tracked automatically based on their response status.</p>
                         </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Sequence 1 -->
-                            <div id="sequence-card-1" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fas fa-bolt text-blue-600 text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-lg font-semibold text-gray-900">30-Day Nurture</h4>
-                                            <p class="text-sm text-gray-500">5 steps â€¢ 142 active leads</p>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="flex items-center justify-between text-sm mb-2">
-                                        <span class="text-gray-600">Progress</span>
-                                        <span class="font-medium text-gray-900">68%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 68%"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <div class="flex -space-x-2">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                    </div>
-                                    <span class="text-sm text-gray-600">+139 more leads</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-paper-plane mr-1"></i> 487 sent</span>
-                                        <span><i class="fas fa-reply mr-1"></i> 89 replies</span>
-                                    </div>
-                                    <button disabled class="text-gray-400 text-sm font-medium cursor-not-allowed">
-                                        View Details
-                                        <i class="fas fa-arrow-right ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Sequence 2 -->
-                            <div id="sequence-card-2" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fas fa-fire text-purple-600 text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-lg font-semibold text-gray-900">Hot Lead Follow-Up</h4>
-                                            <p class="text-sm text-gray-500">3 steps â€¢ 67 active leads</p>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="flex items-center justify-between text-sm mb-2">
-                                        <span class="text-gray-600">Progress</span>
-                                        <span class="font-medium text-gray-900">82%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-purple-600 h-2 rounded-full" style="width: 82%"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <div class="flex -space-x-2">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                    </div>
-                                    <span class="text-sm text-gray-600">+64 more leads</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-paper-plane mr-1"></i> 198 sent</span>
-                                        <span><i class="fas fa-reply mr-1"></i> 54 replies</span>
-                                    </div>
-                                    <button disabled class="text-gray-400 text-sm font-medium cursor-not-allowed">
-                                        View Details
-                                        <i class="fas fa-arrow-right ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Sequence 3 -->
-                            <div id="sequence-card-3" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fas fa-home text-green-600 text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-lg font-semibold text-gray-900">New Listing Alert</h4>
-                                            <p class="text-sm text-gray-500">4 steps â€¢ 89 active leads</p>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="flex items-center justify-between text-sm mb-2">
-                                        <span class="text-gray-600">Progress</span>
-                                        <span class="font-medium text-gray-900">45%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-green-600 h-2 rounded-full" style="width: 45%"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <div class="flex -space-x-2">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                    </div>
-                                    <span class="text-sm text-gray-600">+86 more leads</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-paper-plane mr-1"></i> 245 sent</span>
-                                        <span><i class="fas fa-reply mr-1"></i> 38 replies</span>
-                                    </div>
-                                    <button disabled class="text-gray-400 text-sm font-medium cursor-not-allowed">
-                                        View Details
-                                        <i class="fas fa-arrow-right ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Sequence 4 -->
-                            <div id="sequence-card-4" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <i class="fas fa-star text-orange-600 text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-lg font-semibold text-gray-900">Re-engagement Campaign</h4>
-                                            <p class="text-sm text-gray-500">6 steps â€¢ 203 active leads</p>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Paused</span>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="flex items-center justify-between text-sm mb-2">
-                                        <span class="text-gray-600">Progress</span>
-                                        <span class="font-medium text-gray-900">23%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-orange-600 h-2 rounded-full" style="width: 23%"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <div class="flex -space-x-2">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-8 h-8 rounded-full border-2 border-white">
-                                    </div>
-                                    <span class="text-sm text-gray-600">+200 more leads</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-paper-plane mr-1"></i> 156 sent</span>
-                                        <span><i class="fas fa-reply mr-1"></i> 12 replies</span>
-                                    </div>
-                                    <button disabled class="text-gray-400 text-sm font-medium cursor-not-allowed">
-                                        View Details
-                                        <i class="fas fa-arrow-right ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Sequence Builder -->
-                    <section id="sequence-builder" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900">Sequence Builder</h3>
-                            <button disabled class="text-sm text-gray-400 font-medium flex items-center cursor-not-allowed">
-                                <i class="fas fa-plus mr-1"></i>
-                                Add Step
-                            </button>
-                        </div>
-
-                        <div class="space-y-4">
-                            <!-- Step 1 -->
-                            <div id="step-1" class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex flex-col items-center flex-shrink-0">
-                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">1</div>
-                                    <div class="w-0.5 h-12 bg-gray-300 mt-2"></div>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h4 class="font-semibold text-gray-900">Day 1 - Initial Contact</h4>
-                                        <div class="flex items-center space-x-2">
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white p-3 rounded border border-gray-200">
-                                        <p class="text-sm text-gray-700">
-                                            Hi {{first_name}}, I noticed your interest in properties in {{area}}.
-                                            I have some exciting new listings that match your criteria. Would you like to schedule a viewing?
-                                        </p>
-                                    </div>
-                                    <div class="mt-3 flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-clock mr-1"></i> Send immediately</span>
-                                        <span><i class="fas fa-users mr-1"></i> 142 leads</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 2 -->
-                            <div id="step-2" class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex flex-col items-center flex-shrink-0">
-                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">2</div>
-                                    <div class="w-0.5 h-12 bg-gray-300 mt-2"></div>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h4 class="font-semibold text-gray-900">Day 3 - Follow-Up</h4>
-                                        <div class="flex items-center space-x-2">
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white p-3 rounded border border-gray-200">
-                                        <p class="text-sm text-gray-700">
-                                            Hi {{first_name}}, just checking in! Did you get a chance to review the listings I sent?
-                                            I'm here to answer any questions you might have.
-                                        </p>
-                                    </div>
-                                    <div class="mt-3 flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-clock mr-1"></i> 3 days after step 1</span>
-                                        <span><i class="fas fa-users mr-1"></i> 98 leads</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 3 -->
-                            <div id="step-3" class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex flex-col items-center flex-shrink-0">
-                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">3</div>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h4 class="font-semibold text-gray-900">Day 7 - Value Add</h4>
-                                        <div class="flex items-center space-x-2">
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button disabled class="p-2 text-gray-300 cursor-not-allowed">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white p-3 rounded border border-gray-200">
-                                        <p class="text-sm text-gray-700">
-                                            {{first_name}}, I've prepared a market analysis for {{area}}.
-                                            Current trends show great opportunities. Want to discuss your options over a quick call?
-                                        </p>
-                                    </div>
-                                    <div class="mt-3 flex items-center space-x-4 text-sm text-gray-600">
-                                        <span><i class="fas fa-clock mr-1"></i> 7 days after step 1</span>
-                                        <span><i class="fas fa-users mr-1"></i> 67 leads</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex items-center justify-between pt-6 border-t border-gray-200">
-                            <div class="flex items-center space-x-2 text-sm text-gray-600">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Sequence will stop if lead replies or books a meeting</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <button disabled class="px-6 py-2.5 border border-gray-200 text-gray-400 rounded-lg cursor-not-allowed font-medium">
-                                    Save as Draft
-                                </button>
-                                <button disabled class="px-6 py-2.5 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium">
-                                    Activate Sequence
-                                </button>
-                            </div>
-                        </div>
-                    </section>
+                    </div>
                 </div>
 
-                <!-- CALENDAR VIEW -->
-                <div id="calendar-view" class="hidden">
-                    <section id="calendar-header" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <!-- Actions -->
+                <section id="actions" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <button id="btn-refresh" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium flex items-center space-x-2">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh</span>
+                            </button>
+                            <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">All Status</option>
+                                <option value="no_response">No Response</option>
+                                <option value="needs_followup">Needs Follow-up</option>
+                                <option value="replied">Replied</option>
+                            </select>
+                        </div>
+                        <button id="btn-send-selected" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium flex items-center space-x-2 disabled:opacity-50" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Send Follow-up to Selected</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Follow-Ups Table -->
+                <section id="followups-section" class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <i class="fas fa-chevron-left text-gray-600"></i>
-                                </button>
-                                <h3 class="text-xl font-semibold text-gray-900">January 2024</h3>
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <i class="fas fa-chevron-right text-gray-600"></i>
-                                </button>
-                            </div>
-                            <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
-                                <i class="fas fa-calendar-day mr-2"></i>
-                                Today
-                            </button>
+                            <h3 class="text-lg font-semibold text-gray-900">Scheduled Follow-Ups</h3>
+                            <span id="source-badge" class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hidden">followups.csv</span>
                         </div>
-                    </section>
+                    </div>
 
-                    <section id="calendar-grid" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-                            <!-- Weekday headers -->
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Sun</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Mon</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Tue</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Wed</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Thu</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Fri</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center">
-                                <span class="text-xs font-semibold text-gray-600">Sat</span>
-                            </div>
+                    <!-- Loading State -->
+                    <div id="followups-loading" class="p-12 text-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-500">Loading follow-ups...</p>
+                    </div>
 
-                            <!-- Example days / follow-ups -->
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-400">31</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">1</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">2</span>
-                                <div class="mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded truncate">
-                                    Step 1 â€¢ 30-Day Nurture
-                                </div>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">3</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">4</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">5</span>
-                                <div class="mt-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded truncate">
-                                    Step 2 â€¢ Hot Lead Follow-Up
-                                </div>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">6</span>
-                            </div>
-
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">7</span>
-                            </div>
-                            <div class="bg-blue-50 p-3 min-h-[100px] border-t border-gray-200 ring-2 ring-primary">
-                                <span class="text-sm text-gray-900 font-bold">8</span>
-                                <div class="mt-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded truncate">
-                                    Step 3 â€¢ 30-Day Nurture
-                                </div>
-                                <div class="mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded truncate">
-                                    Re-engagement touch
-                                </div>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">9</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">10</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">11</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">12</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">13</span>
-                            </div>
-
-                            <!-- Rest of month (empty scaffold) -->
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">14</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">15</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">16</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">17</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">18</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">19</span>
-                            </div>
-                            <div class="bg-white p-3 min-h-[100px] border-t border-gray-200">
-                                <span class="text-sm text-gray-900 font-medium">20</span>
-                            </div>
-
-                            <!-- You can extend this grid similarly if you want full 31 days rendered -->
-                            <!-- For now it's illustrative and static -->
+                    <!-- Empty State -->
+                    <div id="followups-empty" class="hidden p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-check-circle text-2xl text-gray-400"></i>
                         </div>
-                    </section>
-                </div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Follow-Ups Needed</h4>
+                        <p class="text-gray-500 mb-4">Send campaigns first, then leads needing follow-up will appear here.</p>
+                        <a href="/prototype/campaigns" target="_top" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-bullhorn mr-2"></i>
+                            Go to Campaigns
+                        </a>
+                    </div>
+
+                    <!-- Follow-Ups Table -->
+                    <div id="followups-table-container" class="hidden overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left">
+                                        <input type="checkbox" id="check-all" class="w-4 h-4 text-primary border-gray-300 rounded">
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Since Contact</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Response Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Suggested Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="followups-tbody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>
 
-    <!-- VIEW TOGGLE SCRIPT -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const listViewBtn = document.getElementById('view-list-btn');
-            const calendarViewBtn = document.getElementById('view-calendar-btn');
-            const listView = document.getElementById('list-view');
-            const calendarView = document.getElementById('calendar-view');
-            const createSequenceBtn = document.getElementById('create-sequence-btn');
+        let allFollowups = [];
+        let filteredFollowups = [];
+        let selectedPhones = new Set();
 
-            function activateListView() {
-                listView.classList.remove('hidden');
-                calendarView.classList.add('hidden');
+        document.addEventListener("DOMContentLoaded", function() {
+            loadFollowups();
 
-                // Button styles
-                listViewBtn.classList.add('bg-primary', 'text-white');
-                listViewBtn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
-
-                calendarViewBtn.classList.remove('bg-primary', 'text-white');
-                calendarViewBtn.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
-            }
-
-            function activateCalendarView() {
-                calendarView.classList.remove('hidden');
-                listView.classList.add('hidden');
-
-                // Button styles
-                calendarViewBtn.classList.add('bg-primary', 'text-white');
-                calendarViewBtn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
-
-                listViewBtn.classList.remove('bg-primary', 'text-white');
-                listViewBtn.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
-            }
-
-            listViewBtn.addEventListener('click', activateListView);
-            calendarViewBtn.addEventListener('click', activateCalendarView);
-
-            // Optional: when clicking "Create Sequence", jump to the builder in list view
-            if (createSequenceBtn) {
-                createSequenceBtn.addEventListener('click', function () {
-                    activateListView();
-                    const builder = document.getElementById('sequence-builder');
-                    if (builder) {
-                        builder.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
-            }
-
-            // Ensure default is list view on load
-            activateListView();
+            document.getElementById("btn-refresh").addEventListener("click", loadFollowups);
+            document.getElementById("filter-status").addEventListener("change", filterFollowups);
+            document.getElementById("btn-send-selected").addEventListener("click", sendSelectedFollowups);
+            document.getElementById("check-all").addEventListener("change", function(e) {
+                if (e.target.checked) selectAll();
+                else deselectAll();
+            });
         });
+
+        async function loadFollowups() {
+            const loading = document.getElementById("followups-loading");
+            const empty = document.getElementById("followups-empty");
+            const table = document.getElementById("followups-table-container");
+
+            loading.classList.remove("hidden");
+            empty.classList.add("hidden");
+            table.classList.add("hidden");
+
+            try {
+                const res = await fetch("/api/followups");
+                const data = await res.json();
+
+                loading.classList.add("hidden");
+
+                if (!data.ok || !data.followups || data.followups.length === 0) {
+                    empty.classList.remove("hidden");
+                    updateStats({ total: 0, no_response: 0, needs_followup: 0, replied: 0 });
+                    return;
+                }
+
+                allFollowups = data.followups;
+                filteredFollowups = [...allFollowups];
+                updateStats(data.stats);
+                renderTable();
+                table.classList.remove("hidden");
+
+            } catch (err) {
+                loading.classList.add("hidden");
+                empty.classList.remove("hidden");
+                console.error("Failed to load follow-ups:", err);
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById("stat-total").textContent = stats.total || 0;
+            document.getElementById("stat-no-response").textContent = stats.no_response || 0;
+            document.getElementById("stat-needs-followup").textContent = stats.needs_followup || 0;
+            document.getElementById("stat-replied").textContent = stats.replied || 0;
+        }
+
+        function filterFollowups() {
+            const status = document.getElementById("filter-status").value;
+
+            if (!status) {
+                filteredFollowups = [...allFollowups];
+            } else {
+                filteredFollowups = allFollowups.filter(f => f.response_status === status);
+            }
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("followups-tbody");
+            tbody.innerHTML = "";
+
+            filteredFollowups.forEach((f, idx) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+
+                const isChecked = selectedPhones.has(f.phone);
+                const statusBadge = getStatusBadge(f.response_status);
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <input type="checkbox"
+                               data-phone="${escapeHtml(f.phone)}"
+                               class="followup-checkbox w-4 h-4 text-primary border-gray-300 rounded"
+                               ${isChecked ? "checked" : ""}>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${escapeHtml(f.owner_name || "Unknown")}</div>
+                        <div class="text-xs text-gray-500">${escapeHtml(f.phone)}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-semibold ${f.days_since_contact >= 7 ? 'text-red-600' : f.days_since_contact >= 3 ? 'text-yellow-600' : 'text-gray-900'}">
+                            ${f.days_since_contact} day${f.days_since_contact !== 1 ? 's' : ''}
+                        </div>
+                        <div class="text-xs text-gray-500">${formatDate(f.last_sent)}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${statusBadge}
+                        ${f.last_response ? `<div class="text-xs text-gray-500 mt-1 truncate max-w-xs" title="${escapeHtml(f.last_response)}">"${escapeHtml(truncate(f.last_response, 40))}"</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-700">${escapeHtml(f.suggested_action)}</div>
+                    </td>
+                `;
+
+                const checkbox = tr.querySelector(".followup-checkbox");
+                checkbox.addEventListener("change", function() {
+                    if (this.checked) selectedPhones.add(f.phone);
+                    else selectedPhones.delete(f.phone);
+                    updateSendButton();
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            updateSendButton();
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'no_response': '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>No Response</span>',
+                'needs_followup': '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><i class="fas fa-exclamation mr-1"></i>Needs Follow-up</span>',
+                'replied': '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-comment mr-1"></i>Replied</span>',
+            };
+            return badges[status] || '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>';
+        }
+
+        function selectAll() {
+            selectedPhones.clear();
+            filteredFollowups.forEach(f => selectedPhones.add(f.phone));
+            document.querySelectorAll(".followup-checkbox").forEach(cb => cb.checked = true);
+            updateSendButton();
+        }
+
+        function deselectAll() {
+            selectedPhones.clear();
+            document.querySelectorAll(".followup-checkbox").forEach(cb => cb.checked = false);
+            document.getElementById("check-all").checked = false;
+            updateSendButton();
+        }
+
+        function updateSendButton() {
+            const btn = document.getElementById("btn-send-selected");
+            btn.disabled = selectedPhones.size === 0;
+            btn.querySelector("span").textContent = selectedPhones.size > 0
+                ? `Send Follow-up to ${selectedPhones.size} Selected`
+                : "Send Follow-up to Selected";
+        }
+
+        async function sendSelectedFollowups() {
+            if (selectedPhones.size === 0) return;
+
+            const btn = document.getElementById("btn-send-selected");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Sending...</span>';
+
+            const leadsToSend = filteredFollowups
+                .filter(f => selectedPhones.has(f.phone))
+                .map(f => ({
+                    phone: f.phone,
+                    owner_name: f.owner_name,
+                    sms_text: `Hi ${f.owner_name || 'there'}, just following up on my previous message. Would you have a few minutes to chat about your property? - Nadine Khalil, KW Commercial`
+                }));
+
+            try {
+                const res = await fetch("/api/campaigns/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leads: leadsToSend })
+                });
+                const data = await res.json();
+
+                alert(`Follow-ups sent!\nSuccess: ${data.sent || 0}\nFailed: ${data.failed || 0}`);
+
+                deselectAll();
+                loadFollowups();
+
+            } catch (err) {
+                alert("Error sending follow-ups: " + err.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>Send Follow-up to Selected</span>';
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return "";
+            const d = new Date(isoString);
+            return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function truncate(str, len) {
+            if (!str) return "";
+            return str.length > len ? str.substring(0, len) + "..." : str;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -39,58 +39,17 @@
                     </div>
                 </div>
             </div>
-            
+
             <nav class="mt-6 px-4">
                 <ul class="space-y-2">
-                    <li>
-                        <a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-chart-line w-5 mr-3"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <!-- ACTIVE: Leads -->
-                        <a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg">
-                            <i class="fas fa-users w-5 mr-3"></i>
-                            Leads
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-bullhorn w-5 mr-3"></i>
-                            Campaigns
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-clock w-5 mr-3"></i>
-                            Follow-Ups
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-comments w-5 mr-3"></i>
-                            Conversations
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-calendar w-5 mr-3"></i>
-                            Calendar
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-file-alt w-5 mr-3"></i>
-                            Logs
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-cog w-5 mr-3"></i>
-                            Settings
-                        </a>
-                    </li>
+                    <li><a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-chart-line w-5 mr-3"></i>Dashboard</a></li>
+                    <li><a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg"><i class="fas fa-users w-5 mr-3"></i>Leads</a></li>
+                    <li><a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-bullhorn w-5 mr-3"></i>Campaigns</a></li>
+                    <li><a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-clock w-5 mr-3"></i>Follow-Ups</a></li>
+                    <li><a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-comments w-5 mr-3"></i>Conversations</a></li>
+                    <li><a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-calendar w-5 mr-3"></i>Calendar</a></li>
+                    <li><a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-file-alt w-5 mr-3"></i>Logs</a></li>
+                    <li><a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-cog w-5 mr-3"></i>Settings</a></li>
                 </ul>
             </nav>
         </aside>
@@ -103,8 +62,8 @@
                         <p class="text-gray-500">Manage and organize your property owner contacts</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
-                            <i class="fas fa-bell text-xl"></i>
+                        <button onclick="loadLeads()" class="p-2 text-gray-500 hover:text-gray-700" title="Refresh leads">
+                            <i class="fas fa-sync-alt text-lg"></i>
                         </button>
                         <div class="flex items-center space-x-3">
                             <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
@@ -118,25 +77,23 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- Hidden file input for Pipeline import -->
+                <input type="file" id="import-file" accept=".csv,.json" class="hidden">
+
                 <section id="leads-header" class="mb-6">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <input type="file" id="import-file" accept=".csv,.json" class="hidden">
                         <div class="flex items-center space-x-4"></div>
                         <div class="flex items-center space-x-3">
                             <div class="relative">
-                                <input type="text" placeholder="Search leads..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <input type="text" id="search-input" placeholder="Search leads..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
                                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             </div>
-                            <select class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option>All Tags</option>
-                                <option>Hot</option>
-                                <option>Cold</option>
-                                <option>Warm</option>
-                                <option>Expired Listing</option>
+                            <select id="status-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="">All Status</option>
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Interested">Interested</option>
                             </select>
-                            <button disabled class="p-2 border border-gray-200 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-filter text-gray-400"></i>
-                            </button>
                         </div>
                     </div>
                 </section>
@@ -146,7 +103,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-600">Total Leads</p>
-                                <p class="text-2xl font-bold text-gray-900">2,847</p>
+                                <p id="stat-total" class="text-2xl font-bold text-gray-900">-</p>
                             </div>
                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-users text-blue-600"></i>
@@ -156,33 +113,33 @@
                     <div class="bg-white rounded-lg border border-gray-200 p-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-600">Hot Leads</p>
-                                <p class="text-2xl font-bold text-red-600">342</p>
-                            </div>
-                            <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-fire text-red-600"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg border border-gray-200 p-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-gray-600">New This Week</p>
-                                <p class="text-2xl font-bold text-green-600">156</p>
+                                <p class="text-sm text-gray-600">With Messages</p>
+                                <p id="stat-messages" class="text-2xl font-bold text-green-600">-</p>
                             </div>
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-plus text-green-600"></i>
+                                <i class="fas fa-comment text-green-600"></i>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 p-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-600">Active Campaigns</p>
-                                <p class="text-2xl font-bold text-purple-600">24</p>
+                                <p class="text-sm text-gray-600">With Phone</p>
+                                <p id="stat-phone" class="text-2xl font-bold text-purple-600">-</p>
                             </div>
                             <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-bullhorn text-purple-600"></i>
+                                <i class="fas fa-phone text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Data Source</p>
+                                <p id="stat-source" class="text-sm font-bold text-gray-600 mt-1">-</p>
+                            </div>
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-database text-gray-600"></i>
                             </div>
                         </div>
                     </div>
@@ -190,9 +147,8 @@
 
                 <section id="pipeline-steps" class="mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
-                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Getting Started</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Pipeline Steps</h3>
                         <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-start">
-                            <!-- Step 1 -->
                             <div class="flex flex-col items-center text-center">
                                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
                                     <span class="text-sm font-bold text-primary">1</span>
@@ -203,11 +159,9 @@
                                     <i class="fas fa-upload mr-1"></i> Import
                                 </button>
                             </div>
-                            <!-- Arrow -->
                             <div class="hidden md:flex items-center justify-center pt-4">
                                 <i class="fas fa-arrow-right text-gray-300"></i>
                             </div>
-                            <!-- Step 2 -->
                             <div class="flex flex-col items-center text-center">
                                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
                                     <span class="text-sm font-bold text-primary">2</span>
@@ -218,28 +172,21 @@
                                     <i class="fas fa-database mr-1"></i> Init
                                 </button>
                             </div>
-                            <!-- Arrow -->
                             <div class="hidden md:flex items-center justify-center pt-4">
                                 <i class="fas fa-arrow-right text-gray-300"></i>
                             </div>
-                            <!-- Step 3 -->
                             <div class="flex flex-col items-center text-center">
                                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
                                     <span class="text-sm font-bold text-primary">3</span>
                                 </div>
-                                <p class="text-xs font-medium text-gray-900 mb-1">Generate &amp; Enrich</p>
-                                <p class="text-xs text-gray-500 mb-2">AI creates &amp; enhances messages</p>
-                                <div class="flex items-center space-x-2">
-                                    <button id="generate-btn" onclick="runPipeline('/api/listing-agent/basic-run','generate-btn','Generate')" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
-                                        <i class="fas fa-pen mr-1"></i> Generate
-                                    </button>
-                                    <button id="enrich-btn" onclick="runPipeline('/api/listing-agent/run','enrich-btn','Enrich')" class="bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
-                                        <i class="fas fa-magic mr-1"></i> Enrich
-                                    </button>
-                                </div>
+                                <p class="text-xs font-medium text-gray-900 mb-1">Generate Messages</p>
+                                <p class="text-xs text-gray-500 mb-2">AI creates personalized SMS</p>
+                                <button id="generate-btn" onclick="runPipeline('/api/listing-agent/basic-run','generate-btn','Generate')" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:opacity-90 text-xs font-medium">
+                                    <i class="fas fa-magic mr-1"></i> Generate
+                                </button>
                             </div>
                         </div>
-                        <span id="pipeline-status" class="text-sm text-gray-600 mt-3 block hidden"></span>
+                        <div id="pipeline-status" class="text-sm text-gray-600 mt-3 hidden"></div>
                     </div>
                 </section>
 
@@ -253,288 +200,318 @@
                                     <span>Export</span>
                                 </button>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-gray-500">Showing 1-20 of 2,847</span>
-                                <div class="flex space-x-1">
-                                    <button class="p-1 hover:bg-gray-100 rounded">
-                                        <i class="fas fa-chevron-left text-gray-400"></i>
-                                    </button>
-                                    <button class="p-1 hover:bg-gray-100 rounded">
-                                        <i class="fas fa-chevron-right text-gray-400"></i>
-                                    </button>
-                                </div>
-                            </div>
+                            <span id="leads-count" class="text-sm text-gray-500"></span>
                         </div>
                     </div>
-                    
-                    <div class="overflow-x-auto">
+
+                    <!-- Loading State -->
+                    <div id="leads-loading" class="p-12 text-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-500">Loading leads...</p>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="leads-empty" class="hidden p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-2xl text-gray-400"></i>
+                        </div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Leads Yet</h4>
+                        <p class="text-gray-500">Use the Pipeline above to import and generate leads.</p>
+                    </div>
+
+                    <!-- Leads Table -->
+                    <div id="leads-table-container" class="hidden overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                        Name <i class="fas fa-sort ml-1"></i>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                        Phone <i class="fas fa-sort ml-1"></i>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                        Email <i class="fas fa-sort ml-1"></i>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                        Property Address <i class="fas fa-sort ml-1"></i>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                        Last Contact <i class="fas fa-sort ml-1"></i>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Tags
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property Address</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
-                                                <div class="text-sm text-gray-500">Property Owner</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 123-4567</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">sarah.j@email.com</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">123 Oak Street, Austin, TX</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Hot</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-eye"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-sms"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-calendar"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-ellipsis-h"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Mike Davis</div>
-                                                <div class="text-sm text-gray-500">Investor</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 234-5678</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mike.davis@email.com</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">456 Pine Ave, Dallas, TX</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 day ago</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Warm</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-eye"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-sms"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-calendar"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-ellipsis-h"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Emma Wilson</div>
-                                                <div class="text-sm text-gray-500">Homeowner</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 345-6789</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">emma.wilson@email.com</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">789 Elm Street, Houston, TX</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Cold</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-eye"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-sms"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-calendar"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-ellipsis-h"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Tom Brown</div>
-                                                <div class="text-sm text-gray-500">Property Owner</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 456-7890</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">tom.brown@email.com</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">321 Maple Dr, San Antonio, TX</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 days ago</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Expired Listing</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-eye"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-sms"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-calendar"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-ellipsis-h"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="checkbox" class="rounded border-gray-300">
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="Avatar" class="w-8 h-8 rounded-full mr-3">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Lisa Garcia</div>
-                                                <div class="text-sm text-gray-500">Investor</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">(555) 567-8901</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">lisa.garcia@email.com</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">654 Cedar Lane, Fort Worth, TX</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 week ago</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Hot</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-eye"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-sms"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-calendar"></i></button>
-                                            <button disabled class="text-gray-400 cursor-not-allowed"><i class="fas fa-ellipsis-h"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="leads-tbody" class="bg-white divide-y divide-gray-200">
                             </tbody>
                         </table>
-                    </div>
-                    
-                    <div class="px-6 py-4 border-t border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <select class="border border-gray-300 rounded px-3 py-1 text-sm">
-                                    <option>20 per page</option>
-                                    <option>50 per page</option>
-                                    <option>100 per page</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Previous</button>
-                                <button class="px-3 py-1 bg-primary text-white rounded text-sm">1</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">2</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">3</button>
-                                <span class="px-2 text-gray-500">...</span>
-                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">143</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Next</button>
-                            </div>
-                        </div>
                     </div>
                 </section>
             </main>
         </div>
     </div>
 
-    <div id="lead-details-drawer" class="fixed inset-y-0 right-0 w-96 bg-white shadow-xl border-l border-gray-200 transform translate-x-full transition-transform duration-300 z-50 hidden">
-        <div class="flex flex-col h-full">
+    <!-- Lead Detail Modal -->
+    <div id="modal-lead" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden">
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-900">Lead Details</h3>
-                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                    <i class="fas fa-times text-gray-500"></i>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6">
-                <div class="text-center mb-6">
-                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Avatar" class="w-20 h-20 rounded-full mx-auto mb-4">
-                    <h4 class="text-xl font-semibold text-gray-900">Sarah Johnson</h4>
-                    <p class="text-gray-500">Property Owner</p>
-                </div>
-                <!-- You can extend drawer content here -->
+            <div id="modal-content" class="p-6 overflow-y-auto max-h-[70vh]">
             </div>
         </div>
     </div>
-    <script>
-        const ioStatus = document.getElementById('io-status');
-        function showStatus(msg) {
-            ioStatus.textContent = msg;
-            ioStatus.classList.remove('hidden');
-            setTimeout(() => ioStatus.classList.add('hidden'), 4000);
-        }
 
-        document.getElementById('import-file').addEventListener('change', async function () {
-            const file = this.files[0];
-            if (!file) return;
-            this.value = '';
-            showStatus('Importing...');
-            try {
-                const fd = new FormData();
-                fd.append('file', file);
-                const res = await fetch('/api/leads/import', { method: 'POST', body: fd });
-                const data = await res.json();
-                showStatus(data.message || data.error || 'Done.');
-            } catch {
-                showStatus('Import failed.');
-            }
+    <!-- Status Toast -->
+    <div id="io-status" class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg hidden z-50"></div>
+
+    <script>
+        let allLeads = [];
+        let filteredLeads = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLeads();
+            setupEventListeners();
         });
 
-        const pipelineStatus = document.getElementById('pipeline-status');
-        function showPipelineStatus(msg) {
-            pipelineStatus.textContent = msg;
-            pipelineStatus.classList.remove('hidden');
-            setTimeout(() => pipelineStatus.classList.add('hidden'), 4000);
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', filterLeads);
+            document.getElementById('status-filter').addEventListener('change', filterLeads);
+
+            document.getElementById('import-file').addEventListener('change', async function() {
+                const file = this.files[0];
+                if (!file) return;
+                this.value = '';
+                showStatus('Importing...');
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const res = await fetch('/api/leads/import', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    showStatus(data.message || data.error || 'Done.');
+                    if (data.ok) {
+                        setTimeout(loadLeads, 500);
+                    }
+                } catch {
+                    showStatus('Import failed.');
+                }
+            });
         }
+
+        async function loadLeads() {
+            const loading = document.getElementById('leads-loading');
+            const empty = document.getElementById('leads-empty');
+            const table = document.getElementById('leads-table-container');
+
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            table.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/leads');
+                const data = await res.json();
+
+                loading.classList.add('hidden');
+
+                if (!data.ok || !data.leads || data.leads.length === 0) {
+                    empty.classList.remove('hidden');
+                    updateStats([], null);
+                    return;
+                }
+
+                allLeads = data.leads;
+                filteredLeads = [...allLeads];
+                updateStats(allLeads, data.source);
+                renderLeadsTable();
+                table.classList.remove('hidden');
+
+            } catch (err) {
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+                showStatus('Failed to load leads: ' + err.message);
+            }
+        }
+
+        function updateStats(leads, source) {
+            document.getElementById('stat-total').textContent = leads.length;
+            document.getElementById('stat-messages').textContent = leads.filter(l => l.sms_text).length;
+            document.getElementById('stat-phone').textContent = leads.filter(l => l.phone).length;
+            document.getElementById('stat-source').textContent = source || 'None';
+        }
+
+        function filterLeads() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const status = document.getElementById('status-filter').value;
+
+            filteredLeads = allLeads.filter(lead => {
+                const matchesSearch = !search ||
+                    (lead.owner_name || '').toLowerCase().includes(search) ||
+                    (lead.phone || '').toLowerCase().includes(search) ||
+                    (lead.email || '').toLowerCase().includes(search) ||
+                    (lead.property_address || '').toLowerCase().includes(search);
+
+                const matchesStatus = !status || lead.status === status;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            renderLeadsTable();
+        }
+
+        function renderLeadsTable() {
+            const tbody = document.getElementById('leads-tbody');
+            tbody.innerHTML = '';
+
+            filteredLeads.forEach((lead, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 cursor-pointer';
+                tr.onclick = () => showLeadDetail(lead);
+
+                const hasMessage = lead.sms_text ? true : false;
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                ${(lead.owner_name || 'U')[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${escapeHtml(lead.owner_name || 'Unknown')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${lead.phone ? 'text-gray-900' : 'text-red-500'}">${lead.phone || 'No phone'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${escapeHtml(lead.email || '-')}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">${escapeHtml(lead.property_address || '-')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(lead.status)}">${escapeHtml(lead.status || 'New')}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${hasMessage
+                            ? '<span class="inline-flex items-center text-green-600 text-xs"><i class="fas fa-check-circle mr-1"></i>Ready</span>'
+                            : '<span class="inline-flex items-center text-gray-400 text-xs"><i class="fas fa-minus-circle mr-1"></i>Pending</span>'}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('leads-count').textContent = `Showing ${filteredLeads.length} of ${allLeads.length} leads`;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'New': 'bg-blue-100 text-blue-800',
+                'Contacted': 'bg-yellow-100 text-yellow-800',
+                'Interested': 'bg-green-100 text-green-800',
+                'Not Interested': 'bg-red-100 text-red-800',
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function showLeadDetail(lead) {
+            const modal = document.getElementById('modal-lead');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                            ${(lead.owner_name || 'U')[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900">${escapeHtml(lead.owner_name || 'Unknown')}</h4>
+                            <p class="text-gray-500">${escapeHtml(lead.property_address || 'No address')}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase">Phone</label>
+                            <p class="text-sm text-gray-900">${escapeHtml(lead.phone || 'Not provided')}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase">Email</label>
+                            <p class="text-sm text-gray-900">${escapeHtml(lead.email || 'Not provided')}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase">Status</label>
+                            <p class="text-sm text-gray-900">${escapeHtml(lead.status || 'New')}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase">Contact Preference</label>
+                            <p class="text-sm text-gray-900">${escapeHtml(lead.contact_preference || 'SMS')}</p>
+                        </div>
+                    </div>
+
+                    ${lead.notes ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500 uppercase">Notes</label>
+                        <p class="text-sm text-gray-900 mt-1">${escapeHtml(lead.notes)}</p>
+                    </div>
+                    ` : ''}
+
+                    ${lead.sms_text ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500 uppercase">Generated SMS Message</label>
+                        <div class="mt-2 bg-green-50 border border-green-200 rounded-lg p-4">
+                            <p class="text-sm text-gray-900">${escapeHtml(lead.sms_text)}</p>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p class="text-sm text-yellow-800"><i class="fas fa-exclamation-triangle mr-2"></i>No message generated yet. Click "Generate" in the pipeline to create personalized messages.</p>
+                    </div>
+                    `}
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        ${lead.phone ? `
+                        <a href="/prototype/campaigns" target="_top" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Send Campaign
+                        </a>
+                        ` : ''}
+                        <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-lead');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        const pipelineStatus = document.getElementById('pipeline-status');
 
         async function runPipeline(url, btnId, label) {
             const btn = document.getElementById(btnId);
+            const originalHtml = btn.innerHTML;
             btn.disabled = true;
             btn.classList.add('opacity-60', 'cursor-not-allowed');
-            showPipelineStatus(label + ': Running...');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Running...';
+
+            pipelineStatus.className = 'text-sm mt-3 p-3 rounded-lg bg-blue-50 text-blue-700';
+            pipelineStatus.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + label + ': Processing...';
+            pipelineStatus.classList.remove('hidden');
+
             try {
                 const res = await fetch(url, { method: 'POST' });
                 const data = await res.json();
-                showPipelineStatus(label + ': ' + (data.message || data.error || 'Done.'));
-            } catch {
-                showPipelineStatus(label + ': Failed.');
+
+                if (data.ok) {
+                    pipelineStatus.className = 'text-sm mt-3 p-3 rounded-lg bg-green-50 text-green-700';
+                    pipelineStatus.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + label + ': ' + (data.message || 'Completed successfully!');
+                    setTimeout(loadLeads, 500);
+                } else {
+                    pipelineStatus.className = 'text-sm mt-3 p-3 rounded-lg bg-red-50 text-red-700';
+                    pipelineStatus.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + label + ': ' + (data.error || 'Failed.');
+                }
+            } catch (err) {
+                pipelineStatus.className = 'text-sm mt-3 p-3 rounded-lg bg-red-50 text-red-700';
+                pipelineStatus.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + label + ': Failed - ' + err.message;
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                btn.innerHTML = originalHtml;
+                setTimeout(() => pipelineStatus.classList.add('hidden'), 5000);
             }
         }
 
@@ -550,7 +527,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'leads_state.json';
+                a.download = 'leads_export.json';
                 a.click();
                 URL.revokeObjectURL(url);
                 showStatus('Exported.');
@@ -558,12 +535,25 @@
                 showStatus('Export failed.');
             }
         }
+
+        function showStatus(msg) {
+            const ioStatus = document.getElementById('io-status');
+            ioStatus.textContent = msg;
+            ioStatus.classList.remove('hidden');
+            setTimeout(() => ioStatus.classList.add('hidden'), 4000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('modal-lead').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
     </script>
 </body>
 </html>
-
-
-
-
-
-

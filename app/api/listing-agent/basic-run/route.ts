@@ -53,9 +53,12 @@ export async function POST() {
     });
   }
 
-  let result = runPython('python');
+  let result = runPython('python3');
   if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = runPython('py');
+    result = runPython('python');
+    if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+      result = runPython('py');
+    }
   }
 
   const stdout = (result.stdout || '').toString().trim();
@@ -72,9 +75,17 @@ export async function POST() {
     );
   }
 
+  // Count leads in output file
+  let leadCount = 0;
+  const outputPath = path.join(pythonDir, outputCsv);
+  if (fs.existsSync(outputPath)) {
+    const content = fs.readFileSync(outputPath, 'utf-8');
+    leadCount = content.split('\n').filter(line => line.trim()).length - 1; // minus header
+  }
+
   return NextResponse.json({
     ok: true,
-    message: 'Listing agent (basic) completed.',
-    data: { stdout, stderr },
+    message: `Generated personalized messages for ${leadCount} leads.`,
+    data: { stdout, stderr, leadCount },
   });
 }

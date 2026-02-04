@@ -28,9 +28,12 @@ export async function POST() {
     );
   }
 
-  let result = runPython('python');
+  let result = runPython('python3');
   if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = runPython('py');
+    result = runPython('python');
+    if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+      result = runPython('py');
+    }
   }
 
   const stdout = (result.stdout || '').toString().trim();
@@ -47,9 +50,14 @@ export async function POST() {
     );
   }
 
+  // Count leads in template file
+  let leadCount = 0;
+  const content = fs.readFileSync(templatePath, 'utf-8');
+  leadCount = content.split('\n').filter(line => line.trim()).length - 1; // minus header
+
   return NextResponse.json({
     ok: true,
-    message: 'Leads state initialized.',
-    data: { stdout, stderr },
+    message: `Initialized ${leadCount} leads. Ready for message generation.`,
+    data: { stdout, stderr, leadCount },
   });
 }
