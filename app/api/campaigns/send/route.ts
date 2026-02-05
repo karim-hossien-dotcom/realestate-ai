@@ -5,8 +5,9 @@ import path from 'path';
 
 const toolsDir = process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const sentLogPath = path.join(toolsDir, 'sent_campaigns.csv');
+const activityLogsPath = path.join(toolsDir, 'activity_logs.json');
 
-function logSentMessage(lead: LeadInput, success: boolean) {
+function logSentMessage(lead: LeadInput, success: boolean, error?: string) {
   const timestamp = new Date().toISOString();
   const row = [
     timestamp,
@@ -21,6 +22,44 @@ function logSentMessage(lead: LeadInput, success: boolean) {
     fs.writeFileSync(sentLogPath, 'timestamp,phone,owner_name,message,status\n');
   }
   fs.appendFileSync(sentLogPath, row + '\n');
+
+  // Also log to activity_logs.json for the Logs page
+  logToActivityLogs(lead, success, error);
+}
+
+function logToActivityLogs(lead: LeadInput, success: boolean, error?: string) {
+  let data: { logs: unknown[]; stats: { totalEvents: number; errorsToday: number; successRate: number; avgResponseTime: number } };
+  try {
+    if (fs.existsSync(activityLogsPath)) {
+      data = JSON.parse(fs.readFileSync(activityLogsPath, 'utf-8'));
+    } else {
+      data = { logs: [], stats: { totalEvents: 0, errorsToday: 0, successRate: 100, avgResponseTime: 1.2 } };
+    }
+  } catch {
+    data = { logs: [], stats: { totalEvents: 0, errorsToday: 0, successRate: 100, avgResponseTime: 1.2 } };
+  }
+
+  const logEntry = {
+    id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: new Date().toISOString(),
+    eventType: 'campaign_send',
+    description: success
+      ? `WhatsApp message sent to ${lead.owner_name || lead.phone}`
+      : `Failed to send WhatsApp message to ${lead.owner_name || lead.phone}${error ? ': ' + error : ''}`,
+    user: 'System',
+    status: success ? 'sent' : 'failed',
+    metadata: {
+      phone: lead.phone || '',
+      leadName: lead.owner_name || '',
+      message: (lead.sms_text || '').substring(0, 100),
+      ...(error ? { errorMessage: error } : {}),
+    },
+  };
+
+  data.logs.unshift(logEntry);
+  data.stats.totalEvents = data.logs.length;
+
+  fs.writeFileSync(activityLogsPath, JSON.stringify(data, null, 2));
 }
 
 type LeadInput = {
@@ -96,7 +135,7 @@ export async function POST(request: Request) {
       results.push({ phone, ok: true });
       sent++;
     } else {
-      logSentMessage(lead, false);
+      logSentMessage(lead, false, result.error);
       results.push({ phone, ok: false, error: result.error });
       failed++;
     }

@@ -30,7 +30,7 @@ export async function sendWhatsAppTemplate(
   }
 
   const templateName = params.templateName || defaultTemplateName || '';
-  const languageCode = params.languageCode || 'en_US';
+  const languageCode = params.languageCode || 'en';
   const bodyParams = Array.isArray(params.bodyParams) ? params.bodyParams : [];
 
   const template: {
@@ -51,15 +51,20 @@ export async function sendWhatsAppTemplate(
     ];
   }
 
+  // WhatsApp API expects phone numbers without '+' prefix
+  const toNumber = params.to.replace(/^\+/, '');
+
   const payload = {
     messaging_product: 'whatsapp',
-    to: params.to,
+    to: toNumber,
     type: 'template',
     template,
   };
 
+  console.log('[WhatsApp] Sending payload:', JSON.stringify(payload, null, 2));
+
   const response = await fetch(
-    `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+    `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
     {
       method: 'POST',
       headers: {
@@ -71,6 +76,7 @@ export async function sendWhatsAppTemplate(
   );
 
   const responseJson = await response.json().catch(() => ({}));
+  console.log('[WhatsApp] Response status:', response.status, 'Body:', JSON.stringify(responseJson));
 
   if (!response.ok) {
     return {
