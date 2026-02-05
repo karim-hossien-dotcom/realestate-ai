@@ -1,0 +1,66 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+type CookieToSet = { name: string; value: string; options: CookieOptions }
+
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // Do not run code between createServerClient and supabase.auth.getUser()
+  // A simple mistake could make it very hard to debug issues with users being
+  // randomly logged out.
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Define protected and auth routes
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/prototype') ||
+                           request.nextUrl.pathname.startsWith('/api/')
+  const isAuthRoute = request.nextUrl.pathname === '/'
+  const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook'
+
+  // Allow public API routes without auth
+  if (isPublicApiRoute) {
+    return supabaseResponse
+  }
+
+  // Redirect unauthenticated users from protected routes to login
+  if (!user && isProtectedRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect authenticated users from auth page to prototype
+  if (user && isAuthRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/prototype'
+    return NextResponse.redirect(url)
+  }
+
+  return supabaseResponse
+}

@@ -1,63 +1,38 @@
-import { NextResponse } from 'next/server';
-import { spawnSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { NextResponse } from 'next/server'
+import { createClient } from '@/app/lib/supabase/server'
+import { withAuth } from '@/app/lib/auth'
 
-const pythonDir =
-  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
-const scriptName = 'init_leads_state.py';
-
-function runPython(command: string) {
-  return spawnSync(command, [scriptName], {
-    cwd: pythonDir,
-    encoding: 'utf-8',
-    timeout: 30000,
-  });
-}
-
+// This route is now mostly deprecated since leads are imported directly
+// but we keep it for backwards compatibility
 export async function POST() {
-  const templatePath = path.join(pythonDir, 'leads_template.csv');
-  if (!fs.existsSync(templatePath)) {
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
+
+  const supabase = await createClient()
+
+  // Count existing leads
+  const { count, error } = await supabase
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+
+  if (error) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: 'Missing leads_template.csv. Add your leads CSV to the tools/ directory.',
-        data: null,
-      },
-      { status: 400 }
-    );
-  }
-
-  let result = runPython('python3');
-  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = runPython('python');
-    if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-      result = runPython('py');
-    }
-  }
-
-  const stdout = (result.stdout || '').toString().trim();
-  const stderr = (result.stderr || '').toString().trim();
-
-  if (result.error || result.status !== 0) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: result.error?.message || stderr || 'Init leads failed.',
-        data: { stdout, stderr },
-      },
+      { ok: false, error: error.message },
       { status: 500 }
-    );
+    )
   }
 
-  // Count leads in template file
-  let leadCount = 0;
-  const content = fs.readFileSync(templatePath, 'utf-8');
-  leadCount = content.split('\n').filter(line => line.trim()).length - 1; // minus header
+  if (count === 0) {
+    return NextResponse.json({
+      ok: true,
+      message: 'No leads found. Import a CSV file from the Leads page.',
+      data: { leadCount: 0 },
+    })
+  }
 
   return NextResponse.json({
     ok: true,
-    message: `Initialized ${leadCount} leads. Ready for message generation.`,
-    data: { stdout, stderr, leadCount },
-  });
+    message: `${count} leads ready. You can now generate messages.`,
+    data: { leadCount: count },
+  })
 }

@@ -2,13 +2,28 @@ import os
 import csv
 import json
 from datetime import datetime, timezone
-from typing import Iterable
+from typing import Iterable, Optional
 
 import fcntl
 import requests
 from flask import Flask, request, Response, jsonify
 
 from tools.ai_inbound_agent import generate_reply, is_stop_message
+
+# Import Supabase DB functions (optional - falls back to CSV if not configured)
+try:
+    from tools.db import (
+        log_inbound_message,
+        log_outbound_message,
+        add_to_dnc_list,
+        log_activity,
+        find_lead_by_phone,
+        update_lead_last_response,
+        get_default_user_id,
+    )
+    SUPABASE_AVAILABLE = True
+except ImportError:
+    SUPABASE_AVAILABLE = False
 
 
 app = Flask(__name__)
@@ -73,7 +88,7 @@ def _send_whatsapp_message(to_number: str, body: str) -> dict:
     if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
         return {"ok": True, "demo": True}
 
-    url = f"https://graph.facebook.com/v20.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+    url = f"https://graph.facebook.com/v21.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
     payload = {
         "messaging_product": "whatsapp",
         "to": to_number,
@@ -86,6 +101,53 @@ def _send_whatsapp_message(to_number: str, body: str) -> dict:
     }
     resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
     return {"ok": resp.ok, "status": resp.status_code, "body": resp.text}
+
+
+def _get_user_id() -> Optional[str]:
+    """Get the user ID to associate with messages"""
+    if SUPABASE_AVAILABLE:
+        return get_default_user_id()
+    return None
+
+
+def _log_to_supabase(
+    user_id: Optional[str],
+    wa_id: str,
+    body: str,
+    msg_id: str,
+    direction: str = "inbound",
+    reply_text: Optional[str] = None,
+    send_status: Optional[str] = None,
+) -> None:
+    """Log message to Supabase if available"""
+    if not SUPABASE_AVAILABLE or not user_id:
+        return
+
+    # Find associated lead
+    lead = find_lead_by_phone(user_id, wa_id)
+    lead_id = lead["id"] if lead else None
+
+    if direction == "inbound":
+        log_inbound_message(
+            user_id=user_id,
+            from_number=wa_id,
+            body=body,
+            external_id=msg_id,
+            lead_id=lead_id,
+        )
+
+        # Update lead's last_response timestamp
+        if lead_id:
+            update_lead_last_response(lead_id)
+
+    elif direction == "outbound" and reply_text:
+        log_outbound_message(
+            user_id=user_id,
+            to_number=wa_id,
+            body=reply_text,
+            status=send_status or "sent",
+            lead_id=lead_id,
+        )
 
 
 @app.route("/health", methods=["GET"])
@@ -111,12 +173,15 @@ def webhook_inbound():
     messages = _extract_messages(payload)
 
     now = datetime.now(timezone.utc).isoformat()
+    user_id = _get_user_id()
+
     for msg in messages:
         wa_id = msg["wa_id"]
         body = msg["body"]
         msg_id = msg["message_id"]
         ts = msg["timestamp"]
 
+        # Log to CSV (always, for backup)
         _write_csv_row(
             INBOUND_LOG,
             ["timestamp_utc", "wa_id", "message_id", "message_ts", "body"],
@@ -129,6 +194,10 @@ def webhook_inbound():
             },
         )
 
+        # Log to Supabase
+        _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
+
+        # Handle STOP messages
         if is_stop_message(body):
             _write_csv_row(
                 STOPPED_LOG,
@@ -141,6 +210,18 @@ def webhook_inbound():
                     "body": body,
                 },
             )
+
+            # Add to DNC list in Supabase
+            if SUPABASE_AVAILABLE and user_id:
+                add_to_dnc_list(user_id, wa_id, "STOP keyword via webhook")
+                log_activity(
+                    user_id,
+                    "opt_out",
+                    f"User {wa_id} opted out via STOP keyword",
+                    "success",
+                    {"phone": wa_id, "message": body},
+                )
+
             _send_whatsapp_message(
                 wa_id,
                 "You're unsubscribed. You won't receive any further messages. "
@@ -148,9 +229,11 @@ def webhook_inbound():
             )
             continue
 
+        # Generate AI reply
         reply_text = generate_reply(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
         send_result = _send_whatsapp_message(wa_id, reply_text)
 
+        # Log outbound to CSV
         _write_csv_row(
             OUTBOUND_LOG,
             ["timestamp_utc", "wa_id", "message_id", "reply", "send_status", "send_body"],
@@ -163,6 +246,13 @@ def webhook_inbound():
                 or ("demo" if send_result.get("demo") else ""),
                 "send_body": send_result.get("body") or "",
             },
+        )
+
+        # Log outbound to Supabase
+        send_status = "sent" if send_result.get("ok") else "failed"
+        _log_to_supabase(
+            user_id, wa_id, body, msg_id, "outbound",
+            reply_text=reply_text, send_status=send_status
         )
 
     return jsonify({"ok": True})

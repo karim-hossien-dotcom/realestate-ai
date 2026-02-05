@@ -1,4 +1,5 @@
 services:
+  # Node.js Next.js app
   - type: web
     name: realestate-ai
     runtime: node
@@ -8,8 +9,17 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Supabase
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # OpenAI
       - key: OPENAI_API_KEY
         sync: false
+      # WhatsApp
       - key: WHATSAPP_ACCESS_TOKEN
         sync: false
       - key: WHATSAPP_PHONE_NUMBER_ID
@@ -18,3 +28,32 @@ services:
         sync: false
       - key: WHATSAPP_TEMPLATE_NAME
         value: realestate_outreach
+      # Agent config
+      - key: LISTING_AGENT_NAME
+        value: Nadine Khalil
+      - key: LISTING_AGENT_BROKERAGE
+        value: KW Commercial
+
+  # Python webhook service
+  - type: web
+    name: realestate-ai-webhook
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn tools.webhook_app:app --bind 0.0.0.0:$PORT
+    envVars:
+      # Supabase
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # WhatsApp
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      # OpenAI
+      - key: OPENAI_API_KEY
+        sync: false

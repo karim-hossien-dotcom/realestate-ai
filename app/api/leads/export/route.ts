@@ -1,25 +1,35 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const toolsDir =
-  process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
+import { NextResponse } from 'next/server'
+import { createClient } from '@/app/lib/supabase/server'
+import { withAuth } from '@/app/lib/auth'
 
 export async function GET() {
-  const statePath = path.join(toolsDir, 'leads_state.json');
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
 
-  if (!fs.existsSync(statePath)) {
+  const supabase = await createClient()
+
+  const { data: leads, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
     return NextResponse.json(
-      { ok: false, error: 'No leads state found. Run Init first.' },
-      { status: 404 }
-    );
+      { ok: false, error: error.message },
+      { status: 500 }
+    )
   }
 
-  const content = fs.readFileSync(statePath, 'utf-8');
-  return new NextResponse(content, {
+  const exportData = {
+    exported_at: new Date().toISOString(),
+    total_leads: leads?.length || 0,
+    leads: leads || [],
+  }
+
+  return new NextResponse(JSON.stringify(exportData, null, 2), {
     headers: {
       'Content-Type': 'application/json',
-      'Content-Disposition': 'attachment; filename="leads_state.json"',
+      'Content-Disposition': `attachment; filename="leads_export_${new Date().toISOString().slice(0, 10)}.json"`,
     },
-  });
+  })
 }

@@ -1,11 +1,91 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/app/lib/supabase/client';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [showSigninPassword, setShowSigninPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    startTransition(async () => {
+      try {
+        console.log('[Auth] Attempting sign in for:', email);
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        console.log('[Auth] Sign in result:', { data, error });
+
+        if (error) {
+          console.error('[Auth] Sign in error:', error);
+          setError(error.message);
+        } else {
+          console.log('[Auth] Sign in successful, redirecting...');
+          router.push('/prototype');
+          router.refresh();
+        }
+      } catch (err) {
+        console.error('[Auth] Unexpected error:', err);
+        setError('An unexpected error occurred. Check the console for details.');
+      }
+    });
+  }
+
+  async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const company = formData.get('company') as string;
+
+    startTransition(async () => {
+      try {
+        console.log('[Auth] Attempting sign up for:', email);
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: `${firstName} ${lastName}`.trim(),
+              company,
+            },
+          },
+        });
+        console.log('[Auth] Sign up result:', { data, error });
+
+        if (error) {
+          console.error('[Auth] Sign up error:', error);
+          setError(error.message);
+        } else if (data.user && !data.session) {
+          // Email confirmation required
+          setError('Check your email to confirm your account before signing in.');
+        } else {
+          console.log('[Auth] Sign up successful, redirecting...');
+          router.push('/prototype');
+          router.refresh();
+        }
+      } catch (err) {
+        console.error('[Auth] Unexpected error:', err);
+        setError('An unexpected error occurred. Check the console for details.');
+      }
+    });
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen flex">
@@ -117,6 +197,13 @@ export default function AuthPage() {
             </Link>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Tabs */}
           <div id="auth-tabs" className="flex border-b border-gray-200 mb-8">
             <button
@@ -126,7 +213,7 @@ export default function AuthPage() {
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('signin')}
+              onClick={() => { setActiveTab('signin'); setError(null); }}
             >
               Sign In
             </button>
@@ -137,7 +224,7 @@ export default function AuthPage() {
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('signup')}
+              onClick={() => { setActiveTab('signup'); setError(null); }}
             >
               Sign Up
             </button>
@@ -151,7 +238,7 @@ export default function AuthPage() {
                 <p className="text-gray-600">Sign in to your account to continue</p>
               </div>
 
-              <form className="space-y-6" method="post" action="/signin">
+              <form className="space-y-6" onSubmit={handleSignIn}>
                 <div>
                   <label
                     htmlFor="signin-email"
@@ -165,9 +252,11 @@ export default function AuthPage() {
                     </div>
                     <input
                       id="signin-email"
+                      name="email"
                       type="email"
                       required
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      disabled={isPending}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="Enter your email"
                     />
                   </div>
@@ -186,9 +275,11 @@ export default function AuthPage() {
                     </div>
                     <input
                       id="signin-password"
+                      name="password"
                       type={showSigninPassword ? 'text' : 'password'}
                       required
-                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      disabled={isPending}
+                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="Enter your password"
                     />
                     <button
@@ -226,9 +317,10 @@ export default function AuthPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  disabled={isPending}
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {isPending ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 
@@ -266,7 +358,7 @@ export default function AuthPage() {
                 <p className="text-gray-600">Start your 14-day free trial today</p>
               </div>
 
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSignUp}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label
@@ -277,9 +369,11 @@ export default function AuthPage() {
                     </label>
                     <input
                       id="first-name"
+                      name="firstName"
                       type="text"
                       required
-                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      disabled={isPending}
+                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="John"
                     />
                   </div>
@@ -292,9 +386,11 @@ export default function AuthPage() {
                     </label>
                     <input
                       id="last-name"
+                      name="lastName"
                       type="text"
                       required
-                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      disabled={isPending}
+                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="Smith"
                     />
                   </div>
@@ -313,9 +409,11 @@ export default function AuthPage() {
                     </div>
                     <input
                       id="signup-email"
+                      name="email"
                       type="email"
                       required
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      disabled={isPending}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -330,8 +428,10 @@ export default function AuthPage() {
                   </label>
                   <input
                     id="company"
+                    name="company"
                     type="text"
-                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                    disabled={isPending}
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                     placeholder="Real Estate Company"
                   />
                 </div>
@@ -349,9 +449,12 @@ export default function AuthPage() {
                     </div>
                     <input
                       id="signup-password"
+                      name="password"
                       type="password"
                       required
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                      minLength={8}
+                      disabled={isPending}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary disabled:bg-gray-100 text-gray-900 bg-white"
                       placeholder="Create a password"
                     />
                   </div>
@@ -384,9 +487,10 @@ export default function AuthPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  disabled={isPending}
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Create Account
+                  {isPending ? 'Creating account...' : 'Create Account'}
                 </button>
               </form>
 

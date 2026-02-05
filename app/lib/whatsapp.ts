@@ -10,6 +10,7 @@ type WhatsAppSendResult = {
   status: number;
   data: { response?: unknown } | null;
   error?: string;
+  messageId?: string;
 };
 
 export async function sendWhatsAppTemplate(
@@ -87,9 +88,13 @@ export async function sendWhatsAppTemplate(
     };
   }
 
+  // Extract message ID from response
+  const messageId = responseJson?.messages?.[0]?.id;
+
   return {
     ok: true,
     status: response.status,
     data: { response: responseJson },
+    messageId,
   };
 }

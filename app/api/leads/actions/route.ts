@@ -1,121 +1,217 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const dataFile = path.join(process.cwd(), 'tools', 'leads_data.json');
-
-type LeadData = {
-  phone: string;
-  meetings?: Array<{ date: string; time: string; note?: string; createdAt: string }>;
-  followUps?: Array<{ dueDate: string; note?: string; createdAt: string }>;
-  tags?: string[];
-  notes?: string;
-};
-
-type LeadsStore = Record<string, LeadData>;
-
-function loadData(): LeadsStore {
-  if (!fs.existsSync(dataFile)) {
-    return {};
-  }
-  try {
-    return JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
-  } catch {
-    return {};
-  }
-}
-
-function saveData(data: LeadsStore) {
-  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
-}
+import { NextResponse } from 'next/server'
+import { createClient } from '@/app/lib/supabase/server'
+import { withAuth, logActivity } from '@/app/lib/auth'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const phone = searchParams.get('phone');
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
 
-  const data = loadData();
+  const { searchParams } = new URL(request.url)
+  const leadId = searchParams.get('leadId')
 
-  if (phone) {
-    return NextResponse.json({ ok: true, data: data[phone] || null });
+  const supabase = await createClient()
+
+  if (leadId) {
+    // Get single lead with follow-ups
+    const { data: lead, error } = await supabase
+      .from('leads')
+      .select(`
+        *,
+        follow_ups (*)
+      `)
+      .eq('id', leadId)
+      .single()
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, data: lead })
   }
 
-  return NextResponse.json({ ok: true, data });
+  // Get all leads
+  const { data: leads, error } = await supabase
+    .from('leads')
+    .select('id, owner_name, phone, tags, notes')
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, data: leads })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
 
-  if (!body || !body.phone || !body.action) {
+  const body = await request.json().catch(() => null)
+
+  if (!body || !body.leadId || !body.action) {
     return NextResponse.json(
-      { ok: false, error: 'Missing phone or action' },
+      { ok: false, error: 'Missing leadId or action' },
       { status: 400 }
-    );
+    )
   }
 
-  const { phone, action } = body;
-  const data = loadData();
-
-  if (!data[phone]) {
-    data[phone] = { phone };
-  }
-
-  const lead = data[phone];
-  const now = new Date().toISOString();
+  const { leadId, action } = body
+  const supabase = await createClient()
 
   switch (action) {
     case 'schedule_meeting': {
-      const { date, time, note } = body;
+      const { date, time, note } = body
       if (!date || !time) {
         return NextResponse.json(
           { ok: false, error: 'Missing date or time' },
           { status: 400 }
-        );
+        )
       }
-      if (!lead.meetings) lead.meetings = [];
-      lead.meetings.push({ date, time, note, createdAt: now });
-      break;
+
+      // Create a follow-up for the meeting
+      const scheduledAt = new Date(`${date}T${time}:00`)
+      const { error } = await supabase.from('follow_ups').insert({
+        user_id: auth.user.id,
+        lead_id: leadId,
+        message_text: note || 'Scheduled meeting',
+        scheduled_at: scheduledAt.toISOString(),
+        status: 'pending',
+      })
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      await logActivity(
+        auth.user.id,
+        'appointment',
+        `Meeting scheduled for ${date} at ${time}`,
+        'success',
+        { leadId, date, time }
+      )
+
+      return NextResponse.json({ ok: true, message: 'Meeting scheduled' })
     }
 
     case 'add_followup': {
-      const { dueDate, note } = body;
+      const { dueDate, note } = body
       if (!dueDate) {
         return NextResponse.json(
           { ok: false, error: 'Missing dueDate' },
           { status: 400 }
-        );
+        )
       }
-      if (!lead.followUps) lead.followUps = [];
-      lead.followUps.push({ dueDate, note, createdAt: now });
-      break;
+
+      const { error } = await supabase.from('follow_ups').insert({
+        user_id: auth.user.id,
+        lead_id: leadId,
+        message_text: note || 'Follow up with lead',
+        scheduled_at: new Date(dueDate).toISOString(),
+        status: 'pending',
+      })
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ ok: true, message: 'Follow-up added' })
     }
 
     case 'update_tags': {
-      const { tags } = body;
+      const { tags } = body
       if (!Array.isArray(tags)) {
         return NextResponse.json(
           { ok: false, error: 'Tags must be an array' },
           { status: 400 }
-        );
+        )
       }
-      lead.tags = tags;
-      break;
+
+      const { error } = await supabase
+        .from('leads')
+        .update({ tags })
+        .eq('id', leadId)
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ ok: true, message: 'Tags updated' })
     }
 
     case 'save_notes': {
-      const { notes } = body;
-      lead.notes = notes || '';
-      break;
+      const { notes } = body
+
+      const { error } = await supabase
+        .from('leads')
+        .update({ notes: notes || '' })
+        .eq('id', leadId)
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ ok: true, message: 'Notes saved' })
+    }
+
+    case 'update_status': {
+      const { status } = body
+
+      const { error } = await supabase
+        .from('leads')
+        .update({ status })
+        .eq('id', leadId)
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ ok: true, message: 'Status updated' })
+    }
+
+    case 'add_to_dnc': {
+      // Get lead phone
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('phone')
+        .eq('id', leadId)
+        .single()
+
+      if (!lead?.phone) {
+        return NextResponse.json({ ok: false, error: 'Lead has no phone' }, { status: 400 })
+      }
+
+      // Add to DNC list
+      const { error } = await supabase.from('dnc_list').insert({
+        user_id: auth.user.id,
+        phone: lead.phone,
+        reason: body.reason || 'User requested',
+        source: 'manual',
+      })
+
+      if (error && !error.message.includes('duplicate')) {
+        return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      }
+
+      // Update lead status
+      await supabase
+        .from('leads')
+        .update({ status: 'do_not_contact' })
+        .eq('id', leadId)
+
+      await logActivity(
+        auth.user.id,
+        'opt_out',
+        `Lead added to DNC list`,
+        'success',
+        { leadId, phone: lead.phone }
+      )
+
+      return NextResponse.json({ ok: true, message: 'Added to DNC list' })
     }
 
     default:
       return NextResponse.json(
         { ok: false, error: `Unknown action: ${action}` },
         { status: 400 }
-      );
+      )
   }
-
-  data[phone] = lead;
-  saveData(data);
-
-  return NextResponse.json({ ok: true, data: lead });
 }

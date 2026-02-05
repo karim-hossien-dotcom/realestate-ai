@@ -1,64 +1,126 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { parse } from 'csv-parse/sync';
-
-const toolsDir = process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
-
-type Lead = {
-  property_address: string;
-  owner_name: string;
-  phone: string;
-  email: string;
-  contact_preference?: string;
-  last_contacted?: string;
-  status?: string;
-  notes?: string;
-  sms_text?: string;
-};
+import { NextResponse } from 'next/server'
+import { createClient } from '@/app/lib/supabase/server'
+import { withAuth } from '@/app/lib/auth'
 
 export async function GET() {
-  // Try output.csv first (has generated messages), then leads_template.csv
-  const outputPath = path.join(toolsDir, 'output.csv');
-  const templatePath = path.join(toolsDir, 'leads_template.csv');
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
 
-  let csvPath = '';
-  let source = '';
+  const supabase = await createClient()
 
-  if (fs.existsSync(outputPath)) {
-    csvPath = outputPath;
-    source = 'output.csv';
-  } else if (fs.existsSync(templatePath)) {
-    csvPath = templatePath;
-    source = 'leads_template.csv';
-  } else {
-    return NextResponse.json({
-      ok: true,
-      leads: [],
-      source: null,
-      message: 'No leads file found. Import a CSV first.',
-    });
-  }
+  const { data: leads, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-  try {
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const records = parse(csvContent, {
-      columns: true,
-      skip_empty_lines: true,
-      trim: true,
-    }) as Lead[];
-
-    return NextResponse.json({
-      ok: true,
-      leads: records,
-      source,
-      total: records.length,
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to parse CSV';
+  if (error) {
     return NextResponse.json(
-      { ok: false, error: message, leads: [] },
+      { ok: false, error: error.message, leads: [] },
       { status: 500 }
-    );
+    )
   }
+
+  return NextResponse.json({
+    ok: true,
+    leads: leads || [],
+    total: leads?.length || 0,
+    source: 'supabase',
+  })
+}
+
+export async function POST(request: Request) {
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
+
+  const body = await request.json().catch(() => ({}))
+  const supabase = await createClient()
+
+  const { data: lead, error } = await supabase
+    .from('leads')
+    .insert({
+      user_id: auth.user.id,
+      property_address: body.property_address,
+      owner_name: body.owner_name,
+      phone: body.phone,
+      email: body.email,
+      contact_preference: body.contact_preference || 'sms',
+      status: body.status || 'new',
+      notes: body.notes,
+      tags: body.tags || [],
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({ ok: true, lead })
+}
+
+export async function PATCH(request: Request) {
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
+
+  const body = await request.json().catch(() => ({}))
+  const { id, ...updates } = body
+
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, error: 'Lead ID is required' },
+      { status: 400 }
+    )
+  }
+
+  const supabase = await createClient()
+
+  const { data: lead, error } = await supabase
+    .from('leads')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({ ok: true, lead })
+}
+
+export async function DELETE(request: Request) {
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
+
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, error: 'Lead ID is required' },
+      { status: 400 }
+    )
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({ ok: true })
 }
