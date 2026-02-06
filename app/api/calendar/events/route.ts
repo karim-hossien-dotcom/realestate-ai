@@ -1,94 +1,97 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, logActivity } from '@/app/lib/auth';
+import { createClient } from '@/app/lib/supabase/server';
+import { listEvents, createAppointment, deleteAppointment, refreshAccessToken } from '@/app/lib/google-calendar';
 
-const leadsDataFile = path.join(process.cwd(), 'tools', 'leads_data.json');
+// GET - List upcoming events
+export async function GET() {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
 
-type Meeting = {
-  date: string;
-  time: string;
-  note?: string;
-  createdAt: string;
-};
+  const supabase = await createClient();
 
-type FollowUp = {
-  dueDate: string;
-  note?: string;
-  createdAt: string;
-};
+  const { data: tokenData, error: tokenError } = await supabase
+    .from('google_tokens')
+    .select('*')
+    .eq('user_id', auth.user.id)
+    .single();
 
-type LeadData = {
-  phone: string;
-  meetings?: Meeting[];
-  followUps?: FollowUp[];
-  tags?: string[];
-  notes?: string;
-};
-
-type LeadsStore = Record<string, LeadData>;
-
-type CalendarEvent = {
-  id: string;
-  type: 'meeting' | 'followup';
-  date: string;
-  time?: string;
-  title: string;
-  phone: string;
-  note?: string;
-};
-
-function loadLeadsData(): LeadsStore {
-  if (!fs.existsSync(leadsDataFile)) {
-    return {};
+  if (tokenError || !tokenData) {
+    return NextResponse.json({ ok: false, connected: false, error: 'Google Calendar not connected' });
   }
+
   try {
-    return JSON.parse(fs.readFileSync(leadsDataFile, 'utf-8'));
-  } catch {
-    return {};
+    let accessToken = tokenData.access_token;
+    if (tokenData.expiry_date && Date.now() > tokenData.expiry_date) {
+      const newTokens = await refreshAccessToken(tokenData.refresh_token);
+      accessToken = newTokens.access_token || accessToken;
+      await supabase.from('google_tokens').update({
+        access_token: newTokens.access_token,
+        expiry_date: newTokens.expiry_date,
+        updated_at: new Date().toISOString(),
+      }).eq('user_id', auth.user.id);
+    }
+
+    const events = await listEvents(accessToken, tokenData.refresh_token, 20);
+    return NextResponse.json({ ok: true, connected: true, events });
+  } catch (err) {
+    console.error('[Calendar Events] Error:', err);
+    return NextResponse.json({ ok: false, connected: true, error: err instanceof Error ? err.message : 'Failed to fetch events' });
   }
 }
 
-export async function GET() {
-  const leadsData = loadLeadsData();
-  const events: CalendarEvent[] = [];
+// POST - Create new appointment
+export async function POST(request: NextRequest) {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
 
-  for (const [phone, lead] of Object.entries(leadsData)) {
-    // Add meetings
-    if (lead.meetings) {
-      lead.meetings.forEach((meeting, idx) => {
-        events.push({
-          id: `meeting-${phone}-${idx}`,
-          type: 'meeting',
-          date: meeting.date,
-          time: meeting.time,
-          title: `Meeting: ${phone}`,
-          phone,
-          note: meeting.note,
-        });
-      });
-    }
+  const body = await request.json();
+  const { summary, description, startTime, endTime, attendeeEmail, location, leadId } = body;
 
-    // Add follow-ups
-    if (lead.followUps) {
-      lead.followUps.forEach((followUp, idx) => {
-        events.push({
-          id: `followup-${phone}-${idx}`,
-          type: 'followup',
-          date: followUp.dueDate,
-          title: `Follow-up: ${phone}`,
-          phone,
-          note: followUp.note,
-        });
-      });
-    }
+  if (!summary || !startTime || !endTime) {
+    return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
   }
 
-  // Sort by date
-  events.sort((a, b) => {
-    const dateA = new Date(a.date + (a.time ? `T${a.time}` : ''));
-    const dateB = new Date(b.date + (b.time ? `T${b.time}` : ''));
-    return dateA.getTime() - dateB.getTime();
-  });
+  const supabase = await createClient();
+  const { data: tokenData } = await supabase.from('google_tokens').select('*').eq('user_id', auth.user.id).single();
 
-  return NextResponse.json({ ok: true, events });
+  if (!tokenData) {
+    return NextResponse.json({ ok: false, error: 'Google Calendar not connected' }, { status: 400 });
+  }
+
+  try {
+    const result = await createAppointment(tokenData.access_token, tokenData.refresh_token, { summary, description, startTime, endTime, attendeeEmail, location });
+    await logActivity(auth.user.id, 'appointment_created', `Created: ${summary}`, 'success', { eventId: result.eventId, leadId });
+
+    if (leadId) {
+      await supabase.from('leads').update({ status: 'appointment_set' }).eq('id', leadId).eq('user_id', auth.user.id);
+    }
+
+    return NextResponse.json({ ok: true, eventId: result.eventId, htmlLink: result.htmlLink });
+  } catch (err) {
+    console.error('[Calendar Create] Error:', err);
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Failed' }, { status: 500 });
+  }
+}
+
+// DELETE - Cancel appointment
+export async function DELETE(request: NextRequest) {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+
+  const eventId = new URL(request.url).searchParams.get('eventId');
+  if (!eventId) return NextResponse.json({ ok: false, error: 'Missing eventId' }, { status: 400 });
+
+  const supabase = await createClient();
+  const { data: tokenData } = await supabase.from('google_tokens').select('*').eq('user_id', auth.user.id).single();
+
+  if (!tokenData) return NextResponse.json({ ok: false, error: 'Not connected' }, { status: 400 });
+
+  try {
+    await deleteAppointment(tokenData.access_token, tokenData.refresh_token, eventId);
+    await logActivity(auth.user.id, 'appointment_cancelled', `Cancelled: ${eventId}`, 'success');
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Failed' }, { status: 500 });
+  }
 }
