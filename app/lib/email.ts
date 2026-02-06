@@ -8,6 +8,7 @@ export type EmailParams = {
   html?: string;
   text?: string;
   replyTo?: string;
+  fromName?: string; // Agent's name - shows as "Nadine Khalil <outreach@domain.com>"
 };
 
 export type EmailSendResult = {
@@ -21,7 +22,12 @@ export type EmailSendResult = {
  */
 export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const fromEmailBase = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+  // Format: "Agent Name <email@domain.com>" if fromName provided
+  const fromEmail = params.fromName
+    ? `${params.fromName} <${fromEmailBase}>`
+    : fromEmailBase;
 
   if (!apiKey) {
     return {
@@ -31,7 +37,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
   }
 
   try {
-    console.log('[Email] Sending to:', params.to);
+    console.log('[Email] Sending to:', params.to, 'from:', fromEmail);
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,

@@ -201,7 +201,7 @@
                     <div class="flex items-center justify-end gap-3 pt-4">
                         <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
                         <button id="save-meeting-btn" type="button" class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
-                            Schedule Meeting
+                            Schedule & Add to Calendar
                         </button>
                     </div>
                 </form>
@@ -219,6 +219,24 @@
         let allEvents = [];
 
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Generate Google Calendar URL
+        function getGoogleCalendarUrl(title, date, time, duration = 60, location = '', description = '') {
+            const startDate = new Date(`${date}T${time}`);
+            const endDate = new Date(startDate.getTime() + duration * 60000);
+
+            const formatDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+            const params = new URLSearchParams({
+                action: 'TEMPLATE',
+                text: title,
+                dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
+                details: description,
+                location: location
+            });
+
+            return `https://calendar.google.com/calendar/render?${params.toString()}`;
+        }
 
         function showToast(message, isError = false) {
             const toast = document.getElementById("toast");
@@ -341,6 +359,8 @@
                 const icon = e.type === 'meeting' ? 'fa-calendar-check' : 'fa-clock';
                 const date = new Date(e.date);
                 const dateDisplay = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const title = `${e.type === 'meeting' ? 'Meeting' : 'Follow-up'} with ${e.phone}`;
+                const calUrl = getGoogleCalendarUrl(title, e.date, e.time || '09:00', 60, '', e.note || '');
 
                 return `
                     <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -352,6 +372,9 @@
                             <p class="text-xs text-gray-500">${e.phone}</p>
                             <p class="text-xs text-gray-600 mt-1">${dateDisplay}${e.time ? ' at ' + e.time : ''}</p>
                             ${e.note ? `<p class="text-xs text-gray-500 mt-1 truncate">${e.note}</p>` : ''}
+                            <a href="${calUrl}" target="_blank" class="inline-flex items-center mt-2 text-xs text-primary hover:text-blue-700">
+                                <i class="fab fa-google mr-1"></i> Add to Calendar
+                            </a>
                         </div>
                     </div>
                 `;
@@ -421,6 +444,11 @@
                     showToast("Meeting scheduled!");
                     closeModal();
                     loadEvents();
+
+                    // Open Google Calendar to add the event
+                    const title = `Meeting with ${phone}`;
+                    const calUrl = getGoogleCalendarUrl(title, date, time, 60, '', note);
+                    window.open(calUrl, '_blank');
                 } else {
                     showToast(data.error || "Failed to schedule", true);
                 }

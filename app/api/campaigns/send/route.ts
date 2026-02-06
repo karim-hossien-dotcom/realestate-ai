@@ -182,6 +182,7 @@ export async function POST(request: Request) {
         html: emailContent.html,
         text: emailContent.text,
         replyTo: agentEmail,
+        fromName: agentName, // Shows as "Agent Name <outreach@domain.com>"
       })
     } else {
       // Send WhatsApp
