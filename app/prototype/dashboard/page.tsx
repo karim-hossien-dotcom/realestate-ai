@@ -28,12 +28,14 @@ type DashboardData = {
   timeSeries: Array<{ date: string; sent: number; received: number }>
 }
 
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Fetch dashboard data
     fetch('/api/analytics/dashboard')
       .then(res => res.json())
       .then(result => {
@@ -71,8 +73,13 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Page Title */}
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <p className="text-gray-500">Overview of your lead management and outreach performance</p>
+      </div>
+
+      <div className="flex items-center justify-end">
         <span className="text-sm text-gray-500">Last 30 days</span>
       </div>
 

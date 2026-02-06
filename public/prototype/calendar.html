@@ -27,29 +27,29 @@
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen">
-        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200 flex-shrink-0 transition-all duration-300">
+            <div class="p-4 border-b border-gray-200">
+                <div class="logo-container flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-home text-white text-lg"></i>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
-                        <p class="text-sm text-gray-500">Agent Assistant</p>
+                    <div class="logo-text">
+                        <h1 class="text-xl font-bold text-gray-900 whitespace-nowrap">RealEstate AI</h1>
+                        <p class="text-sm text-gray-500 whitespace-nowrap">Agent Assistant</p>
                     </div>
                 </div>
             </div>
 
-            <nav class="mt-6 px-4">
+            <nav class="mt-6 px-2">
                 <ul class="space-y-2">
-                    <li><a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-chart-line w-5 mr-3"></i>Dashboard</a></li>
-                    <li><a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-users w-5 mr-3"></i>Leads</a></li>
-                    <li><a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-bullhorn w-5 mr-3"></i>Campaigns</a></li>
-                    <li><a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-clock w-5 mr-3"></i>Follow-Ups</a></li>
-                    <li><a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-comments w-5 mr-3"></i>Conversations</a></li>
-                    <li><a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg"><i class="fas fa-calendar w-5 mr-3"></i>Calendar</a></li>
-                    <li><a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-file-alt w-5 mr-3"></i>Logs</a></li>
-                    <li><a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-cog w-5 mr-3"></i>Settings</a></li>
+                    <li><a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-chart-line w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Dashboard</span></a></li>
+                    <li><a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-users w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Leads</span></a></li>
+                    <li><a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-bullhorn w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Campaigns</span></a></li>
+                    <li><a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-clock w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Follow-Ups</span></a></li>
+                    <li><a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-comments w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Conversations</span></a></li>
+                    <li><a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg"><i class="fas fa-calendar w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Calendar</span></a></li>
+                    <li><a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-file-alt w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Logs</span></a></li>
+                    <li><a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"><i class="fas fa-cog w-5 mr-3 flex-shrink-0"></i><span class="nav-text whitespace-nowrap">Settings</span></a></li>
                 </ul>
             </nav>
         </aside>
@@ -67,10 +67,10 @@
                             <span>Create Invite</span>
                         </button>
                         <div class="flex items-center space-x-3">
-                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="profile-avatar w-10 h-10 rounded-full">
                             <div>
-                                <p class="text-sm font-medium text-gray-900">John Smith</p>
-                                <p class="text-xs text-gray-500">Senior Agent</p>
+                                <p class="text-sm font-medium text-gray-900 profile-name">Loading...</p>
+                                <p class="text-xs text-gray-500 profile-company">Real Estate Agent</p>
                             </div>
                         </div>
                     </div>
@@ -170,7 +170,7 @@
 
     <!-- Create Invite Modal -->
     <div id="invite-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <h3 class="text-xl font-bold text-gray-900">Schedule Meeting</h3>
                 <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">
@@ -178,12 +178,58 @@
                 </button>
             </div>
 
-            <div class="p-6">
+            <div class="p-6 overflow-y-auto flex-1">
                 <form id="invite-form" class="space-y-4">
+                    <!-- Lead Selection -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Lead Phone</label>
-                        <input id="invite-phone" type="tel" placeholder="+1234567890" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Lead</label>
+
+                        <!-- Tabs -->
+                        <div class="flex border-b border-gray-200 mb-3">
+                            <button type="button" id="tab-manual" onclick="switchLeadTab('manual')" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary">
+                                Enter Manually
+                            </button>
+                            <button type="button" id="tab-followups" onclick="switchLeadTab('followups')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                                From Follow-ups
+                            </button>
+                            <button type="button" id="tab-campaigns" onclick="switchLeadTab('campaigns')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                                From Campaigns
+                            </button>
+                        </div>
+
+                        <!-- Manual Entry -->
+                        <div id="panel-manual" class="">
+                            <input id="invite-phone" type="tel" placeholder="+1234567890" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+
+                        <!-- Follow-ups List -->
+                        <div id="panel-followups" class="hidden">
+                            <div id="followups-list" class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                                <p class="p-3 text-gray-500 text-sm">Loading follow-ups...</p>
+                            </div>
+                        </div>
+
+                        <!-- Campaigns List -->
+                        <div id="panel-campaigns" class="hidden">
+                            <div id="campaigns-list" class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                                <p class="p-3 text-gray-500 text-sm">Loading campaign leads...</p>
+                            </div>
+                        </div>
+
+                        <!-- Selected Lead Display -->
+                        <div id="selected-lead" class="hidden mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900" id="selected-lead-name">-</p>
+                                    <p class="text-sm text-gray-600" id="selected-lead-phone">-</p>
+                                </div>
+                                <button type="button" onclick="clearSelectedLead()" class="text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
@@ -217,8 +263,167 @@
     <script>
         let currentDate = new Date();
         let allEvents = [];
+        let followUpLeads = [];
+        let campaignLeads = [];
+        let selectedLead = null;
 
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Lead Selection Functions
+        function switchLeadTab(tab) {
+            // Update tab styles
+            ['manual', 'followups', 'campaigns'].forEach(t => {
+                const tabBtn = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (t === tab) {
+                    tabBtn.classList.add('border-primary', 'text-primary');
+                    tabBtn.classList.remove('border-transparent', 'text-gray-500');
+                    panel.classList.remove('hidden');
+                } else {
+                    tabBtn.classList.remove('border-primary', 'text-primary');
+                    tabBtn.classList.add('border-transparent', 'text-gray-500');
+                    panel.classList.add('hidden');
+                }
+            });
+
+            // Load data if needed
+            if (tab === 'followups' && followUpLeads.length === 0) {
+                loadFollowUpLeads();
+            } else if (tab === 'campaigns' && campaignLeads.length === 0) {
+                loadCampaignLeads();
+            }
+        }
+
+        async function loadFollowUpLeads() {
+            const container = document.getElementById('followups-list');
+            container.innerHTML = '<p class="p-3 text-gray-500 text-sm">Loading...</p>';
+
+            try {
+                const res = await fetch('/api/followups');
+                const data = await res.json();
+
+                if (data.ok && data.followups && data.followups.length > 0) {
+                    followUpLeads = data.followups;
+                    renderFollowUpsList();
+                } else {
+                    container.innerHTML = '<p class="p-3 text-gray-500 text-sm">No contacted leads found. Send campaigns first.</p>';
+                }
+            } catch (err) {
+                container.innerHTML = '<p class="p-3 text-red-500 text-sm">Failed to load follow-ups.</p>';
+            }
+        }
+
+        function renderFollowUpsList() {
+            const container = document.getElementById('followups-list');
+            if (followUpLeads.length === 0) {
+                container.innerHTML = '<p class="p-3 text-gray-500 text-sm">No contacted leads found.</p>';
+                return;
+            }
+
+            container.innerHTML = followUpLeads.map(fu => {
+                const name = fu.ownerName || 'Unknown';
+                const phone = fu.phone || '';
+                const property = fu.propertyAddress || '';
+                const days = fu.daysSinceContact || 0;
+                const status = fu.responseStatus || 'no_response';
+                const statusColor = status === 'replied' ? 'text-green-600' : status === 'no_response' ? 'text-yellow-600' : 'text-gray-600';
+                const statusText = status === 'replied' ? 'Replied' : status === 'no_response' ? 'No response' : status;
+
+                return `
+                    <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0" onclick="selectLead('${escapeHtml(name)}', '${escapeHtml(phone)}', '${escapeHtml(property)}')">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900">${escapeHtml(name)}</p>
+                                <p class="text-sm text-gray-600">${escapeHtml(phone)}</p>
+                                ${property ? `<p class="text-xs text-gray-500">${escapeHtml(property)}</p>` : ''}
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs ${statusColor}">${statusText}</p>
+                                <p class="text-xs text-gray-400">${days} days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadCampaignLeads() {
+            const container = document.getElementById('campaigns-list');
+            container.innerHTML = '<p class="p-3 text-gray-500 text-sm">Loading...</p>';
+
+            try {
+                const res = await fetch('/api/campaigns/leads');
+                const data = await res.json();
+
+                if (data.ok && data.leads && data.leads.length > 0) {
+                    campaignLeads = data.leads;
+                    renderCampaignsList();
+                } else {
+                    container.innerHTML = '<p class="p-3 text-gray-500 text-sm">No campaign leads found. Generate messages first.</p>';
+                }
+            } catch (err) {
+                container.innerHTML = '<p class="p-3 text-red-500 text-sm">Failed to load campaign leads.</p>';
+            }
+        }
+
+        function renderCampaignsList() {
+            const container = document.getElementById('campaigns-list');
+            if (campaignLeads.length === 0) {
+                container.innerHTML = '<p class="p-3 text-gray-500 text-sm">No campaign leads found.</p>';
+                return;
+            }
+
+            container.innerHTML = campaignLeads.map(lead => {
+                const name = lead.owner_name || 'Unknown';
+                const phone = lead.phone || '';
+                const property = lead.property_address || '';
+                const score = lead.score_category || 'Warm';
+                const scoreColor = score === 'Hot' ? 'text-red-600' : score === 'Warm' ? 'text-orange-600' : 'text-blue-600';
+
+                return `
+                    <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0" onclick="selectLead('${escapeHtml(name)}', '${escapeHtml(phone)}', '${escapeHtml(property)}')">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900">${escapeHtml(name)}</p>
+                                <p class="text-sm text-gray-600">${escapeHtml(phone)}</p>
+                                ${property ? `<p class="text-xs text-gray-500">${escapeHtml(property)}</p>` : ''}
+                            </div>
+                            <div class="text-xs ${scoreColor}">${score}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectLead(name, phone, property) {
+            selectedLead = { name, phone, property };
+
+            // Update UI
+            document.getElementById('selected-lead').classList.remove('hidden');
+            document.getElementById('selected-lead-name').textContent = name;
+            document.getElementById('selected-lead-phone').textContent = phone + (property ? ` - ${property}` : '');
+
+            // Update the phone input
+            document.getElementById('invite-phone').value = phone;
+
+            // Pre-fill note with property if available
+            if (property && !document.getElementById('invite-note').value) {
+                document.getElementById('invite-note').value = `Meeting about ${property}`;
+            }
+        }
+
+        function clearSelectedLead() {
+            selectedLead = null;
+            document.getElementById('selected-lead').classList.add('hidden');
+            document.getElementById('invite-phone').value = '';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         // Generate Google Calendar URL
         function getGoogleCalendarUrl(title, date, time, duration = 60, location = '', description = '') {
@@ -253,6 +458,13 @@
         function openModal() {
             const modal = document.getElementById("invite-modal");
             modal.classList.remove("hidden");
+
+            // Reset form
+            document.getElementById("invite-phone").value = "";
+            document.getElementById("invite-note").value = "";
+            clearSelectedLead();
+            switchLeadTab('manual');
+
             // Set default date to tomorrow
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -485,5 +697,7 @@
         // Load on page load
         document.addEventListener("DOMContentLoaded", loadEvents);
     </script>
+<script src="/prototype/js/profile-loader.js"></script>
+<script src="/prototype/js/collapsible-sidebar.js"></script>
 </body>
 </html>

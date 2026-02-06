@@ -28,68 +28,68 @@
 <body class="bg-gray-50">
     <div class="flex h-screen">
         <!-- SIDEBAR: shared across app, Conversations active -->
-        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+        <aside id="sidebar" class="w-64 bg-white shadow-lg border-r border-gray-200 flex-shrink-0 transition-all duration-300">
+            <div class="p-4 border-b border-gray-200">
+                <div class="logo-container flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-home text-white text-lg"></i>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-900">RealEstate AI</h1>
-                        <p class="text-sm text-gray-500">Agent Assistant</p>
+                    <div class="logo-text">
+                        <h1 class="text-xl font-bold text-gray-900 whitespace-nowrap">RealEstate AI</h1>
+                        <p class="text-sm text-gray-500 whitespace-nowrap">Agent Assistant</p>
                     </div>
                 </div>
             </div>
-            
-            <nav class="mt-6 px-4">
+
+            <nav class="mt-6 px-2">
                 <ul class="space-y-2">
                     <li>
                         <a href="/prototype/dashboard" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-chart-line w-5 mr-3"></i>
-                            Dashboard
+                            <i class="fas fa-chart-line w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Dashboard</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/leads" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-users w-5 mr-3"></i>
-                            Leads
+                            <i class="fas fa-users w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Leads</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/campaigns" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-bullhorn w-5 mr-3"></i>
-                            Campaigns
+                            <i class="fas fa-bullhorn w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Campaigns</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/follow-ups" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-clock w-5 mr-3"></i>
-                            Follow-Ups
+                            <i class="fas fa-clock w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Follow-Ups</span>
                         </a>
                     </li>
                     <li>
                         <!-- ACTIVE: Conversations -->
                         <a href="/prototype/conversations" target="_top" class="flex items-center px-4 py-3 text-primary bg-blue-50 rounded-lg">
-                            <i class="fas fa-comments w-5 mr-3"></i>
-                            Conversations
+                            <i class="fas fa-comments w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Conversations</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/calendar" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-calendar w-5 mr-3"></i>
-                            Calendar
+                            <i class="fas fa-calendar w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Calendar</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/logs" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-file-alt w-5 mr-3"></i>
-                            Logs
+                            <i class="fas fa-file-alt w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Logs</span>
                         </a>
                     </li>
                     <li>
                         <a href="/prototype/settings" target="_top" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-cog w-5 mr-3"></i>
-                            Settings
+                            <i class="fas fa-cog w-5 mr-3 flex-shrink-0"></i>
+                            <span class="nav-text whitespace-nowrap">Settings</span>
                         </a>
                     </li>
                 </ul>
@@ -105,17 +105,18 @@
                         <p class="text-gray-500">Unified inbox for SMS conversations and lead interactions</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                        <button id="btn-advanced-filter" class="p-2 text-gray-600 hover:text-primary border border-gray-200 rounded-lg hover:border-primary transition" title="Advanced filters">
                             <i class="fas fa-filter"></i>
                         </button>
-                        <button class="relative p-2 text-gray-300 cursor-default" disabled title="Notifications coming soon">
+                        <button id="btn-notifications" class="relative p-2 text-gray-600 hover:text-primary transition" title="Notifications">
                             <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
                         <div class="flex items-center space-x-3">
-                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-10 h-10 rounded-full">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="profile-avatar w-10 h-10 rounded-full">
                             <div>
-                                <p class="text-sm font-medium text-gray-900">John Smith</p>
-                                <p class="text-xs text-gray-500">Senior Agent</p>
+                                <p class="text-sm font-medium text-gray-900 profile-name">Loading...</p>
+                                <p class="text-xs text-gray-500 profile-company">Real Estate Agent</p>
                             </div>
                         </div>
                     </div>
@@ -128,17 +129,18 @@
                     <div class="p-4 border-b border-gray-200">
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" placeholder="Search conversations..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <input type="text" id="search-conversations" placeholder="Search conversations..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                         <div class="flex items-center space-x-4 mt-3">
-                            <button class="text-sm font-medium text-primary border-b-2 border-primary pb-1">All (47)</button>
-                            <button class="text-sm text-gray-500 hover:text-gray-700">Unread (12)</button>
-                            <button class="text-sm text-gray-500 hover:text-gray-700">Flagged (3)</button>
+                            <button id="filter-all" class="filter-btn text-sm font-medium text-primary border-b-2 border-primary pb-1" data-filter="all">All (<span id="count-all">47</span>)</button>
+                            <button id="filter-unread" class="filter-btn text-sm text-gray-500 hover:text-gray-700 pb-1" data-filter="unread">Unread (<span id="count-unread">12</span>)</button>
+                            <button id="filter-flagged" class="filter-btn text-sm text-gray-500 hover:text-gray-700 pb-1" data-filter="flagged">Flagged (<span id="count-flagged">3</span>)</button>
                         </div>
                     </div>
                     
-                    <div class="flex-1 overflow-y-auto">
-                        <div id="conversation-item-1" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer bg-blue-50">
+                    <div id="conversation-list" class="flex-1 overflow-y-auto">
+                        <div id="conversation-item-1" class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer bg-blue-50 border-l-4 border-l-blue-600"
+                             onclick="selectDemoConversation('demo-sarah', '+15551234567', 'Sarah Johnson', 'sarah.johnson@email.com')">
                             <div class="flex items-start space-x-3">
                                 <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah Johnson" class="w-10 h-10 rounded-full">
                                 <div class="flex-1 min-w-0">
@@ -159,7 +161,8 @@
                             </div>
                         </div>
 
-                        <div id="conversation-item-2" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                        <div id="conversation-item-2" class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                             onclick="selectDemoConversation('demo-mike', '+15559876543', 'Mike Davis', 'mike.davis@email.com')">
                             <div class="flex items-start space-x-3">
                                 <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Mike Davis" class="w-10 h-10 rounded-full">
                                 <div class="flex-1 min-w-0">
@@ -176,7 +179,8 @@
                             </div>
                         </div>
 
-                        <div id="conversation-item-3" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                        <div id="conversation-item-3" class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                             onclick="selectDemoConversation('demo-emma', '+15554567890', 'Emma Wilson', 'emma.wilson@email.com')">
                             <div class="flex items-start space-x-3">
                                 <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Emma Wilson" class="w-10 h-10 rounded-full">
                                 <div class="flex-1 min-w-0">
@@ -196,7 +200,8 @@
                             </div>
                         </div>
 
-                        <div id="conversation-item-4" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                        <div id="conversation-item-4" class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                             onclick="selectDemoConversation('demo-tom', '+15553210987', 'Tom Brown', 'tom.brown@email.com')">
                             <div class="flex items-start space-x-3">
                                 <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="Tom Brown" class="w-10 h-10 rounded-full">
                                 <div class="flex-1 min-w-0">
@@ -213,7 +218,8 @@
                             </div>
                         </div>
 
-                        <div id="conversation-item-5" class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                        <div id="conversation-item-5" class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                             onclick="selectDemoConversation('demo-lisa', '+15556543210', 'Lisa Chen', 'lisa.chen@email.com')">
                             <div class="flex items-start space-x-3">
                                 <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="Lisa Chen" class="w-10 h-10 rounded-full">
                                 <div class="flex-1 min-w-0">
@@ -248,23 +254,23 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                                <button id="btn-chat-calendar" class="p-2 text-gray-600 hover:text-primary border border-gray-200 rounded-lg hover:border-primary transition" title="Schedule meeting">
                                     <i class="fas fa-calendar"></i>
                                 </button>
-                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                                <button id="btn-chat-profile" class="p-2 text-gray-600 hover:text-primary border border-gray-200 rounded-lg hover:border-primary transition" title="View lead profile">
                                     <i class="fas fa-user"></i>
                                 </button>
-                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                                <button id="btn-chat-flag" class="p-2 text-gray-600 hover:text-yellow-500 border border-gray-200 rounded-lg hover:border-yellow-500 transition" title="Flag conversation">
                                     <i class="fas fa-flag"></i>
                                 </button>
-                                <button disabled class="p-2 text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                                <button id="btn-chat-archive" class="p-2 text-gray-600 hover:text-red-500 border border-gray-200 rounded-lg hover:border-red-500 transition" title="Archive conversation">
                                     <i class="fas fa-archive"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                         <div class="flex justify-start">
                             <div class="max-w-xs lg:max-w-md">
                                 <div class="bg-white rounded-lg shadow-sm p-3">
@@ -319,23 +325,30 @@
 
                     <div class="p-4 bg-white border-t border-gray-200">
                         <div class="flex items-center space-x-3 mb-3">
-                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
-                                Schedule Meeting
+                            <button id="btn-quick-meeting" class="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition">
+                                <i class="fas fa-calendar-plus mr-1"></i>Schedule Meeting
                             </button>
-                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
-                                Send Property Info
+                            <button id="btn-quick-property" class="px-3 py-1 text-xs bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition">
+                                <i class="fas fa-home mr-1"></i>Send Property Info
                             </button>
-                            <button disabled class="px-3 py-1 text-xs bg-gray-50 text-gray-400 rounded-full cursor-not-allowed">
-                                Follow-up Sequence
+                            <button id="btn-quick-followup" class="px-3 py-1 text-xs bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 transition">
+                                <i class="fas fa-redo mr-1"></i>Add to Follow-up
                             </button>
                         </div>
                         <div class="flex items-end space-x-3">
                             <div class="flex-1">
-                                <textarea disabled placeholder="Type your message..." rows="3" class="w-full p-3 border border-gray-200 rounded-lg resize-none bg-gray-50 text-gray-400 cursor-not-allowed"></textarea>
+                                <textarea id="message-input" placeholder="Type your message..." rows="2" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
                             </div>
-                            <button disabled class="p-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
+                            <div class="flex flex-col space-y-2">
+                                <select id="message-channel" class="text-xs border border-gray-300 rounded px-2 py-1">
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="sms">SMS</option>
+                                    <option value="email">Email</option>
+                                </select>
+                                <button id="btn-send-message" class="p-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -344,38 +357,101 @@
                 <section id="lead-details-panel" class="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto">
                     <div class="space-y-6">
                         <div>
-                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Lead Details</h4>
-                            <div class="space-y-3">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-lg font-semibold text-gray-900">Lead Details</h4>
+                                <div class="flex items-center space-x-2">
+                                    <button id="btn-extract-details" class="text-sm text-purple-600 hover:text-purple-800" title="Extract from conversation using AI">
+                                        <i class="fas fa-magic mr-1"></i>AI Extract
+                                    </button>
+                                    <button id="btn-edit-lead" class="text-sm text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- View Mode -->
+                            <div id="lead-details-view" class="space-y-3">
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Name</label>
-                                    <p class="text-sm text-gray-900">Sarah Johnson</p>
+                                    <p id="lead-name-display" class="text-sm text-gray-900">Select a conversation</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Phone</label>
-                                    <p class="text-sm text-gray-900">+1 (555) 123-4567</p>
+                                    <p id="lead-phone-display" class="text-sm text-gray-900">-</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Email</label>
-                                    <p class="text-sm text-gray-900">sarah.johnson@email.com</p>
+                                    <p id="lead-email-display" class="text-sm text-gray-900">-</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Property Interest</label>
-                                    <p class="text-sm text-gray-900">3-bedroom house, Oak Street</p>
+                                    <p id="lead-property-display" class="text-sm text-gray-900">Not specified</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Budget Range</label>
-                                    <p class="text-sm text-gray-900">$450k - $500k</p>
+                                    <p id="lead-budget-display" class="text-sm text-gray-900">Not specified</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Tags</label>
-                                    <div class="flex flex-wrap gap-1 mt-1">
-                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Hot Lead</span>
-                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">First Time Buyer</span>
+                                    <div id="lead-tags-display" class="flex flex-wrap gap-1 mt-1">
+                                        <span class="text-xs text-gray-400">No tags</span>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Edit Mode (hidden by default) -->
+                            <div id="lead-details-edit" class="space-y-3 hidden">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Property Interest</label>
+                                    <input type="text" id="lead-property-input" placeholder="e.g., 3-bedroom house"
+                                        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Budget Min ($)</label>
+                                    <input type="number" id="lead-budget-min-input" placeholder="e.g., 450000"
+                                        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Budget Max ($)</label>
+                                    <input type="number" id="lead-budget-max-input" placeholder="e.g., 500000"
+                                        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Property Type</label>
+                                    <select id="lead-property-type-input"
+                                        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">Select type</option>
+                                        <option value="residential">Residential</option>
+                                        <option value="commercial">Commercial</option>
+                                        <option value="land">Land</option>
+                                        <option value="multi-family">Multi-family</option>
+                                        <option value="industrial">Industrial</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Location Preference</label>
+                                    <input type="text" id="lead-location-input" placeholder="e.g., Downtown, Oak Street area"
+                                        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div class="flex space-x-2 pt-2">
+                                    <button id="btn-save-lead-details" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                                        Save
+                                    </button>
+                                    <button id="btn-cancel-lead-edit" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm">
+                                        Cancel
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Notes Section -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
+                            <textarea id="lead-notes" placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg resize-none text-sm focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Click Edit above to save notes with lead details</p>
+                        </div>
+
+                        <!-- Activity History -->
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Activity History</h4>
                             <div class="space-y-3">
@@ -409,6 +485,7 @@
                             </div>
                         </div>
 
+                        <!-- Quick Actions -->
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h4>
                             <div class="space-y-2">
@@ -425,14 +502,6 @@
                                     Update Tags
                                 </button>
                             </div>
-                        </div>
-
-                        <div>
-                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Notes</h4>
-                            <textarea id="lead-notes" placeholder="Add notes about this lead..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg resize-none text-sm focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
-                            <button id="btn-save-notes" class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                                Save Note
-                            </button>
                         </div>
                     </div>
                 </section>
@@ -549,14 +618,391 @@
         </div>
     </div>
 
+    <!-- Property Info Modal -->
+    <div id="modal-property-info" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Send Property Info</h3>
+                <button onclick="closeModal('modal-property-info')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Property Address</label>
+                    <input type="text" id="property-address" placeholder="123 Oak Street" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                        <input type="text" id="property-price" placeholder="$485,000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Beds/Baths</label>
+                        <input type="text" id="property-beds" placeholder="3 bed / 2 bath" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Key Features</label>
+                    <textarea id="property-features" rows="2" placeholder="Large backyard, updated kitchen..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Property Link (optional)</label>
+                    <input type="url" id="property-link" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal('modal-property-info')" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="sendPropertyInfo()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">Send Info</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filters Modal -->
+    <div id="modal-filters" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Advanced Filters</h3>
+                <button onclick="closeModal('modal-filters')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lead Score</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">All Scores</option>
+                        <option value="hot">Hot Leads</option>
+                        <option value="warm">Warm Leads</option>
+                        <option value="cold">Cold Leads</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Channel</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">All Channels</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="sms">SMS</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal('modal-filters')" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="applyFilters()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast notification -->
     <div id="toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
         <span id="toast-message"></span>
     </div>
 
     <script>
-        // Current lead phone (would be dynamic in real app)
+        // Current lead info - set from selected conversation
         let currentLeadPhone = "+15551234567";
+        let currentLeadName = "Sarah Johnson";
+        let currentLeadEmail = "sarah.johnson@email.com";
+
+        // =====================
+        // Demo Conversation Selection
+        // =====================
+        function selectDemoConversation(leadId, phone, name, email) {
+            // Set current lead info
+            currentLeadId = leadId;
+            currentLeadPhone = phone;
+            currentLeadName = name;
+            currentLeadEmail = email;
+
+            // Update visual selection
+            document.querySelectorAll(".conversation-item").forEach(item => {
+                item.classList.remove("bg-blue-50", "border-l-4", "border-l-blue-600");
+            });
+            const clickedItem = event.currentTarget;
+            clickedItem.classList.add("bg-blue-50", "border-l-4", "border-l-blue-600");
+
+            // Update lead details panel
+            document.getElementById("lead-name-display").textContent = name;
+            document.getElementById("lead-phone-display").textContent = phone;
+            document.getElementById("lead-email-display").textContent = email;
+
+            // Set demo lead data for editing
+            currentLeadData = {
+                owner_name: name,
+                phone: phone,
+                email: email,
+                property_interest: null,
+                budget_min: null,
+                budget_max: null,
+                property_type: null,
+                location_preference: null,
+                tags: []
+            };
+
+            showToast(`Selected: ${name}`);
+        }
+
+        // Initialize Sarah Johnson as selected on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            currentLeadId = "demo-sarah";
+            currentLeadData = {
+                owner_name: "Sarah Johnson",
+                phone: "+15551234567",
+                email: "sarah.johnson@email.com",
+                property_interest: null,
+                budget_min: null,
+                budget_max: null,
+                property_type: null,
+                location_preference: null,
+                tags: ["Hot Lead", "First Time Buyer"]
+            };
+        });
+
+        // =====================
+        // Send Property Info
+        // =====================
+        async function sendPropertyInfo() {
+            const address = document.getElementById("property-address").value;
+            const price = document.getElementById("property-price").value;
+            const beds = document.getElementById("property-beds").value;
+            const features = document.getElementById("property-features").value;
+            const link = document.getElementById("property-link").value;
+
+            if (!address) {
+                showToast("Please enter property address", true);
+                return;
+            }
+
+            // Compose message
+            let message = `Property Details:\n\n`;
+            message += `Address: ${address}\n`;
+            if (price) message += `Price: ${price}\n`;
+            if (beds) message += `Bedrooms/Bathrooms: ${beds}\n`;
+            if (features) message += `Features: ${features}\n`;
+            if (link) message += `View listing: ${link}\n`;
+            message += `\nLet me know if you'd like to schedule a viewing!`;
+
+            // Send via current channel
+            const channel = document.getElementById("message-channel").value;
+
+            try {
+                const res = await fetch("/api/whatsapp/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone: currentLeadPhone,
+                        message: message
+                    })
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    addMessageToChat(message, "outbound", channel);
+                    closeModal("modal-property-info");
+                    showToast("Property info sent!");
+
+                    // Clear form
+                    document.getElementById("property-address").value = "";
+                    document.getElementById("property-price").value = "";
+                    document.getElementById("property-beds").value = "";
+                    document.getElementById("property-features").value = "";
+                    document.getElementById("property-link").value = "";
+                } else {
+                    showToast(data.error || "Failed to send", true);
+                }
+            } catch (err) {
+                showToast("Failed to send property info", true);
+            }
+        }
+
+        // =====================
+        // Apply Filters
+        // =====================
+        function applyFilters() {
+            showToast("Filters applied");
+            closeModal("modal-filters");
+        }
+
+        // =====================
+        // Real Data Loading Functions
+        // =====================
+
+        // Load conversation list from API
+        async function loadConversationList() {
+            try {
+                const res = await fetch('/api/conversations');
+                const data = await res.json();
+                if (data.ok && data.conversations && data.conversations.length > 0) {
+                    renderConversationList(data.conversations);
+                }
+            } catch (err) {
+                console.error('Failed to load conversations:', err);
+            }
+        }
+
+        // Render conversation list
+        function renderConversationList(conversations) {
+            const listContainer = document.getElementById('conversation-list');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = conversations.map((conv, idx) => {
+                const name = conv.owner_name || 'Unknown';
+                const initial = name.charAt(0).toUpperCase();
+                const lastMsg = conv.lastMessage?.content || 'No messages yet';
+                const lastMsgTruncated = lastMsg.length > 40 ? lastMsg.substring(0, 40) + '...' : lastMsg;
+                const timeAgo = conv.lastMessage ? formatTimeAgo(new Date(conv.lastMessage.created_at)) : '';
+                const unread = conv.unreadCount > 0 ? `<span class="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">${conv.unreadCount}</span>` : '';
+                const scoreColor = getScoreColor(conv.score_category);
+
+                return `
+                    <div class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${idx === 0 ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''}"
+                         data-lead-id="${conv.id}" data-lead-phone="${conv.phone || ''}" onclick="selectConversation('${conv.id}', '${conv.phone || ''}')">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 ${scoreColor} rounded-full flex items-center justify-center text-white font-semibold">
+                                ${initial}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-medium text-gray-900 truncate">${name}</h3>
+                                    <span class="text-xs text-gray-500">${timeAgo}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-gray-500 truncate">${lastMsgTruncated}</p>
+                                    ${unread}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select a conversation
+        async function selectConversation(leadId, phone) {
+            // Update visual selection
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('bg-blue-50', 'border-l-4', 'border-l-blue-600');
+            });
+            const selectedItem = document.querySelector(`[data-lead-id="${leadId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('bg-blue-50', 'border-l-4', 'border-l-blue-600');
+            }
+
+            // Update current lead info
+            currentLeadPhone = phone;
+            currentLeadId = leadId;
+
+            // Load lead details
+            await loadLeadDetails(leadId);
+
+            // Load messages
+            await loadMessages(leadId);
+        }
+
+        // Load messages for a lead
+        async function loadMessages(leadId) {
+            try {
+                const res = await fetch(`/api/conversations?leadId=${leadId}`);
+                const data = await res.json();
+                if (data.ok && data.messages) {
+                    renderMessages(data.messages);
+                }
+            } catch (err) {
+                console.error('Failed to load messages:', err);
+            }
+        }
+
+        // Render messages in chat area
+        function renderMessages(messages) {
+            const chatContainer = document.getElementById('chat-messages');
+            if (!chatContainer || messages.length === 0) return;
+
+            chatContainer.innerHTML = messages.map(msg => {
+                const isOutbound = msg.direction === 'outbound';
+                const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const channelIcon = msg.channel === 'whatsapp' ? 'fa-whatsapp' : (msg.channel === 'email' ? 'fa-envelope' : 'fa-comment');
+
+                if (isOutbound) {
+                    return `
+                        <div class="flex justify-end">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-blue-600 text-white rounded-lg px-4 py-2">
+                                    <p class="text-sm">${escapeHtml(msg.content)}</p>
+                                </div>
+                                <div class="flex items-center justify-end space-x-1 mt-1">
+                                    <i class="fab ${channelIcon} text-xs text-gray-400"></i>
+                                    <span class="text-xs text-gray-500">${time}</span>
+                                    <i class="fas fa-check-double text-xs text-blue-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-gray-100 rounded-lg px-4 py-2">
+                                    <p class="text-sm text-gray-900">${escapeHtml(msg.content)}</p>
+                                </div>
+                                <div class="flex items-center space-x-1 mt-1">
+                                    <i class="fab ${channelIcon} text-xs text-gray-400"></i>
+                                    <span class="text-xs text-gray-500">${time}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Helper: Format time ago
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const mins = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (mins < 1) return 'now';
+            if (mins < 60) return `${mins}m`;
+            if (hours < 24) return `${hours}h`;
+            if (days < 7) return `${days}d`;
+            return date.toLocaleDateString();
+        }
+
+        // Helper: Get score color
+        function getScoreColor(category) {
+            const colors = {
+                'Hot': 'bg-red-500',
+                'Warm': 'bg-orange-500',
+                'Cold': 'bg-blue-500',
+                'Dead': 'bg-gray-400'
+            };
+            return colors[category] || 'bg-green-500';
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize real data loading (uncomment to enable)
+        // document.addEventListener("DOMContentLoaded", loadConversationList);
 
         // Modal functions
         function openModal(modalId) {
@@ -746,17 +1192,6 @@
             return colorMap[tag] || "bg-gray-100 text-gray-800";
         }
 
-        // Save Notes
-        document.getElementById("btn-save-notes").addEventListener("click", async () => {
-            const notes = document.getElementById("lead-notes").value;
-            const result = await callLeadAction({ action: "save_notes", notes });
-            if (result.ok) {
-                showToast("Notes saved successfully!");
-            } else {
-                showToast(result.error || "Failed to save notes", true);
-            }
-        });
-
         // Close modals on backdrop click
         document.querySelectorAll("[id^='modal-']").forEach(modal => {
             modal.addEventListener("click", (e) => {
@@ -766,9 +1201,480 @@
             });
         });
 
+        // =====================
+        // Lead Details Editing
+        // =====================
+        let currentLeadId = null;
+        let currentLeadData = null;
+
+        // Load lead details from API
+        async function loadLeadDetails(leadId) {
+            if (!leadId) return;
+            currentLeadId = leadId;
+
+            try {
+                const res = await fetch(`/api/leads/${leadId}`);
+                const data = await res.json();
+                if (data.ok && data.lead) {
+                    currentLeadData = data.lead;
+                    displayLeadDetails(data.lead);
+                }
+            } catch (err) {
+                console.error("Failed to load lead details:", err);
+            }
+        }
+
+        // Display lead details in view mode
+        function displayLeadDetails(lead) {
+            document.getElementById("lead-name-display").textContent = lead.owner_name || "Unknown";
+            document.getElementById("lead-phone-display").textContent = lead.phone || "-";
+            document.getElementById("lead-email-display").textContent = lead.email || "-";
+            document.getElementById("lead-property-display").textContent = lead.property_interest || "Not specified";
+
+            // Format budget
+            if (lead.budget_min || lead.budget_max) {
+                const min = lead.budget_min ? `$${(lead.budget_min / 1000).toFixed(0)}k` : "";
+                const max = lead.budget_max ? `$${(lead.budget_max / 1000).toFixed(0)}k` : "";
+                document.getElementById("lead-budget-display").textContent = min && max ? `${min} - ${max}` : (min || max);
+            } else {
+                document.getElementById("lead-budget-display").textContent = "Not specified";
+            }
+
+            // Display tags
+            const tagsContainer = document.getElementById("lead-tags-display");
+            if (lead.tags && lead.tags.length > 0) {
+                tagsContainer.innerHTML = lead.tags.map(tag => {
+                    const colors = getTagColors(tag);
+                    return `<span class="text-xs ${colors} px-2 py-1 rounded-full">${tag}</span>`;
+                }).join("");
+            } else {
+                tagsContainer.innerHTML = '<span class="text-xs text-gray-400">No tags</span>';
+            }
+
+            // Also update notes if present
+            if (lead.notes) {
+                document.getElementById("lead-notes").value = lead.notes;
+            }
+        }
+
+        // Toggle edit mode
+        function toggleLeadEditMode(editing) {
+            const viewSection = document.getElementById("lead-details-view");
+            const editSection = document.getElementById("lead-details-edit");
+            const editBtn = document.getElementById("btn-edit-lead");
+
+            if (editing) {
+                viewSection.classList.add("hidden");
+                editSection.classList.remove("hidden");
+                editBtn.classList.add("hidden");
+
+                // Populate edit fields with current data
+                if (currentLeadData) {
+                    document.getElementById("lead-property-input").value = currentLeadData.property_interest || "";
+                    document.getElementById("lead-budget-min-input").value = currentLeadData.budget_min || "";
+                    document.getElementById("lead-budget-max-input").value = currentLeadData.budget_max || "";
+                    document.getElementById("lead-property-type-input").value = currentLeadData.property_type || "";
+                    document.getElementById("lead-location-input").value = currentLeadData.location_preference || "";
+                }
+            } else {
+                viewSection.classList.remove("hidden");
+                editSection.classList.add("hidden");
+                editBtn.classList.remove("hidden");
+            }
+        }
+
+        // Save lead details
+        async function saveLeadDetails() {
+            // Check if this is a demo lead (ID starts with "demo-") or no lead selected
+            const isDemoMode = !currentLeadId || currentLeadId.toString().startsWith("demo-");
+
+            // Get form values
+            const propertyInterest = document.getElementById("lead-property-input").value;
+            const budgetMin = document.getElementById("lead-budget-min-input").value;
+            const budgetMax = document.getElementById("lead-budget-max-input").value;
+            const propertyType = document.getElementById("lead-property-type-input").value;
+            const locationPref = document.getElementById("lead-location-input").value;
+            const notes = document.getElementById("lead-notes").value;
+
+            if (isDemoMode) {
+                // Demo mode - update display locally without API call
+                if (propertyInterest) {
+                    document.getElementById("lead-property-display").textContent = propertyInterest;
+                }
+                if (budgetMin || budgetMax) {
+                    const min = budgetMin ? `$${(parseInt(budgetMin) / 1000).toFixed(0)}k` : "";
+                    const max = budgetMax ? `$${(parseInt(budgetMax) / 1000).toFixed(0)}k` : "";
+                    document.getElementById("lead-budget-display").textContent = min && max ? `${min} - ${max}` : (min || max);
+                }
+
+                // Update local data
+                if (currentLeadData) {
+                    currentLeadData.property_interest = propertyInterest || null;
+                    currentLeadData.budget_min = parseInt(budgetMin) || null;
+                    currentLeadData.budget_max = parseInt(budgetMax) || null;
+                    currentLeadData.property_type = propertyType || null;
+                    currentLeadData.location_preference = locationPref || null;
+                    currentLeadData.notes = notes || null;
+                }
+
+                toggleLeadEditMode(false);
+                showToast("Lead details & notes saved (demo mode)");
+                return;
+            }
+
+            const updates = {
+                property_interest: document.getElementById("lead-property-input").value || null,
+                budget_min: parseInt(document.getElementById("lead-budget-min-input").value) || null,
+                budget_max: parseInt(document.getElementById("lead-budget-max-input").value) || null,
+                property_type: document.getElementById("lead-property-type-input").value || null,
+                location_preference: document.getElementById("lead-location-input").value || null,
+                notes: document.getElementById("lead-notes").value || null
+            };
+
+            try {
+                const res = await fetch(`/api/leads/${currentLeadId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updates)
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast("Lead details saved!");
+                    currentLeadData = { ...currentLeadData, ...updates };
+                    displayLeadDetails(currentLeadData);
+                    toggleLeadEditMode(false);
+                } else {
+                    showToast(data.error || "Failed to save", true);
+                }
+            } catch (err) {
+                showToast("Failed to save lead details", true);
+            }
+        }
+
+        // Edit button click handler
+        document.getElementById("btn-edit-lead").addEventListener("click", () => {
+            toggleLeadEditMode(true);
+        });
+
+        // AI Extract button click handler
+        document.getElementById("btn-extract-details").addEventListener("click", async () => {
+            // Get conversation text from the message area
+            const messageArea = document.querySelector("#chat-messages");
+            if (!messageArea) {
+                showToast("No conversation found", true);
+                return;
+            }
+
+            // Extract text from all messages - look for message paragraphs
+            // Find all message bubbles (rounded-lg divs containing p tags)
+            let conversationText = "";
+
+            // Method 1: Get all p.text-sm inside message bubbles
+            const messageParagraphs = messageArea.querySelectorAll(".rounded-lg p.text-sm");
+            messageParagraphs.forEach(p => {
+                const text = p.textContent?.trim();
+                if (text) {
+                    conversationText += text + "\n";
+                }
+            });
+
+            // Method 2: Fallback - get any p tags in the message area
+            if (!conversationText.trim()) {
+                const allParagraphs = messageArea.querySelectorAll("p");
+                allParagraphs.forEach(p => {
+                    const text = p.textContent?.trim();
+                    // Skip timestamps (they have text-xs class)
+                    if (text && !p.classList.contains("text-xs")) {
+                        conversationText += text + "\n";
+                    }
+                });
+            }
+
+            if (!conversationText.trim()) {
+                showToast("No messages to extract from", true);
+                return;
+            }
+
+            console.log("Extracting from conversation:", conversationText);
+
+            // Show loading state
+            const extractBtn = document.getElementById("btn-extract-details");
+            const originalHtml = extractBtn.innerHTML;
+            extractBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Extracting...';
+            extractBtn.disabled = true;
+
+            try {
+                const res = await fetch("/api/leads/extract-details", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        conversationText,
+                        leadId: currentLeadId
+                    })
+                });
+                const data = await res.json();
+
+                if (data.ok && data.extracted) {
+                    // Switch to edit mode and populate with extracted data
+                    toggleLeadEditMode(true);
+
+                    if (data.extracted.property_interest) {
+                        document.getElementById("lead-property-input").value = data.extracted.property_interest;
+                    }
+                    if (data.extracted.budget_min) {
+                        document.getElementById("lead-budget-min-input").value = data.extracted.budget_min;
+                    }
+                    if (data.extracted.budget_max) {
+                        document.getElementById("lead-budget-max-input").value = data.extracted.budget_max;
+                    }
+                    if (data.extracted.property_type) {
+                        document.getElementById("lead-property-type-input").value = data.extracted.property_type;
+                    }
+                    if (data.extracted.location_preference) {
+                        document.getElementById("lead-location-input").value = data.extracted.location_preference;
+                    }
+
+                    // Populate notes with extracted important info
+                    if (data.extracted.notes) {
+                        const notesField = document.getElementById("lead-notes");
+                        const existingNotes = notesField.value.trim();
+                        const newNotes = data.extracted.notes;
+
+                        // Append to existing notes or set new
+                        if (existingNotes) {
+                            notesField.value = existingNotes + "\n\n--- AI Extracted ---\n" + newNotes;
+                        } else {
+                            notesField.value = newNotes;
+                        }
+                    }
+
+                    showToast("Details extracted! Review and save.");
+                } else {
+                    showToast(data.error || "Could not extract details", true);
+                }
+            } catch (err) {
+                showToast("Failed to extract details", true);
+            } finally {
+                extractBtn.innerHTML = originalHtml;
+                extractBtn.disabled = false;
+            }
+        });
+
+        // Save and cancel buttons
+        document.getElementById("btn-save-lead-details").addEventListener("click", saveLeadDetails);
+        document.getElementById("btn-cancel-lead-edit").addEventListener("click", () => toggleLeadEditMode(false));
+
+        // =====================
+        // Message Sending
+        // =====================
+        document.getElementById("btn-send-message").addEventListener("click", sendMessage);
+        document.getElementById("message-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById("message-input");
+            const message = input.value.trim();
+            const channel = document.getElementById("message-channel").value;
+
+            if (!message) {
+                showToast("Please enter a message", true);
+                return;
+            }
+
+            if (!currentLeadPhone) {
+                showToast("No lead selected", true);
+                return;
+            }
+
+            const sendBtn = document.getElementById("btn-send-message");
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                let endpoint = "/api/whatsapp/send";
+                let body = { phone: currentLeadPhone, message };
+
+                if (channel === "email") {
+                    endpoint = "/api/email/send";
+                    body = { to: currentLeadPhone, subject: "Message from your agent", body: message };
+                } else if (channel === "sms") {
+                    endpoint = "/api/whatsapp/send"; // SMS uses same endpoint
+                    body = { phone: currentLeadPhone, message, channel: "sms" };
+                }
+
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    // Add message to chat
+                    addMessageToChat(message, "outbound", channel);
+                    input.value = "";
+                    showToast("Message sent!");
+                } else {
+                    showToast(data.error || "Failed to send message", true);
+                }
+            } catch (err) {
+                showToast("Failed to send message", true);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        function addMessageToChat(content, direction, channel) {
+            const chatContainer = document.getElementById("chat-messages");
+            const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            const channelIcon = channel === "whatsapp" ? "fa-whatsapp" : (channel === "email" ? "fa-envelope" : "fa-comment");
+
+            const msgHtml = direction === "outbound" ? `
+                <div class="flex justify-end">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-primary text-white rounded-lg shadow-sm p-3">
+                            <p class="text-sm">${escapeHtml(content)}</p>
+                        </div>
+                        <div class="flex items-center justify-end space-x-1 mt-1">
+                            <i class="fab ${channelIcon} text-xs text-gray-400"></i>
+                            <span class="text-xs text-gray-500">${time}</span>
+                            <i class="fas fa-check text-xs text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            ` : `
+                <div class="flex justify-start">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-white rounded-lg shadow-sm p-3">
+                            <p class="text-sm text-gray-900">${escapeHtml(content)}</p>
+                        </div>
+                        <span class="text-xs text-gray-500">${time}</span>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.insertAdjacentHTML("beforeend", msgHtml);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // =====================
+        // Filter Buttons
+        // =====================
+        let currentFilter = "all";
+
+        document.querySelectorAll(".filter-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                currentFilter = btn.dataset.filter;
+
+                // Update active state
+                document.querySelectorAll(".filter-btn").forEach(b => {
+                    b.classList.remove("text-primary", "border-b-2", "border-primary", "font-medium");
+                    b.classList.add("text-gray-500");
+                });
+                btn.classList.remove("text-gray-500");
+                btn.classList.add("text-primary", "border-b-2", "border-primary", "font-medium");
+
+                // Filter conversations (demo - would filter real data)
+                filterConversations(currentFilter);
+            });
+        });
+
+        function filterConversations(filter) {
+            // In demo mode, just show a toast
+            if (filter === "unread") {
+                showToast("Showing unread conversations");
+            } else if (filter === "flagged") {
+                showToast("Showing flagged conversations");
+            } else {
+                showToast("Showing all conversations");
+            }
+            // Real implementation would filter the conversation list
+        }
+
+        // =====================
+        // Search
+        // =====================
+        document.getElementById("search-conversations").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            // Demo: would search through conversations
+            if (query.length > 2) {
+                showToast(`Searching for "${query}"...`);
+            }
+        });
+
+        // =====================
+        // Quick Actions
+        // =====================
+        document.getElementById("btn-quick-meeting").addEventListener("click", () => {
+            document.getElementById("btn-schedule-meeting").click();
+        });
+
+        document.getElementById("btn-quick-property").addEventListener("click", () => {
+            openModal("modal-property-info");
+        });
+
+        document.getElementById("btn-quick-followup").addEventListener("click", () => {
+            document.getElementById("btn-add-followup").click();
+        });
+
+        // =====================
+        // Chat Toolbar
+        // =====================
+        document.getElementById("btn-chat-calendar").addEventListener("click", () => {
+            document.getElementById("btn-schedule-meeting").click();
+        });
+
+        document.getElementById("btn-chat-profile").addEventListener("click", () => {
+            // Scroll to lead details panel
+            document.getElementById("lead-details-panel").scrollIntoView({ behavior: "smooth" });
+            showToast("Lead details panel");
+        });
+
+        let isFlagged = false;
+        document.getElementById("btn-chat-flag").addEventListener("click", function() {
+            isFlagged = !isFlagged;
+            if (isFlagged) {
+                this.classList.add("text-yellow-500", "border-yellow-500");
+                this.classList.remove("text-gray-600");
+                showToast("Conversation flagged");
+            } else {
+                this.classList.remove("text-yellow-500", "border-yellow-500");
+                this.classList.add("text-gray-600");
+                showToast("Flag removed");
+            }
+        });
+
+        document.getElementById("btn-chat-archive").addEventListener("click", () => {
+            if (confirm("Archive this conversation?")) {
+                showToast("Conversation archived");
+                // Would remove from list in real implementation
+            }
+        });
+
+        // =====================
+        // Notifications
+        // =====================
+        document.getElementById("btn-notifications").addEventListener("click", () => {
+            showToast("3 new notifications");
+        });
+
+        // =====================
+        // Advanced Filter
+        // =====================
+        document.getElementById("btn-advanced-filter").addEventListener("click", () => {
+            openModal("modal-filters");
+        });
+
         // Load data on page load
         document.addEventListener("DOMContentLoaded", loadLeadData);
     </script>
+<script src="/prototype/js/profile-loader.js"></script>
+<script src="/prototype/js/collapsible-sidebar.js"></script>
 </body>
 </html>
 

@@ -2,6 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import MobileNav from '@/app/components/MobileNav';
+
+type Profile = {
+  full_name: string | null;
+  email: string;
+  company: string | null;
+};
 
 const navItems = [
   { href: '/prototype/dashboard', label: 'Dashboard', icon: 'fa-chart-line' },
@@ -22,7 +30,7 @@ const iframePages = [
   '/prototype/conversations',
   '/prototype/calendar',
   '/prototype/logs',
-  '/prototype/settings',
+  // Note: /prototype/settings removed - now uses React component
 ];
 
 export default function PrototypeLayout({
@@ -31,29 +39,80 @@ export default function PrototypeLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  // Fetch user profile
+  useEffect(() => {
+    fetch('/api/settings/profile')
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok && data.profile) {
+          setProfile(data.profile);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  // Close mobile nav when route changes
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  const handleSignOut = async () => {
+    const { createClient } = await import('@/app/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
 
   // Skip layout for iframe pages (they have their own navigation)
-  if (pathname === '/prototype' || iframePages.includes(pathname)) {
+  // Also skip for settings page which has its own full layout
+  if (pathname === '/prototype' || iframePages.includes(pathname) || pathname === '/prototype/settings') {
     return <div className="w-screen h-screen">{children}</div>;
   }
 
+  const displayName = profile?.full_name || profile?.email || 'Loading...';
+  const displayCompany = profile?.company || 'Real Estate Agent';
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const profileData = { displayName, displayCompany, initial };
+
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg border-r border-gray-200 flex-shrink-0">
-        <div className="p-6 border-b border-gray-200">
+      {/* Mobile Nav */}
+      <MobileNav
+        navItems={navItems}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        profile={profileData}
+        onSignOut={handleSignOut}
+      />
+
+      {/* Desktop Sidebar - collapsible on hover */}
+      <aside
+        className={`hidden md:flex bg-white shadow-lg border-r border-gray-200 flex-shrink-0 flex-col transition-all duration-300 ${
+          sidebarExpanded ? 'w-64' : 'w-16'
+        }`}
+        onMouseEnter={() => setSidebarExpanded(true)}
+        onMouseLeave={() => setSidebarExpanded(false)}
+      >
+        <div className={`p-4 border-b border-gray-200 ${sidebarExpanded ? 'px-6' : 'px-3'}`}>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <i className="fas fa-home text-white text-lg"></i>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">RealEstate AI</h1>
-              <p className="text-sm text-gray-500">Agent Assistant</p>
-            </div>
+            {sidebarExpanded && (
+              <div className="overflow-hidden">
+                <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">RealEstate AI</h1>
+                <p className="text-sm text-gray-500 whitespace-nowrap">Agent Assistant</p>
+              </div>
+            )}
           </div>
         </div>
 
-        <nav className="mt-6 px-4">
+        <nav className={`mt-6 flex-1 overflow-y-auto ${sidebarExpanded ? 'px-4' : 'px-2'}`}>
           <ul className="space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -61,14 +120,17 @@ export default function PrototypeLayout({
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                    className={`flex items-center py-3 rounded-lg transition-colors ${
+                      sidebarExpanded ? 'px-4' : 'px-3 justify-center'
+                    } ${
                       isActive
-                        ? 'text-primary bg-blue-50'
+                        ? 'text-blue-600 bg-blue-50'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
+                    title={!sidebarExpanded ? item.label : undefined}
                   >
-                    <i className={`fas ${item.icon} w-5 mr-3`}></i>
-                    {item.label}
+                    <i className={`fas ${item.icon} ${sidebarExpanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
+                    {sidebarExpanded && <span className="whitespace-nowrap">{item.label}</span>}
                   </Link>
                 </li>
               );
@@ -76,25 +138,65 @@ export default function PrototypeLayout({
           </ul>
         </nav>
 
-        {/* Sign out button */}
-        <div className="absolute bottom-0 left-0 w-64 p-4 border-t border-gray-200 bg-white">
-          <button
-            onClick={async () => {
-              const { createClient } = await import('@/app/lib/supabase/client');
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = '/';
-            }}
-            className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"
-          >
-            <i className="fas fa-sign-out-alt w-5 mr-3"></i>
-            Sign Out
-          </button>
+        {/* User Profile & Sign out */}
+        <div className="border-t border-gray-200 bg-white">
+          {/* User Profile */}
+          <div className={`p-3 border-b border-gray-100 ${sidebarExpanded ? 'px-4' : ''}`}>
+            <div className={`flex items-center ${sidebarExpanded ? 'space-x-3' : 'justify-center'}`}>
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                {initial}
+              </div>
+              {sidebarExpanded && (
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                  <p className="text-xs text-gray-500 truncate">{displayCompany}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Sign out button */}
+          <div className="p-2">
+            <button
+              onClick={handleSignOut}
+              className={`flex items-center w-full py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm ${
+                sidebarExpanded ? 'px-4' : 'justify-center px-2'
+              }`}
+              title={!sidebarExpanded ? 'Sign Out' : undefined}
+            >
+              <i className={`fas fa-sign-out-alt ${sidebarExpanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
+              {sidebarExpanded && <span>Sign Out</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header with hamburger menu on mobile */}
+        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:hidden">
+          <div className="flex items-center justify-between">
+            {/* Hamburger menu */}
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="p-2 text-gray-600 hover:text-gray-900"
+            >
+              <i className="fas fa-bars text-xl"></i>
+            </button>
+
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i className="fas fa-home text-white text-sm"></i>
+              </div>
+              <span className="font-bold text-gray-900">RealEstate AI</span>
+            </div>
+
+            {/* User profile - mobile */}
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+              {initial}
+            </div>
+          </div>
+        </header>
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
