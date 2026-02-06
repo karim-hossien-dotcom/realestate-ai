@@ -43,7 +43,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
       from: fromEmail,
       to: params.to,
       subject: params.subject,
-      html: params.html,
+      html: params.html || params.text || '',
       text: params.text,
       replyTo: params.replyTo,
     });
