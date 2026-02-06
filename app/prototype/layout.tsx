@@ -20,6 +20,7 @@ const iframePages = [
   '/prototype/campaigns',
   '/prototype/follow-ups',
   '/prototype/conversations',
+  '/prototype/calendar',
   '/prototype/logs',
   '/prototype/settings',
 ];
