@@ -41,7 +41,10 @@ export async function updateSession(request: NextRequest) {
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/prototype') ||
                            request.nextUrl.pathname.startsWith('/api/')
   const isAuthRoute = request.nextUrl.pathname === '/'
-  const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook'
+  const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook' ||
+                           request.nextUrl.pathname.startsWith('/api/cron/') ||
+                           request.nextUrl.pathname === '/api/whatsapp/send' ||
+                           request.nextUrl.pathname === '/api/email/send'
 
   // Allow public API routes without auth
   if (isPublicApiRoute) {
