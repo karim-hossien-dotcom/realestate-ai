@@ -89,9 +89,15 @@ export async function POST(request: Request) {
   let sent = 0
   let failed = 0
   let skipped = 0
-  const RATE_LIMIT = 5 // messages per contact per day
+  const RATE_LIMIT = 20 // messages per contact per day
 
-  for (const lead of leads) {
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  for (let i = 0; i < leads.length; i++) {
+    const lead = leads[i]
+    // Pace sends to avoid rate limits (Resend: 2 req/sec)
+    if (i > 0) await delay(600)
+
     // Get contact info based on channel
     const contact = channel === 'email'
       ? (lead.email || '').trim().toLowerCase()
