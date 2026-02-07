@@ -1,0 +1,12 @@
+property_address,owner_name,phone,email,contact_preference,last_contacted,status,notes
+"100 Test Property Lane, New York, NY 10001",Karim Hossien,+13474452049,karim-hossien@live.com,SMS,,New,Owner - ready to test messaging system
+"456 Oak Avenue, Tampa, FL 33601",Sarah Johnson,+15551234567,sarah.johnson@email.com,SMS,,New,Interested in selling - inherited property
+"789 Pine Street, Miami, FL 33101",Michael Davis,+15559876543,michael.d@gmail.com,SMS,,New,Pre-foreclosure lead
+"321 Maple Drive, Orlando, FL 32801",Jennifer Williams,+15554567890,jwilliams@yahoo.com,Email,,New,Absentee owner - rental property
+"654 Cedar Lane, Jacksonville, FL 32201",Robert Brown,+15553216549,rbrown@outlook.com,SMS,,New,Probate property - motivated seller
+"987 Birch Court, St Petersburg, FL 33701",Emily Martinez,+15557891234,emily.m@hotmail.com,SMS,,New,Vacant property for 6 months
+"147 Elm Street, Clearwater, FL 33755",David Wilson,+15552589631,dwilson@gmail.com,Phone,,New,Tax delinquent - needs cash offer
+"258 Walnut Boulevard, Sarasota, FL 34201",Amanda Taylor,+15551472583,ataylor@email.com,SMS,,New,Divorce situation - quick sale needed
+"369 Spruce Way, Fort Lauderdale, FL 33301",Christopher Lee,+15553698521,clee@yahoo.com,SMS,,New,Relocating for work - motivated
+"741 Hickory Road, West Palm Beach, FL 33401",Jessica Anderson,+15557413692,janderson@gmail.com,Email,,New,Downsizing - empty nesters
+"852 Willow Circle, Naples, FL 34101",Daniel Thomas,+15558524713,dthomas@outlook.com,SMS,,New,Investment property - looking to liquidate
