@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/app/lib/supabase/server'
+import { createServiceClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 
 export async function GET() {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const events: Array<{
     id: string
     date: string
@@ -24,6 +24,7 @@ export async function GET() {
   const { data: meetings } = await supabase
     .from('meetings')
     .select('*')
+    .eq('user_id', auth.user.id)
     .order('meeting_date', { ascending: true })
 
   if (meetings) {
@@ -61,6 +62,7 @@ export async function GET() {
   const { data: followups } = await supabase
     .from('follow_ups')
     .select('id, lead_id, message_text, scheduled_at, status, leads(phone, owner_name)')
+    .eq('user_id', auth.user.id)
     .eq('status', 'pending')
     .order('scheduled_at', { ascending: true })
 

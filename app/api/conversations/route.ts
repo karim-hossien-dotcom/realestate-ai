@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     leads.map(async (lead) => {
       const { data: messages } = await supabase
         .from('messages')
-        .select('id, content, direction, created_at, channel')
+        .select('id, body, direction, created_at, channel')
         .eq('lead_id', lead.id)
         .order('created_at', { ascending: false })
         .limit(1)

@@ -198,6 +198,16 @@ def webhook_inbound():
         # Log to Supabase
         _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
 
+        # Log inbound to activity_logs
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id,
+                "message_reply",
+                f"Inbound WhatsApp from {wa_id}: {body[:100]}",
+                "received",
+                {"phone": wa_id, "message": body, "direction": "inbound"},
+            )
+
         # Handle STOP messages
         if is_stop_message(body):
             _write_csv_row(
@@ -280,6 +290,23 @@ def webhook_inbound():
             user_id, wa_id, body, msg_id, "outbound",
             reply_text=reply_text, send_status=send_status
         )
+
+        # Log AI bot reply to activity_logs
+        if SUPABASE_AVAILABLE and user_id:
+            intent = ai_result.get("intent", "other")
+            log_activity(
+                user_id,
+                "message_reply",
+                f"AI bot replied to {wa_id} (intent: {intent}): {reply_text[:100]}",
+                send_status,
+                {
+                    "phone": wa_id,
+                    "reply": reply_text,
+                    "intent": intent,
+                    "direction": "outbound",
+                    "follow_up_days": ai_result.get("schedule_follow_up_days"),
+                },
+            )
 
     return jsonify({"ok": True})
 
