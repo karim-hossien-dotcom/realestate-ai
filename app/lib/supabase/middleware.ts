@@ -4,6 +4,16 @@ import { NextResponse, type NextRequest } from 'next/server'
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
 export async function updateSession(request: NextRequest) {
+  // Check public API routes FIRST - skip all auth for these
+  const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook' ||
+                           request.nextUrl.pathname.startsWith('/api/cron/') ||
+                           request.nextUrl.pathname === '/api/whatsapp/send' ||
+                           request.nextUrl.pathname === '/api/email/send'
+
+  if (isPublicApiRoute) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -30,9 +40,6 @@ export async function updateSession(request: NextRequest) {
   )
 
   // Do not run code between createServerClient and supabase.auth.getUser()
-  // A simple mistake could make it very hard to debug issues with users being
-  // randomly logged out.
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -41,15 +48,6 @@ export async function updateSession(request: NextRequest) {
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/prototype') ||
                            request.nextUrl.pathname.startsWith('/api/')
   const isAuthRoute = request.nextUrl.pathname === '/'
-  const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook' ||
-                           request.nextUrl.pathname.startsWith('/api/cron/') ||
-                           request.nextUrl.pathname === '/api/whatsapp/send' ||
-                           request.nextUrl.pathname === '/api/email/send'
-
-  // Allow public API routes without auth
-  if (isPublicApiRoute) {
-    return supabaseResponse
-  }
 
   // Redirect unauthenticated users from protected routes to login
   if (!user && isProtectedRoute) {
