@@ -8,7 +8,7 @@ import fcntl
 import requests
 from flask import Flask, request, Response, jsonify
 
-from tools.ai_inbound_agent import generate_reply, is_stop_message
+from tools.ai_inbound_agent import generate_reply, analyze_with_ai, is_stop_message
 
 # Import Supabase DB functions (optional - falls back to CSV if not configured)
 try:
@@ -20,6 +20,7 @@ try:
         find_lead_by_phone,
         update_lead_last_response,
         get_default_user_id,
+        create_meeting,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -229,9 +230,34 @@ def webhook_inbound():
             )
             continue
 
-        # Generate AI reply
-        reply_text = generate_reply(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
+        # Generate AI reply with full analysis
+        ai_result = analyze_with_ai(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
+        reply_text = ai_result.get("reply", "Thanks for your message! I'll follow up shortly.")
         send_result = _send_whatsapp_message(wa_id, reply_text)
+
+        # Create meeting if AI detected a meeting request
+        meeting_data = ai_result.get("meeting", {})
+        if meeting_data.get("requested") and SUPABASE_AVAILABLE and user_id:
+            lead = find_lead_by_phone(user_id, wa_id) if user_id else None
+            create_meeting(
+                user_id=user_id,
+                title=meeting_data.get("title", f"Meeting with {wa_id}"),
+                lead_phone=wa_id,
+                lead_name=lead.get("owner_name") if lead else None,
+                lead_id=lead.get("id") if lead else None,
+                description=meeting_data.get("description"),
+                meeting_date=meeting_data.get("date_suggestion"),
+                property_address=meeting_data.get("property_address"),
+                notes=ai_result.get("notes", ""),
+                source="ai_bot",
+            )
+            if user_id:
+                log_activity(
+                    user_id, "meeting_created",
+                    f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
+                    "success",
+                    {"phone": wa_id, "meeting": meeting_data},
+                )
 
         # Log outbound to CSV
         _write_csv_row(

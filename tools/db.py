@@ -185,6 +185,52 @@ def update_lead_last_response(lead_id: str) -> bool:
         return False
 
 
+def create_meeting(
+    user_id: str,
+    title: str,
+    lead_phone: str,
+    lead_name: Optional[str] = None,
+    lead_id: Optional[str] = None,
+    description: Optional[str] = None,
+    meeting_date: Optional[str] = None,
+    property_address: Optional[str] = None,
+    notes: Optional[str] = None,
+    source: str = "ai_bot",
+) -> bool:
+    """
+    Create a meeting/appointment record
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+
+    try:
+        record = {
+            "user_id": user_id,
+            "title": title,
+            "lead_phone": lead_phone,
+            "source": source,
+        }
+        if lead_id:
+            record["lead_id"] = lead_id
+        if lead_name:
+            record["lead_name"] = lead_name
+        if description:
+            record["description"] = description
+        if meeting_date:
+            record["meeting_date"] = meeting_date
+        if property_address:
+            record["property_address"] = property_address
+        if notes:
+            record["notes"] = notes
+
+        client.table("meetings").insert(record).execute()
+        return True
+    except Exception as e:
+        print(f"Error creating meeting: {e}")
+        return False
+
+
 def get_default_user_id() -> Optional[str]:
     """
     Get the first user ID from profiles table (for single-user setups)
