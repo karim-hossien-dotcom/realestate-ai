@@ -571,8 +571,9 @@
                 const icon = e.type === 'meeting' ? 'fa-calendar-check' : 'fa-clock';
                 const date = new Date(e.date);
                 const dateDisplay = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                const title = `${e.type === 'meeting' ? 'Meeting' : 'Follow-up'} with ${e.phone}`;
-                const calUrl = getGoogleCalendarUrl(title, e.date, e.time || '09:00', 60, '', e.note || '');
+                const displayTitle = e.title || `${e.type === 'meeting' ? 'Meeting' : 'Follow-up'} with ${e.phone}`;
+                const calUrl = getGoogleCalendarUrl(displayTitle, e.date, e.time || '09:00', 60, e.property_address || '', e.note || '');
+                const sourceLabel = e.source === 'ai_bot' ? '<span class="ml-1 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">AI Bot</span>' : '';
 
                 return `
                     <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -580,9 +581,10 @@
                             <i class="fas ${icon} text-white"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900">${e.type === 'meeting' ? 'Meeting' : 'Follow-up'}</p>
+                            <p class="text-sm font-medium text-gray-900">${displayTitle}${sourceLabel}</p>
                             <p class="text-xs text-gray-500">${e.phone}</p>
                             <p class="text-xs text-gray-600 mt-1">${dateDisplay}${e.time ? ' at ' + e.time : ''}</p>
+                            ${e.property_address ? `<p class="text-xs text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${e.property_address}</p>` : ''}
                             ${e.note ? `<p class="text-xs text-gray-500 mt-1 truncate">${e.note}</p>` : ''}
                             <a href="${calUrl}" target="_blank" class="inline-flex items-center mt-2 text-xs text-primary hover:text-blue-700">
                                 <i class="fab fa-google mr-1"></i> Add to Calendar
