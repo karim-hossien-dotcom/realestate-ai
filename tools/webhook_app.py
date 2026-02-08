@@ -24,6 +24,7 @@ try:
         get_conversation_history,
         get_lead_details,
         get_supabase_client,
+        create_follow_up,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -344,6 +345,37 @@ def webhook_inbound():
                     "success",
                     {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
                 )
+
+            # Auto-create day-before confirmation follow-up
+            if meeting_data.get("date_suggestion") and lead:
+                try:
+                    from datetime import timedelta
+                    meeting_dt = datetime.fromisoformat(
+                        meeting_data["date_suggestion"].replace("Z", "+00:00")
+                    )
+                    confirm_dt = meeting_dt - timedelta(days=1)
+                    lead_name = lead.get("owner_name", "there")
+                    confirm_msg = (
+                        f"Hi {lead_name}, just a reminder about our meeting tomorrow "
+                        f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
+                        f"at {meeting_data.get('property_address', 'your property')}. "
+                        f"Looking forward to speaking with you! - {os.getenv('AGENT_NAME', 'Nadine Khalil')}"
+                    )
+                    create_follow_up(
+                        user_id=user_id,
+                        lead_id=lead.get("id"),
+                        message_text=confirm_msg,
+                        scheduled_at=confirm_dt.isoformat(),
+                        channel="whatsapp",
+                    )
+                    log_activity(
+                        user_id, "followup",
+                        f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
+                        "success",
+                        {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
+                    )
+                except Exception as e:
+                    print(f"Error creating confirmation follow-up: {e}")
 
         # Log agent brief when lead is fully qualified
         agent_brief = ai_result.get("agent_brief")

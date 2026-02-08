@@ -130,7 +130,12 @@ def analyze_with_ai(
             parts.append(f"Email: {lead_details['email']}")
         known_info = "\n".join(parts)
 
+    today = dt.date.today().isoformat()
+    current_year = dt.date.today().year
+
     system_prompt = f"""You are {AGENT_NAME}, a top-performing real estate agent at {AGENT_BROKERAGE}. You handle inbound WhatsApp conversations AUTONOMOUSLY to qualify leads and prepare them for a closing call with the agent.
+
+TODAY'S DATE: {today}. The current year is {current_year}. ALWAYS use {current_year} for any dates you generate.
 
 YOUR MISSION: Gather ALL missing information from the lead through natural conversation, then schedule a meeting once fully qualified. You are the agent's assistant who handles the entire intake process.
 

@@ -231,6 +231,35 @@ def create_meeting(
         return False
 
 
+def create_follow_up(
+    user_id: str,
+    lead_id: str,
+    message_text: str,
+    scheduled_at: str,
+    channel: str = "both",
+) -> bool:
+    """
+    Create a follow-up reminder in the follow_ups table
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+
+    try:
+        client.table("follow_ups").insert({
+            "user_id": user_id,
+            "lead_id": lead_id,
+            "message_text": message_text,
+            "scheduled_at": scheduled_at,
+            "status": "pending",
+            "channel": channel,
+        }).execute()
+        return True
+    except Exception as e:
+        print(f"Error creating follow-up: {e}")
+        return False
+
+
 def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
     """
     Fetch recent conversation messages for a phone number.

@@ -754,18 +754,8 @@
 
         // Initialize Sarah Johnson as selected on page load
         document.addEventListener("DOMContentLoaded", () => {
-            currentLeadId = "demo-sarah";
-            currentLeadData = {
-                owner_name: "Sarah Johnson",
-                phone: "+15551234567",
-                email: "sarah.johnson@email.com",
-                property_interest: null,
-                budget_min: null,
-                budget_max: null,
-                property_type: null,
-                location_preference: null,
-                tags: ["Hot Lead", "First Time Buyer"]
-            };
+            // Load real conversations from API
+            loadConversationList();
         });
 
         // =====================
@@ -1001,8 +991,7 @@
             return div.innerHTML;
         }
 
-        // Initialize real data loading (uncomment to enable)
-        // document.addEventListener("DOMContentLoaded", loadConversationList);
+        // Real data loading is initialized in the DOMContentLoaded handler above
 
         // Modal functions
         function openModal(modalId) {
