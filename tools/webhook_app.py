@@ -21,6 +21,9 @@ try:
         update_lead_last_response,
         get_default_user_id,
         create_meeting,
+        get_conversation_history,
+        get_lead_details,
+        get_supabase_client,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -109,6 +112,63 @@ def _get_user_id() -> Optional[str]:
     if SUPABASE_AVAILABLE:
         return get_default_user_id()
     return None
+
+
+def _update_lead_from_qualification(
+    user_id: str,
+    wa_id: str,
+    qualification: dict,
+    ai_result: dict,
+) -> None:
+    """Update the lead record with information extracted by AI during qualification."""
+    if not SUPABASE_AVAILABLE:
+        return
+
+    lead = find_lead_by_phone(user_id, wa_id)
+    if not lead:
+        return
+
+    updates = {}
+    if qualification.get("property_address") and not lead.get("property_address"):
+        updates["property_address"] = qualification["property_address"]
+    if qualification.get("property_type") and not lead.get("property_type"):
+        updates["property_type"] = qualification["property_type"]
+    if qualification.get("owner_goal") and not lead.get("property_interest"):
+        updates["property_interest"] = qualification["owner_goal"]
+    if qualification.get("price_expectation") and not lead.get("budget_max"):
+        # Try to parse a number from the price expectation
+        try:
+            price_str = qualification["price_expectation"].replace("$", "").replace(",", "").strip()
+            price_val = int(float(price_str))
+            updates["budget_max"] = price_val
+        except (ValueError, AttributeError):
+            pass
+    if qualification.get("sqft"):
+        notes = lead.get("notes") or ""
+        sqft_note = f"Sqft: {qualification['sqft']}"
+        if sqft_note not in notes:
+            updates["notes"] = f"{notes}\n{sqft_note}".strip() if notes else sqft_note
+    if qualification.get("bedrooms"):
+        notes = updates.get("notes") or lead.get("notes") or ""
+        bed_note = f"Beds: {qualification['bedrooms']}"
+        if bed_note not in notes:
+            updates["notes"] = f"{notes}\n{bed_note}".strip() if notes else bed_note
+
+    # Save agent brief to lead notes when qualified
+    agent_brief = ai_result.get("agent_brief")
+    if agent_brief:
+        notes = updates.get("notes") or lead.get("notes") or ""
+        brief_header = "--- AI QUALIFICATION BRIEF ---"
+        if brief_header not in notes:
+            updates["notes"] = f"{notes}\n\n{brief_header}\n{agent_brief}".strip()
+
+    if updates:
+        try:
+            client = get_supabase_client()
+            if client:
+                client.table("leads").update(updates).eq("id", lead["id"]).execute()
+        except Exception as e:
+            print(f"Error updating lead from qualification: {e}")
 
 
 def _log_to_supabase(
@@ -240,14 +300,30 @@ def webhook_inbound():
             )
             continue
 
-        # Generate AI reply with full analysis
-        ai_result = analyze_with_ai(body, wa_id, WHATSAPP_PHONE_NUMBER_ID)
+        # Fetch conversation history and lead details for context
+        conversation_history = []
+        lead_details = None
+        if SUPABASE_AVAILABLE and user_id:
+            conversation_history = get_conversation_history(user_id, wa_id)
+            lead_details = get_lead_details(user_id, wa_id)
+
+        # Generate AI reply with full analysis + conversation context
+        ai_result = analyze_with_ai(
+            body, wa_id, WHATSAPP_PHONE_NUMBER_ID,
+            conversation_history=conversation_history,
+            lead_details=lead_details,
+        )
         reply_text = ai_result.get("reply", "Thanks for your message! I'll follow up shortly.")
         send_result = _send_whatsapp_message(wa_id, reply_text)
 
-        # Create meeting if AI detected a meeting request
+        # Update lead with qualification data extracted by AI
+        qualification = ai_result.get("qualification", {})
+        if qualification and SUPABASE_AVAILABLE and user_id:
+            _update_lead_from_qualification(user_id, wa_id, qualification, ai_result)
+
+        # Create meeting ONLY when ready_to_book (has both date and time)
         meeting_data = ai_result.get("meeting", {})
-        if meeting_data.get("requested") and SUPABASE_AVAILABLE and user_id:
+        if meeting_data.get("ready_to_book") and meeting_data.get("date_suggestion") and SUPABASE_AVAILABLE and user_id:
             lead = find_lead_by_phone(user_id, wa_id) if user_id else None
             create_meeting(
                 user_id=user_id,
@@ -257,8 +333,8 @@ def webhook_inbound():
                 lead_id=lead.get("id") if lead else None,
                 description=meeting_data.get("description"),
                 meeting_date=meeting_data.get("date_suggestion"),
-                property_address=meeting_data.get("property_address"),
-                notes=ai_result.get("notes", ""),
+                property_address=meeting_data.get("property_address") or qualification.get("property_address"),
+                notes=ai_result.get("agent_brief") or ai_result.get("notes", ""),
                 source="ai_bot",
             )
             if user_id:
@@ -266,8 +342,22 @@ def webhook_inbound():
                     user_id, "meeting_created",
                     f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
                     "success",
-                    {"phone": wa_id, "meeting": meeting_data},
+                    {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
                 )
+
+        # Log agent brief when lead is fully qualified
+        agent_brief = ai_result.get("agent_brief")
+        if agent_brief and SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "lead_qualified",
+                f"Lead {wa_id} fully qualified by AI bot",
+                "success",
+                {
+                    "phone": wa_id,
+                    "agent_brief": agent_brief,
+                    "qualification": qualification,
+                },
+            )
 
         # Log outbound to CSV
         _write_csv_row(

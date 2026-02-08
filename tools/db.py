@@ -231,6 +231,49 @@ def create_meeting(
         return False
 
 
+def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
+    """
+    Fetch recent conversation messages for a phone number.
+    Returns list of {direction, body, created_at} dicts, oldest first.
+    """
+    client = get_supabase_client()
+    if not client:
+        return []
+
+    try:
+        normalized = phone.lstrip("+")
+
+        # Find lead by phone to get lead_id
+        lead = find_lead_by_phone(user_id, phone)
+        if not lead:
+            return []
+
+        result = (
+            client.table("messages")
+            .select("direction, body, channel, created_at")
+            .eq("user_id", user_id)
+            .eq("lead_id", lead["id"])
+            .order("created_at", desc=False)
+            .limit(limit)
+            .execute()
+        )
+
+        return result.data if result.data else []
+    except Exception as e:
+        print(f"Error fetching conversation history: {e}")
+        return []
+
+
+def get_lead_details(user_id: str, phone: str) -> Optional[dict]:
+    """
+    Get full lead details including property info, budget, etc.
+    """
+    lead = find_lead_by_phone(user_id, phone)
+    if not lead:
+        return None
+    return lead
+
+
 def get_default_user_id() -> Optional[str]:
     """
     Get the first user ID from profiles table (for single-user setups)

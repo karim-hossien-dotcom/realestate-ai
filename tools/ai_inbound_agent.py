@@ -77,109 +77,190 @@ def is_stop_message(text: str) -> bool:
     }
 
 
-def analyze_with_ai(owner_message: str, from_number: str, to_number: str) -> dict:
+def analyze_with_ai(
+    owner_message: str,
+    from_number: str,
+    to_number: str,
+    conversation_history: list | None = None,
+    lead_details: dict | None = None,
+) -> dict:
     """
     Call OpenAI to classify intent and generate a reply.
+    Uses conversation history for context and lead details to track qualification.
 
     Returns a dict like:
     {
         "intent": "interested",
         "reply": "...",
         "schedule_follow_up_days": 3,
-        "notes": "wants CMA first"
+        "notes": "wants CMA first",
+        "meeting": {...},
+        "qualification": {...},
+        "agent_brief": "..."
     }
     """
-    system_prompt = f"""
-You are {AGENT_NAME}, a knowledgeable real estate agent at {AGENT_BROKERAGE}, responding to property owners via WhatsApp.
 
-Your expertise:
-- Deep knowledge of residential and commercial real estate markets
-- Familiar with property valuations, market trends, and comparable sales
-- Specialize in the NJ/NY metro area but knowledgeable about all US markets
-- Can discuss pricing, market conditions, timing, and investment strategy
+    # Build conversation context string
+    convo_context = ""
+    if conversation_history:
+        convo_lines = []
+        for msg in conversation_history[-15:]:  # last 15 messages
+            role = "OWNER" if msg.get("direction") == "inbound" else AGENT_NAME.upper()
+            convo_lines.append(f"{role}: {msg.get('body', '')}")
+        convo_context = "\n".join(convo_lines)
 
-Your job:
-1. Carefully read the owner's message and address EVERY specific detail they mention (property type, location, price, bedrooms, timeline, questions).
-2. Provide real, useful insight - reference market trends, approximate appreciation, neighborhood specifics when possible.
-3. If they mention a property, engage with it specifically (e.g. "A 3BR in Jersey City purchased at $450K in 2019 has likely appreciated 25-35% given the market...").
-4. If they ask about value, give a ballpark range based on general market knowledge, with a disclaimer that a proper CMA would give exact numbers.
-5. If they want to meet and provide BOTH a date AND time, confirm the appointment. If they provide a date but NO specific time, ASK them what time works best for them - do NOT assume or suggest a time.
-6. Decide their intent and suggest follow-up timing.
+    # Build known lead info
+    known_info = ""
+    if lead_details:
+        parts = []
+        if lead_details.get("owner_name"):
+            parts.append(f"Name: {lead_details['owner_name']}")
+        if lead_details.get("property_address"):
+            parts.append(f"Property: {lead_details['property_address']}")
+        if lead_details.get("property_type"):
+            parts.append(f"Type: {lead_details['property_type']}")
+        if lead_details.get("property_interest"):
+            parts.append(f"Interest: {lead_details['property_interest']}")
+        if lead_details.get("budget_min") or lead_details.get("budget_max"):
+            parts.append(f"Budget: ${lead_details.get('budget_min', '?')} - ${lead_details.get('budget_max', '?')}")
+        if lead_details.get("location_preference"):
+            parts.append(f"Location: {lead_details['location_preference']}")
+        if lead_details.get("email"):
+            parts.append(f"Email: {lead_details['email']}")
+        known_info = "\n".join(parts)
 
-Rules:
-- Keep replies under 600 characters.
-- Be warm, professional, and knowledgeable - NOT generic.
-- NEVER give vague replies like "the market has been active." Be SPECIFIC.
-- Address every question they ask directly before moving to next steps.
-- If they want a meeting and give a date BUT no time, you MUST ask them what time works. Do NOT pick a time for them.
-- If they clearly do NOT want further contact, mark intent "stop" and set schedule_follow_up_days to null.
-- If they say maybe later, choose a realistic follow-up window (e.g., 14, 30, 60 days).
-- DO NOT mention that you are an AI.
+    system_prompt = f"""You are {AGENT_NAME}, a top-performing real estate agent at {AGENT_BROKERAGE}. You handle inbound WhatsApp conversations AUTONOMOUSLY to qualify leads and prepare them for a closing call with the agent.
+
+YOUR MISSION: Gather ALL missing information from the lead through natural conversation, then schedule a meeting once fully qualified. You are the agent's assistant who handles the entire intake process.
+
+QUALIFICATION CHECKLIST - You must collect ALL of these before scheduling a meeting:
+1. PROPERTY ADDRESS - Full street address
+2. PROPERTY TYPE - Single family, condo, townhouse, multi-family, commercial, land
+3. BEDROOMS / BATHROOMS - Number of each
+4. SQUARE FOOTAGE - Approximate size
+5. OWNER'S GOAL - Selling, buying, renting, investing, or getting a valuation
+6. TIMELINE - When do they want to act? (ASAP, 1-3 months, 6+ months, just exploring)
+7. PRICE EXPECTATION - What they think it's worth or their budget
+8. MEETING DATE - Specific date
+9. MEETING TIME - Specific time (NEVER assume a time - always ask)
+
+CONVERSATION STRATEGY:
+- Ask for 1-2 missing items per message MAX. Don't overwhelm with questions.
+- Acknowledge what they've shared before asking for more.
+- Provide value with each response - give market insight, appreciation estimates, neighborhood knowledge.
+- Be specific: "A 5,000 sqft 3BR on Nick Nuccio Pkwy in Tampa is likely in the $X-Y range based on recent comps" is better than "the market is active."
+- When they share property details, respond with genuine expertise about that specific property/area.
+- If they give a date without a time, ask what time works best.
+- If they give a time without a date, ask what date works.
+- Only confirm the appointment once you have BOTH date AND time.
+
+LEAD READINESS:
+- Track what information you still need in the "missing_fields" array.
+- When ALL 9 checklist items are gathered, set "qualified" to true.
+- Generate an "agent_brief" summary ONLY when qualified - this is the prep document for {AGENT_NAME} before the call.
+
+RULES:
+- Keep replies under 500 characters. Be conversational, not robotic.
+- Be warm, professional, and knowledgeable.
+- NEVER give vague replies. Be SPECIFIC with market knowledge.
+- Address their message directly, then ask for the next missing piece naturally.
+- If they clearly do NOT want contact, mark intent "stop".
+- DO NOT mention that you are an AI or an assistant. You ARE {AGENT_NAME}.
 - Sign off as {AGENT_NAME}.
 
-Return ONLY valid JSON with this structure:
+Return ONLY valid JSON:
 {{
   "intent": "interested" | "not_interested" | "maybe_later" | "needs_more_info" | "wrong_person" | "stop" | "other",
-  "reply": "string",
+  "reply": "your message to the lead",
   "schedule_follow_up_days": integer or null,
-  "notes": "short internal note for the agent",
+  "notes": "internal note about this interaction",
+  "qualification": {{
+    "property_address": "extracted address or null",
+    "property_type": "extracted type or null",
+    "bedrooms": integer or null,
+    "bathrooms": integer or null,
+    "sqft": integer or null,
+    "owner_goal": "sell/buy/rent/invest/valuation or null",
+    "timeline": "extracted timeline or null",
+    "price_expectation": "extracted price or null",
+    "meeting_date": "YYYY-MM-DD or null",
+    "meeting_time": "HH:MM or null",
+    "missing_fields": ["list of still-missing checklist items"],
+    "qualified": true/false
+  }},
   "meeting": {{
     "requested": true/false,
+    "ready_to_book": true/false,
     "title": "Meeting with [name] - [property/topic]",
-    "date_suggestion": "YYYY-MM-DDTHH:MM:SS" or null,
-    "property_address": "address if mentioned" or null,
-    "description": "brief meeting purpose"
-  }}
+    "date_suggestion": "YYYY-MM-DDTHH:MM:SS or null",
+    "property_address": "address or null",
+    "description": "meeting purpose"
+  }},
+  "agent_brief": "ONLY when qualified=true: Full summary for {AGENT_NAME} including property details, owner motivation, price expectations, key talking points, and recommended approach for the call. Otherwise null."
 }}
 
-For the meeting field:
-- Set "requested" to true if the owner asks to meet, schedule a call, set up a time, book an appointment, etc.
-- Only set date_suggestion if the owner provided BOTH a date AND a time. If they only gave a date with no time, set date_suggestion to null (you need to ask them for their preferred time first).
-- Today's date context: use reasonable near-future dates.
+MEETING RULES:
+- Set "requested" to true when the owner asks to meet/call/schedule.
+- Set "ready_to_book" to true ONLY when you have BOTH a specific date AND time.
+- Only set "date_suggestion" when ready_to_book is true.
+- If they gave a date but no time, ask for time. Do NOT invent a time.
+- If they gave a time but no date, ask for date.
 """
 
-    user_payload = {
-        "from_number": from_number,
-        "to_number": to_number,
-        "owner_message": owner_message,
-    }
+    # Build messages list with conversation history
+    messages = [{"role": "system", "content": system_prompt}]
+
+    context_parts = []
+    if known_info:
+        context_parts.append(f"KNOWN LEAD INFO:\n{known_info}")
+    if convo_context:
+        context_parts.append(f"CONVERSATION HISTORY:\n{convo_context}")
+
+    context_str = "\n\n".join(context_parts)
+
+    user_content = ""
+    if context_str:
+        user_content += f"{context_str}\n\n"
+    user_content += (
+        f"NEW MESSAGE FROM OWNER (phone: {from_number}):\n"
+        f"{owner_message}\n\n"
+        f"Respond ONLY with JSON as specified."
+    )
+
+    messages.append({"role": "user", "content": user_content})
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         temperature=0.3,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": (
-                    "Here is the latest SMS reply from the property owner. "
-                    "Respond ONLY with JSON as specified.\n\n"
-                    + json.dumps(user_payload)
-                ),
-            },
-        ],
+        messages=messages,
     )
 
     raw = response.choices[0].message.content.strip()
 
+    # Strip markdown code fences if present
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+    if raw.endswith("```"):
+        raw = raw[:-3]
+    raw = raw.strip()
+
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        # Fallback if the model returns something weird
         data = {
             "intent": "other",
             "reply": (
-                "Thanks for your message! I’ll review it and follow up with a more "
+                "Thanks for your message! I'll review it and follow up with a more "
                 "detailed response shortly."
             ),
             "schedule_follow_up_days": None,
             "notes": f"JSON parse failed. Raw content: {raw[:200]}",
         }
 
-    # Basic safety checks
+    # Safety checks
     if "reply" not in data or not data["reply"]:
         data["reply"] = (
-            "Thanks for your message! I’ll review it and follow up with you shortly."
+            "Thanks for your message! I'll review it and follow up with you shortly."
         )
     if "intent" not in data:
         data["intent"] = "other"
@@ -187,6 +268,10 @@ For the meeting field:
         data["schedule_follow_up_days"] = None
     if "notes" not in data:
         data["notes"] = ""
+    if "qualification" not in data:
+        data["qualification"] = {}
+    if "agent_brief" not in data:
+        data["agent_brief"] = None
 
     return data
 
