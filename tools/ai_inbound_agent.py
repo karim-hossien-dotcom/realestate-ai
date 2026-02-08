@@ -19,6 +19,7 @@ import json
 import datetime as dt
 import urllib.request
 import urllib.error
+from typing import Optional
 
 from flask import Flask, request, jsonify
 from openai import OpenAI
@@ -81,8 +82,8 @@ def analyze_with_ai(
     owner_message: str,
     from_number: str,
     to_number: str,
-    conversation_history: list | None = None,
-    lead_details: dict | None = None,
+    conversation_history: Optional[list] = None,
+    lead_details: Optional[dict] = None,
 ) -> dict:
     """
     Call OpenAI to classify intent and generate a reply.
