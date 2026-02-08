@@ -246,16 +246,32 @@ def create_follow_up(
         return False
 
     try:
-        client.table("follow_ups").insert({
+        record = {
             "user_id": user_id,
             "lead_id": lead_id,
             "message_text": message_text,
             "scheduled_at": scheduled_at,
             "status": "pending",
             "channel": channel,
-        }).execute()
+        }
+        client.table("follow_ups").insert(record).execute()
         return True
     except Exception as e:
+        # If channel column doesn't exist yet (migration not run), retry without it
+        if "channel" in str(e):
+            try:
+                record = {
+                    "user_id": user_id,
+                    "lead_id": lead_id,
+                    "message_text": message_text,
+                    "scheduled_at": scheduled_at,
+                    "status": "pending",
+                }
+                client.table("follow_ups").insert(record).execute()
+                return True
+            except Exception as e2:
+                print(f"Error creating follow-up (retry): {e2}")
+                return False
         print(f"Error creating follow-up: {e}")
         return False
 

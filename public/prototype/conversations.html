@@ -243,13 +243,13 @@
                     <div class="p-4 bg-white border-b border-gray-200">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah Johnson" class="w-10 h-10 rounded-full">
+                                <div id="chat-header-avatar" class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">S</div>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Sarah Johnson</h3>
+                                    <h3 id="chat-header-name" class="text-lg font-semibold text-gray-900">Sarah Johnson</h3>
                                     <div class="flex items-center space-x-2">
-                                        <p class="text-sm text-gray-500">+1 (555) 123-4567</p>
+                                        <p id="chat-header-phone" class="text-sm text-gray-500">+1 (555) 123-4567</p>
                                         <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                        <span class="text-xs text-green-600">Online</span>
+                                        <span id="chat-header-channel" class="text-xs text-green-600">WhatsApp</span>
                                     </div>
                                 </div>
                             </div>
@@ -731,6 +731,12 @@
             const clickedItem = event.currentTarget;
             clickedItem.classList.add("bg-blue-50", "border-l-4", "border-l-blue-600");
 
+            // Update chat header
+            document.getElementById("chat-header-name").textContent = name;
+            document.getElementById("chat-header-phone").textContent = phone;
+            document.getElementById("chat-header-avatar").textContent = name.charAt(0).toUpperCase();
+            document.getElementById("chat-header-channel").textContent = "Demo";
+
             // Update lead details panel
             document.getElementById("lead-name-display").textContent = name;
             document.getElementById("lead-phone-display").textContent = phone;
@@ -833,32 +839,50 @@
                 const res = await fetch('/api/conversations');
                 const data = await res.json();
                 if (data.ok && data.conversations && data.conversations.length > 0) {
-                    renderConversationList(data.conversations);
+                    prependRealConversations(data.conversations);
+                    // Auto-select first real conversation
+                    const first = data.conversations[0];
+                    if (first) {
+                        selectConversation(first.id, first.phone || '');
+                    }
                 }
             } catch (err) {
                 console.error('Failed to load conversations:', err);
             }
         }
 
-        // Render conversation list
-        function renderConversationList(conversations) {
+        // Prepend real conversations above demo ones (don't replace)
+        function prependRealConversations(conversations) {
             const listContainer = document.getElementById('conversation-list');
             if (!listContainer) return;
 
-            listContainer.innerHTML = conversations.map((conv, idx) => {
+            // Remove highlight from demo items
+            listContainer.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('bg-blue-50', 'border-l-4', 'border-l-blue-600');
+            });
+
+            // Add a divider between real and demo
+            const dividerHtml = conversations.length > 0 ? `
+                <div id="real-demo-divider" class="px-4 py-2 bg-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Demo Conversations
+                </div>
+            ` : '';
+
+            const realHtml = conversations.map((conv, idx) => {
                 const name = conv.owner_name || 'Unknown';
                 const initial = name.charAt(0).toUpperCase();
                 const lastMsg = conv.lastMessage?.body || 'No messages yet';
                 const lastMsgTruncated = lastMsg.length > 40 ? lastMsg.substring(0, 40) + '...' : lastMsg;
                 const timeAgo = conv.lastMessage ? formatTimeAgo(new Date(conv.lastMessage.created_at)) : '';
                 const unread = conv.unreadCount > 0 ? `<span class="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">${conv.unreadCount}</span>` : '';
-                const scoreColor = getScoreColor(conv.score_category);
+                const channel = conv.lastMessage?.channel || 'whatsapp';
+                const channelIcon = channel === 'whatsapp' ? 'fab fa-whatsapp text-green-500' : (channel === 'email' ? 'fas fa-envelope text-blue-500' : 'fas fa-comment text-gray-500');
 
                 return `
                     <div class="conversation-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${idx === 0 ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''}"
                          data-lead-id="${conv.id}" data-lead-phone="${conv.phone || ''}" onclick="selectConversation('${conv.id}', '${conv.phone || ''}')">
                         <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 ${scoreColor} rounded-full flex items-center justify-center text-white font-semibold">
+                            <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 ${initial}
                             </div>
                             <div class="flex-1 min-w-0">
@@ -867,7 +891,7 @@
                                     <span class="text-xs text-gray-500">${timeAgo}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <p class="text-sm text-gray-500 truncate">${lastMsgTruncated}</p>
+                                    <p class="text-sm text-gray-500 truncate"><i class="${channelIcon} mr-1"></i>${lastMsgTruncated}</p>
                                     ${unread}
                                 </div>
                             </div>
@@ -875,6 +899,9 @@
                     </div>
                 `;
             }).join('');
+
+            // Prepend real conversations + divider before demo items
+            listContainer.insertAdjacentHTML('afterbegin', realHtml + dividerHtml);
         }
 
         // Select a conversation
@@ -892,8 +919,17 @@
             currentLeadPhone = phone;
             currentLeadId = leadId;
 
-            // Load lead details
+            // Load lead details (updates right panel)
             await loadLeadDetails(leadId);
+
+            // Update chat header from loaded lead data
+            if (currentLeadData) {
+                const name = currentLeadData.owner_name || 'Unknown';
+                document.getElementById('chat-header-name').textContent = name;
+                document.getElementById('chat-header-phone').textContent = phone || currentLeadData.phone || '';
+                document.getElementById('chat-header-avatar').textContent = name.charAt(0).toUpperCase();
+                document.getElementById('chat-header-channel').textContent = 'WhatsApp';
+            }
 
             // Load messages
             await loadMessages(leadId);
