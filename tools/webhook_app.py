@@ -217,7 +217,7 @@ def health():
     return Response("ok", status=200, mimetype="text/plain")
 
 
-@app.route("/webhook", methods=["GET"])
+@app.route("/webhook", methods=["GET"], strict_slashes=False)
 def webhook_verify():
     mode = request.args.get("hub.mode", "")
     token = request.args.get("hub.verify_token", "")
@@ -229,7 +229,7 @@ def webhook_verify():
     return Response("Forbidden", status=403, mimetype="text/plain")
 
 
-@app.route("/webhook", methods=["POST"])
+@app.route("/webhook", methods=["POST"], strict_slashes=False)
 def webhook_inbound():
     payload = request.get_json(silent=True) or {}
     messages = _extract_messages(payload)
