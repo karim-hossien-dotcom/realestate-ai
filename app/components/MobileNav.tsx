@@ -35,21 +35,21 @@ export default function MobileNav({ navItems, isOpen, onClose, profile, onSignOu
       />
 
       {/* Slide-out drawer */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-50 md:hidden transform transition-transform duration-300 ease-in-out">
-        <div className="p-6 border-b border-gray-200">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg z-50 md:hidden transform transition-transform duration-300 ease-in-out">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <i className="fas fa-home text-white text-lg"></i>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">RealEstate AI</h1>
-                <p className="text-sm text-gray-500">Agent Assistant</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">RealEstate AI</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Agent Assistant</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-500 hover:text-gray-700"
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-300"
             >
               <i className="fas fa-times text-xl"></i>
             </button>
@@ -89,7 +89,7 @@ export default function MobileNav({ navItems, isOpen, onClose, profile, onSignOu
                 {profile.initial}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{profile.displayName}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{profile.displayName}</p>
                 <p className="text-xs text-gray-500 truncate">{profile.displayCompany}</p>
               </div>
             </div>
