@@ -193,7 +193,8 @@ export async function POST(request: Request) {
     } else {
       // Send WhatsApp
       const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || ''
-      const bodyParams = effectiveTemplate !== 'hello_world' && lead.sms_text ? [lead.sms_text] : []
+      const recipientName = lead.owner_name?.split(' ')[0] || 'there'
+      const bodyParams = effectiveTemplate === 'hello_world' ? [] : (lead.sms_text ? [lead.sms_text] : [recipientName])
 
       sendResult = await sendWhatsAppTemplate({
         to: contact,
