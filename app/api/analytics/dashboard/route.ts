@@ -1,23 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
+  const { searchParams } = new URL(request.url)
+  const days = Math.min(Math.max(Number(searchParams.get('days')) || 30, 1), 365)
+
   const supabase = await createClient()
 
-  // Get message stats (last 30 days)
+  // Get message stats
   const { data: messageStats } = await supabase.rpc('get_message_stats', {
     p_user_id: auth.user.id,
-    p_days: 30,
+    p_days: days,
   })
 
   // Get response rate
   const { data: responseRate } = await supabase.rpc('get_response_rate', {
     p_user_id: auth.user.id,
-    p_days: 30,
+    p_days: days,
   })
 
   // Get lead status distribution
@@ -25,10 +28,10 @@ export async function GET() {
     p_user_id: auth.user.id,
   })
 
-  // Get messages time series (last 14 days)
+  // Get messages time series
   const { data: timeSeries } = await supabase.rpc('get_messages_time_series', {
     p_user_id: auth.user.id,
-    p_days: 14,
+    p_days: days,
   })
 
   // Get total leads count

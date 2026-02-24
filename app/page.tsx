@@ -10,6 +10,10 @@ export default function AuthPage() {
   const [showSigninPassword, setShowSigninPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const router = useRouter();
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
@@ -310,10 +314,80 @@ export default function AuthPage() {
                       Remember me
                     </label>
                   </div>
-                  <span className="text-sm text-gray-400 cursor-default">
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(true); setError(null); setForgotSent(false); }}
+                    className="text-sm text-primary hover:text-primary/80 transition-colors"
+                  >
                     Forgot password?
-                  </span>
+                  </button>
                 </div>
+
+                {/* Forgot Password Inline Form */}
+                {showForgotPassword && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                    {forgotSent ? (
+                      <div className="text-center">
+                        <i className="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                        <p className="text-sm text-gray-700 font-medium">Reset link sent!</p>
+                        <p className="text-xs text-gray-500 mt-1">Check your email for a password reset link.</p>
+                        <button
+                          type="button"
+                          onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(''); }}
+                          className="text-sm text-primary mt-3 hover:text-primary/80"
+                        >
+                          Back to sign in
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-600">Enter your email to receive a reset link.</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-primary focus:border-primary text-gray-900 bg-white"
+                          />
+                          <button
+                            type="button"
+                            disabled={forgotLoading || !forgotEmail}
+                            onClick={async () => {
+                              setForgotLoading(true);
+                              setError(null);
+                              try {
+                                const supabase = createClient();
+                                const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+                                  redirectTo: `${window.location.origin}/reset-password`,
+                                });
+                                if (error) {
+                                  setError(error.message);
+                                } else {
+                                  setForgotSent(true);
+                                }
+                              } catch {
+                                setError('Failed to send reset email');
+                              } finally {
+                                setForgotLoading(false);
+                              }
+                            }}
+                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                          >
+                            {forgotLoading ? 'Sending...' : 'Send'}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setShowForgotPassword(false); setForgotEmail(''); }}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -475,9 +549,9 @@ export default function AuthPage() {
                     className="ml-2 block text-sm text-gray-700"
                   >
                     I agree to the{' '}
-                    <span className="text-gray-400">
+                    <Link href="/terms" className="text-primary hover:text-primary/80">
                       Terms of Service
-                    </span>{' '}
+                    </Link>{' '}
                     and{' '}
                     <Link href="/privacy-policy" className="text-primary hover:text-primary/80">
                       Privacy Policy

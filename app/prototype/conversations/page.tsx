@@ -51,6 +51,8 @@ const CHANNEL_ICONS: Record<string, string> = {
   email: 'fa-envelope text-purple-600',
 };
 
+const POLL_INTERVAL = 15000; // 15 seconds
+
 export default function ConversationsPage() {
   const { showToast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -61,38 +63,97 @@ export default function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showContext, setShowContext] = useState(true);
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevConvosRef = useRef<string>('');
+  const prevMessagesRef = useRef<string>('');
+  const selectedIdRef = useRef<string | null>(null);
 
-  // Load conversations
+  // Keep ref in sync with state
   useEffect(() => {
-    fetch('/api/conversations')
-      .then(res => res.json())
-      .then(data => {
-        if (data.ok) setConversations(data.conversations || []);
-      })
-      .catch(() => showToast('Failed to load conversations', 'error'))
-      .finally(() => setLoading(false));
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  // Fetch conversation list
+  const fetchConversations = useCallback(async (silent = false) => {
+    try {
+      const res = await fetch('/api/conversations');
+      const data = await res.json();
+      if (data.ok) {
+        const newConvos = data.conversations || [];
+        const newSignature = JSON.stringify(newConvos.map((c: Conversation) => ({
+          id: c.id,
+          lastMsg: c.lastMessage?.id,
+          unread: c.unreadCount,
+        })));
+
+        if (silent && prevConvosRef.current && newSignature !== prevConvosRef.current) {
+          setHasNewMessages(true);
+        }
+        prevConvosRef.current = newSignature;
+        setConversations(newConvos);
+      }
+    } catch {
+      if (!silent) showToast('Failed to load conversations', 'error');
+    }
   }, [showToast]);
 
+  // Initial load
+  useEffect(() => {
+    fetchConversations().finally(() => setLoading(false));
+  }, [fetchConversations]);
+
+  // Poll conversations every 15s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchConversations(true);
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchConversations]);
+
   // Load messages when conversation selected
-  const loadMessages = useCallback(async (leadId: string) => {
-    setMessagesLoading(true);
+  const loadMessages = useCallback(async (leadId: string, silent = false) => {
+    if (!silent) setMessagesLoading(true);
     try {
       const res = await fetch(`/api/conversations?leadId=${leadId}`);
       const data = await res.json();
       if (data.ok) {
-        setMessages(data.conversations || data.messages || []);
+        const newMsgs = data.conversations || data.messages || [];
+        const newSignature = JSON.stringify(newMsgs.map((m: Message) => m.id));
+
+        if (silent && prevMessagesRef.current && newSignature !== prevMessagesRef.current) {
+          // New messages in active thread — auto-scroll
+          setMessages(newMsgs);
+        } else {
+          setMessages(newMsgs);
+        }
+        prevMessagesRef.current = newSignature;
       }
     } catch {
-      showToast('Failed to load messages', 'error');
+      if (!silent) showToast('Failed to load messages', 'error');
     } finally {
-      setMessagesLoading(false);
+      if (!silent) setMessagesLoading(false);
     }
   }, [showToast]);
 
   useEffect(() => {
-    if (selectedId) loadMessages(selectedId);
+    if (selectedId) {
+      prevMessagesRef.current = '';
+      loadMessages(selectedId);
+    }
   }, [selectedId, loadMessages]);
+
+  // Poll active thread messages every 15s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentId = selectedIdRef.current;
+      if (currentId) {
+        loadMessages(currentId, true);
+      }
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [loadMessages]);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -108,6 +169,15 @@ export default function ConversationsPage() {
       setMobileView('thread');
     }
   }, []);
+
+  // Manual refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setHasNewMessages(false);
+    await fetchConversations();
+    if (selectedId) await loadMessages(selectedId);
+    setRefreshing(false);
+  };
 
   const selectedConvo = conversations.find(c => c.id === selectedId);
 
@@ -125,19 +195,43 @@ export default function ConversationsPage() {
     <div className="flex h-[calc(100vh-64px)] md:h-[calc(100vh-0px)] overflow-hidden">
       {/* Panel 1: Conversation List */}
       <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 border-r border-gray-200 bg-white dark:bg-gray-800 flex-shrink-0`}>
-        {/* Search */}
+        {/* Search + Refresh */}
         <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="relative">
-            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-            <input
-              type="text"
-              placeholder="Search conversations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-900"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Refresh"
+            >
+              <i className={`fas fa-sync-alt text-sm ${refreshing ? 'animate-spin' : ''}`}></i>
+            </button>
           </div>
         </div>
+
+        {/* New messages banner */}
+        {hasNewMessages && (
+          <button
+            onClick={() => {
+              setHasNewMessages(false);
+              fetchConversations();
+            }}
+            className="mx-3 mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
+            <i className="fas fa-arrow-up text-xs"></i>
+            New messages available — tap to refresh
+          </button>
+        )}
 
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
@@ -167,8 +261,8 @@ export default function ConversationsPage() {
                     setSelectedId(convo.id);
                     setMobileView('thread');
                   }}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    isActive ? 'bg-blue-50' : ''
+                  className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    isActive ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -186,7 +280,7 @@ export default function ConversationsPage() {
                         {convo.lastMessage?.channel && (
                           <i className={`fas ${CHANNEL_ICONS[convo.lastMessage.channel] || 'fa-comment text-gray-400'} text-xs`}></i>
                         )}
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {convo.lastMessage?.direction === 'outbound' && <span className="text-gray-400">You: </span>}
                           {convo.lastMessage?.body || 'No messages'}
                         </p>
@@ -206,7 +300,7 @@ export default function ConversationsPage() {
       </div>
 
       {/* Panel 2: Message Thread */}
-      <div className={`${mobileView === 'thread' || selectedId ? 'flex' : 'hidden'} md:flex flex-col flex-1 bg-gray-50 min-w-0`}>
+      <div className={`${mobileView === 'thread' || selectedId ? 'flex' : 'hidden'} md:flex flex-col flex-1 bg-gray-50 dark:bg-gray-900 min-w-0`}>
         {!selectedId ? (
           <div className="flex-1 flex items-center justify-center">
             <EmptyState
@@ -248,7 +342,7 @@ export default function ConversationsPage() {
                 <div className="space-y-4 py-8">
                   {[1, 2, 3].map(i => (
                     <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                      <div className="animate-pulse bg-gray-200 rounded-lg h-12 w-48"></div>
+                      <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-12 w-48"></div>
                     </div>
                   ))}
                 </div>
@@ -286,7 +380,7 @@ export default function ConversationsPage() {
 
             {/* Compose (disabled for v1) */}
             <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2.5">
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2.5">
                 <i className="fas fa-lock text-gray-400 text-sm"></i>
                 <span className="text-sm text-gray-400">Direct messaging coming soon — use Campaigns to send outreach</span>
               </div>
@@ -297,7 +391,7 @@ export default function ConversationsPage() {
 
       {/* Panel 3: Context Sidebar */}
       {selectedConvo && showContext && (
-        <div className="hidden lg:flex flex-col w-80 border-l border-gray-200 bg-white dark:bg-gray-800 flex-shrink-0 overflow-y-auto">
+        <div className="hidden lg:flex flex-col w-80 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 overflow-y-auto">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Lead Details</h3>
           </div>
@@ -316,13 +410,13 @@ export default function ConversationsPage() {
             {/* Contact */}
             <div className="space-y-2 text-sm">
               {selectedConvo.phone && (
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <i className="fas fa-phone w-4 text-center text-gray-400"></i>
                   {selectedConvo.phone}
                 </div>
               )}
               {selectedConvo.email && (
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <i className="fas fa-envelope w-4 text-center text-gray-400"></i>
                   {selectedConvo.email}
                 </div>
@@ -331,20 +425,20 @@ export default function ConversationsPage() {
 
             {/* Status */}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Status</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
               <StatusBadge status={selectedConvo.status} />
             </div>
 
             {/* Property Info */}
             {selectedConvo.property_interest && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Property Interest</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Property Interest</p>
                 <p className="text-sm text-gray-900 dark:text-gray-100">{selectedConvo.property_interest}</p>
               </div>
             )}
             {(selectedConvo.budget_min || selectedConvo.budget_max) && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Budget</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Budget</p>
                 <p className="text-sm text-gray-900 dark:text-gray-100">
                   {selectedConvo.budget_min ? `$${selectedConvo.budget_min.toLocaleString()}` : '?'}
                   {' — '}
@@ -354,16 +448,16 @@ export default function ConversationsPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="pt-2 border-t border-gray-100 space-y-2">
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2">
               <button
                 onClick={() => window.location.href = `/prototype/leads`}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
               >
                 <i className="fas fa-user"></i>View Full Profile
               </button>
               <button
                 onClick={() => window.location.href = `/prototype/campaigns`}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
               >
                 <i className="fas fa-paper-plane"></i>Send Campaign
               </button>

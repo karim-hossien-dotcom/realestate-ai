@@ -62,7 +62,7 @@ export default function PrototypeLayout({
   };
 
   // Skip layout for settings page which has its own full layout
-  if (pathname === '/prototype' || iframePages.includes(pathname) || pathname === '/prototype/settings') {
+  if (pathname === '/prototype' || iframePages.includes(pathname)) {
     return <ThemeProvider><ToastProvider><div className="w-screen h-screen">{children}</div></ToastProvider></ThemeProvider>;
   }
 
