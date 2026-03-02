@@ -3,13 +3,13 @@ import './globals.css';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
-  title: 'RealEstate AI',
+  title: 'Estate AI',
   description: 'AI-powered assistant for real estate agents',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'RealEstate AI',
+    title: 'Estate AI',
   },
   formatDetection: {
     telephone: false,
@@ -41,7 +41,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       </head>
-      <body className="bg-gray-50" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <body className="bg-gray-50 dark:bg-gray-900 transition-colors" style={{ fontFamily: 'Inter, sans-serif' }}>
         {/* Font Awesome JS */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"

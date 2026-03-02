@@ -6,9 +6,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions }
 export async function updateSession(request: NextRequest) {
   // Check public API routes FIRST - skip all auth for these
   const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook' ||
-                           request.nextUrl.pathname.startsWith('/api/cron/') ||
-                           request.nextUrl.pathname === '/api/whatsapp/send' ||
-                           request.nextUrl.pathname === '/api/email/send'
+                           request.nextUrl.pathname.startsWith('/api/cron/')
 
   if (isPublicApiRoute) {
     return NextResponse.next({ request })

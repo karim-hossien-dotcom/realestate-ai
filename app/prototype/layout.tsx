@@ -100,7 +100,7 @@ export default function PrototypeLayout({
             </div>
             {sidebarExpanded && (
               <div className="overflow-hidden">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">RealEstate AI</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">Estate AI</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Agent Assistant</p>
               </div>
             )}
@@ -184,7 +184,7 @@ export default function PrototypeLayout({
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <i className="fas fa-home text-white text-sm"></i>
               </div>
-              <span className="font-bold text-gray-900 dark:text-gray-100">RealEstate AI</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">Estate AI</span>
             </div>
 
             {/* User profile - mobile */}

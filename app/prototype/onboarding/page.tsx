@@ -131,7 +131,7 @@ export default function OnboardingPage() {
               <i className="fas fa-home text-blue-600 text-xl"></i>
             </div>
             <div className="text-left">
-              <h1 className="text-2xl font-bold text-white">RealEstate AI</h1>
+              <h1 className="text-2xl font-bold text-white">Estate AI</h1>
               <p className="text-blue-200">Agent Assistant</p>
             </div>
           </div>

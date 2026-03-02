@@ -11,6 +11,7 @@ export async function GET() {
   const { data: leads, error } = await supabase
     .from('leads')
     .select('*')
+    .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -81,6 +82,7 @@ export async function PATCH(request: Request) {
     .from('leads')
     .update(updates)
     .eq('id', id)
+    .eq('user_id', auth.user.id)
     .select()
     .single()
 
@@ -114,6 +116,7 @@ export async function DELETE(request: Request) {
     .from('leads')
     .delete()
     .eq('id', id)
+    .eq('user_id', auth.user.id)
 
   if (error) {
     return NextResponse.json(

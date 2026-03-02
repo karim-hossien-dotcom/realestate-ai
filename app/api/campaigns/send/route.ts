@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
+import { sendSms } from '@/app/lib/sms'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 
@@ -14,7 +15,7 @@ type LeadInput = {
   property_address?: string
 }
 
-type Channel = 'whatsapp' | 'email'
+type Channel = 'whatsapp' | 'email' | 'sms'
 
 type SendResult = {
   phone: string
@@ -33,10 +34,11 @@ export async function POST(request: Request) {
   const supabase = await createClient()
 
   const leads: LeadInput[] = Array.isArray(body?.leads) ? body.leads : []
-  const channel: Channel = body?.channel === 'email' ? 'email' : 'whatsapp'
+  const channel: Channel = body?.channel === 'email' ? 'email' : body?.channel === 'sms' ? 'sms' : 'whatsapp'
   const templateName = typeof body?.templateName === 'string' ? body.templateName : undefined
   const languageCode = typeof body?.languageCode === 'string' ? body.languageCode : undefined
-  const campaignName = typeof body?.campaignName === 'string' ? body.campaignName : `${channel === 'email' ? 'Email' : 'WhatsApp'} Campaign ${new Date().toISOString().slice(0, 10)}`
+  const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
+  const campaignName = typeof body?.campaignName === 'string' ? body.campaignName : `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
 
   if (leads.length === 0) {
     return NextResponse.json(
@@ -62,8 +64,9 @@ export async function POST(request: Request) {
     process.env.WHATSAPP_PHONE_NUMBER_ID &&
     (templateName || process.env.WHATSAPP_TEMPLATE_NAME)
   const hasEmailConfig = !!process.env.RESEND_API_KEY
+  const hasSmsConfig = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER)
 
-  const isDemoMode = channel === 'whatsapp' ? !hasWhatsAppConfig : !hasEmailConfig
+  const isDemoMode = channel === 'email' ? !hasEmailConfig : channel === 'sms' ? !hasSmsConfig : !hasWhatsAppConfig
 
   // Create campaign record
   const { data: campaign, error: campaignError } = await supabase
@@ -101,7 +104,7 @@ export async function POST(request: Request) {
     // Get contact info based on channel
     const contact = channel === 'email'
       ? (lead.email || '').trim().toLowerCase()
-      : String(lead.phone || '').trim().replace(/^\+/, '')
+      : String(lead.phone || '').trim().replace(/^\+/, '')  // works for both whatsapp and sms
 
     if (!contact) {
       results.push({ phone: '', ok: false, error: `Missing ${channel === 'email' ? 'email' : 'phone number'}` })
@@ -190,6 +193,10 @@ export async function POST(request: Request) {
         replyTo: agentEmail,
         fromName: agentName, // Shows as "Agent Name <outreach@domain.com>"
       })
+    } else if (channel === 'sms') {
+      // Send SMS
+      const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
+      sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
       // Send WhatsApp
       const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || ''
@@ -259,7 +266,7 @@ export async function POST(request: Request) {
   await logActivity(
     auth.user.id,
     `${channel}_campaign_send`,
-    `${channel === 'email' ? 'Email' : 'WhatsApp'} campaign "${campaignName}": ${sent} delivered, ${failed} failed, ${skipped} skipped`,
+    `${channelLabel} campaign "${campaignName}": ${sent} delivered, ${failed} failed, ${skipped} skipped`,
     sent > 0 ? 'success' : 'failed',
     {
       campaignId: campaign.id,

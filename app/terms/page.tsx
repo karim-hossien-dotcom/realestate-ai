@@ -49,7 +49,7 @@ export default function TermsPage() {
         or contact us at:
       </p>
       <ul>
-        <li><strong>Email:</strong> support@eywaconsulting.com</li>
+        <li><strong>Email:</strong> support@realestate-ai.app</li>
         <li><strong>Phone:</strong> (848) 456-9428</li>
       </ul>
 
@@ -86,7 +86,7 @@ export default function TermsPage() {
       <ul>
         <li><strong>Company:</strong> EYWA Consulting Services Inc</li>
         <li><strong>Address:</strong> Keller Williams Commercial</li>
-        <li><strong>Email:</strong> support@eywaconsulting.com</li>
+        <li><strong>Email:</strong> support@realestate-ai.app</li>
         <li><strong>Phone:</strong> (848) 456-9428</li>
       </ul>
     </main>

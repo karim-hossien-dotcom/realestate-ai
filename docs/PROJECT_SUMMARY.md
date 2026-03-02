@@ -1,4 +1,4 @@
-# RealEstate AI - Project Summary
+# Estate AI - Project Summary
 
 ## Project Overview
 An AI-powered real estate lead outreach system for Nadine Khalil (KW Commercial) that automates personalized SMS/WhatsApp messaging to property owners.

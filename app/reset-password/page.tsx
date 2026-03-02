@@ -14,7 +14,14 @@ export default function ResetPasswordPage() {
   const [hasSession, setHasSession] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // Check if user arrived via recovery link (Supabase sets session automatically)
+  // Sync dark mode
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,21 +62,21 @@ export default function ResetPasswordPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
 
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-link-slash text-red-500 text-2xl"></i>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-link-slash text-red-500 dark:text-red-400 text-2xl"></i>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid or Expired Link</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Invalid or Expired Link</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             This password reset link is invalid or has expired. Please request a new one.
           </p>
           <button
@@ -85,13 +92,13 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-check text-green-600 text-2xl"></i>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-check text-green-600 dark:text-green-400 text-2xl"></i>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Password Updated</h1>
-          <p className="text-gray-600">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Password Updated</h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Your password has been reset. Redirecting to your dashboard...
           </p>
         </div>
@@ -100,30 +107,30 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-home text-white text-lg"></i>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Set New Password</h1>
-          <p className="text-gray-600">Enter your new password below</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Set New Password</h1>
+          <p className="text-gray-600 dark:text-gray-400">Enter your new password below</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               New Password
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-lock text-gray-400"></i>
+                <i className="fas fa-lock text-gray-400 dark:text-gray-500"></i>
               </div>
               <input
                 id="password"
@@ -133,19 +140,19 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white disabled:bg-gray-100"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-600 transition-colors"
                 placeholder="Enter new password"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Confirm Password
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i className="fas fa-lock text-gray-400"></i>
+                <i className="fas fa-lock text-gray-400 dark:text-gray-500"></i>
               </div>
               <input
                 id="confirm-password"
@@ -155,11 +162,11 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white disabled:bg-gray-100"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-600 transition-colors"
                 placeholder="Confirm new password"
               />
             </div>
-            <p className="mt-1.5 text-xs text-gray-500">Must be at least 8 characters</p>
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Must be at least 8 characters</p>
           </div>
 
           <button

@@ -26,6 +26,7 @@ def log_inbound_message(
     body: str,
     external_id: Optional[str] = None,
     lead_id: Optional[str] = None,
+    channel: str = "whatsapp",
 ) -> bool:
     """
     Log an inbound message to the messages table
@@ -39,7 +40,7 @@ def log_inbound_message(
             "user_id": user_id,
             "lead_id": lead_id,
             "direction": "inbound",
-            "channel": "whatsapp",
+            "channel": channel,
             "from_number": from_number,
             "body": body,
             "status": "received",
@@ -59,6 +60,7 @@ def log_outbound_message(
     external_id: Optional[str] = None,
     lead_id: Optional[str] = None,
     error_message: Optional[str] = None,
+    channel: str = "whatsapp",
 ) -> bool:
     """
     Log an outbound message to the messages table
@@ -72,7 +74,7 @@ def log_outbound_message(
             "user_id": user_id,
             "lead_id": lead_id,
             "direction": "outbound",
-            "channel": "whatsapp",
+            "channel": channel,
             "to_number": to_number,
             "body": body,
             "status": status,
@@ -317,6 +319,51 @@ def get_lead_details(user_id: str, phone: str) -> Optional[dict]:
     if not lead:
         return None
     return lead
+
+
+def is_on_dnc_list(user_id: str, phone: str) -> bool:
+    """
+    Check if a phone number is on the DNC (Do Not Contact) list.
+    Returns True if the number should NOT be contacted.
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+
+    try:
+        normalized = phone.lstrip("+")
+        result = client.table("dnc_list").select("id").eq(
+            "user_id", user_id
+        ).or_(
+            f"phone.eq.{normalized},phone.eq.+{normalized}"
+        ).limit(1).execute()
+
+        return bool(result.data)
+    except Exception as e:
+        print(f"Error checking DNC list: {e}")
+        return False
+
+
+def remove_from_dnc_list(user_id: str, phone: str) -> bool:
+    """
+    Remove a phone number from the DNC list (re-opt-in).
+    Used when a previously opted-out lead re-engages.
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+
+    try:
+        normalized = phone.lstrip("+")
+        client.table("dnc_list").delete().eq(
+            "user_id", user_id
+        ).or_(
+            f"phone.eq.{normalized},phone.eq.+{normalized}"
+        ).execute()
+        return True
+    except Exception as e:
+        print(f"Error removing from DNC list: {e}")
+        return False
 
 
 def get_default_user_id() -> Optional[str]:

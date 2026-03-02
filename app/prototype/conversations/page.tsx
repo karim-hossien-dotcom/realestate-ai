@@ -65,6 +65,9 @@ export default function ConversationsPage() {
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [composeText, setComposeText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendChannel, setSendChannel] = useState<'whatsapp' | 'sms' | 'email'>('whatsapp');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevConvosRef = useRef<string>('');
   const prevMessagesRef = useRef<string>('');
@@ -177,6 +180,38 @@ export default function ConversationsPage() {
     await fetchConversations();
     if (selectedId) await loadMessages(selectedId);
     setRefreshing(false);
+  };
+
+  // Send message handler
+  const handleSendMessage = async () => {
+    if (!composeText.trim() || !selectedId || sending) return;
+
+    setSending(true);
+    try {
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: selectedId,
+          message: composeText.trim(),
+          channel: sendChannel,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast('Message sent!', 'success');
+        setComposeText('');
+        // Refresh messages to show the sent message
+        await loadMessages(selectedId);
+        await fetchConversations(true);
+      } else {
+        showToast(data.error || 'Failed to send message', 'error');
+      }
+    } catch {
+      showToast('Failed to send message', 'error');
+    } finally {
+      setSending(false);
+    }
   };
 
   const selectedConvo = conversations.find(c => c.id === selectedId);
@@ -378,11 +413,46 @@ export default function ConversationsPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Compose (disabled for v1) */}
+            {/* Compose */}
             <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2.5">
-                <i className="fas fa-lock text-gray-400 text-sm"></i>
-                <span className="text-sm text-gray-400">Direct messaging coming soon — use Campaigns to send outreach</span>
+              <div className="flex items-center gap-2">
+                {/* Channel toggle */}
+                <button
+                  onClick={() => setSendChannel(sendChannel === 'whatsapp' ? 'sms' : sendChannel === 'sms' ? 'email' : 'whatsapp')}
+                  className={`p-2 rounded-lg flex-shrink-0 transition-colors ${
+                    sendChannel === 'whatsapp'
+                      ? 'text-green-600 bg-green-50 dark:bg-green-900/30'
+                      : sendChannel === 'sms'
+                      ? 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/30'
+                      : 'text-purple-600 bg-purple-50 dark:bg-purple-900/30'
+                  }`}
+                  title={`Sending via ${sendChannel.toUpperCase()} — click to switch`}
+                >
+                  <i className={`fas ${sendChannel === 'whatsapp' ? 'fa-brands fa-whatsapp' : sendChannel === 'sms' ? 'fa-sms' : 'fa-envelope'} text-lg`}></i>
+                </button>
+                {/* Text input */}
+                <input
+                  type="text"
+                  value={composeText}
+                  onChange={(e) => setComposeText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                  placeholder={`Type a message via ${sendChannel}...`}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 disabled:opacity-50"
+                />
+                {/* Send button */}
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!composeText.trim() || sending}
+                  className="p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  title="Send message"
+                >
+                  {sending ? (
+                    <i className="fas fa-spinner fa-spin text-sm"></i>
+                  ) : (
+                    <i className="fas fa-paper-plane text-sm"></i>
+                  )}
+                </button>
               </div>
             </div>
           </>

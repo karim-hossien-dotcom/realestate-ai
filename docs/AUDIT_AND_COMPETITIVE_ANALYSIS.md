@@ -1,4 +1,4 @@
-# RealEstate AI - Audit + Competitive Analysis
+# Estate AI - Audit + Competitive Analysis
 ## February 2026
 
 ---

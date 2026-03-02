@@ -29,7 +29,7 @@ const settingsSections = [
   { id: 'email' as const, label: 'Email Settings', icon: 'fa-envelope', comingSoon: true, shortLabel: 'Email' },
   { id: 'team' as const, label: 'Team Management', icon: 'fa-users-cog', comingSoon: true, shortLabel: 'Team' },
   { id: 'auto-reply' as const, label: 'Auto-Reply', icon: 'fa-robot', comingSoon: true, shortLabel: 'Auto-Reply' },
-  { id: 'billing' as const, label: 'Billing & Plans', icon: 'fa-credit-card', comingSoon: true, shortLabel: 'Billing' },
+  { id: 'billing' as const, label: 'Billing & Plans', icon: 'fa-credit-card', shortLabel: 'Billing' },
 ];
 
 export default function SettingsPage() {
@@ -53,10 +53,39 @@ export default function SettingsPage() {
   const [fubError, setFubError] = useState<string | null>(null);
   const [fubSuccess, setFubSuccess] = useState<string | null>(null);
 
+  // Billing state
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingData, setBillingData] = useState<{
+    subscription: {
+      status: string;
+      plan: string;
+      planSlug: string | null;
+      currentPeriodEnd: string;
+      trialEnd: string | null;
+      cancelAtPeriodEnd: boolean;
+    } | null;
+    usage: {
+      sms: number;
+      email: number;
+      whatsapp: number;
+      leads: number;
+      includedSms: number;
+      includedLeads: number;
+    };
+  } | null>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
   useEffect(() => {
     fetchProfile();
     fetchFubStatus();
   }, []);
+
+  useEffect(() => {
+    if (activeSection === 'billing') {
+      fetchBillingData();
+    }
+  }, [activeSection]);
 
   const fetchProfile = async () => {
     try {
@@ -165,6 +194,89 @@ export default function SettingsPage() {
     } catch { setFubError('Failed to sync'); }
     finally { setFubSyncing(false); }
   };
+
+  const fetchBillingData = async () => {
+    setBillingLoading(true);
+    setBillingError(null);
+    try {
+      const response = await fetch('/api/stripe/usage');
+      const data = await response.json();
+      if (data.ok) {
+        setBillingData(data);
+      } else {
+        setBillingError(data.error || 'Failed to load billing data');
+      }
+    } catch {
+      setBillingError('Failed to load billing data');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const handleCheckout = async (priceId: string) => {
+    setCheckoutLoading(priceId);
+    setBillingError(null);
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId }),
+      });
+      const data = await response.json();
+      if (data.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError(data.error || 'Failed to start checkout');
+      }
+    } catch {
+      setBillingError('Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setBillingError(null);
+    try {
+      const response = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await response.json();
+      if (data.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError(data.error || 'Failed to open billing portal');
+      }
+    } catch {
+      setBillingError('Failed to open billing portal');
+    }
+  };
+
+  const plans = [
+    {
+      slug: 'starter',
+      name: 'Starter',
+      price: '$29',
+      period: '/mo',
+      features: ['Up to 200 leads', '500 SMS/month', 'WhatsApp + Email + SMS', 'AI message generation', 'Lead scoring', 'Basic analytics'],
+      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || '',
+    },
+    {
+      slug: 'pro',
+      name: 'Pro',
+      price: '$59',
+      period: '/mo',
+      popular: true,
+      features: ['Up to 1,000 leads', '2,000 SMS/month', 'Everything in Starter', 'Follow-up automation', 'CRM integration', 'Advanced analytics', 'Priority support'],
+      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
+    },
+    {
+      slug: 'agency',
+      name: 'Agency',
+      price: '$149',
+      period: '/mo',
+      features: ['Unlimited leads', '10,000 SMS/month', 'Everything in Pro', 'Team management', 'White-label reports', 'Dedicated support', 'Custom integrations'],
+      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_AGENCY_PRICE_ID || '',
+    },
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -436,8 +548,239 @@ export default function SettingsPage() {
             </section>
           )}
 
+          {/* Billing Section */}
+          {activeSection === 'billing' && (
+            <section className="space-y-6 max-w-5xl">
+              {billingError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                  {billingError}
+                </div>
+              )}
+
+              {billingLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Current Subscription Status */}
+                  {billingData?.subscription ? (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Current Plan</h3>
+                        <button
+                          onClick={handleManageBilling}
+                          className="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <i className="fas fa-external-link-alt mr-2"></i>
+                          Manage Billing
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Plan</span>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{billingData.subscription.plan}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
+                          <p className="text-lg font-semibold">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                              billingData.subscription.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                              billingData.subscription.status === 'trialing' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                              'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                            }`}>
+                              {billingData.subscription.status === 'trialing' ? 'Free Trial' : billingData.subscription.status}
+                            </span>
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {billingData.subscription.status === 'trialing' ? 'Trial ends' : 'Renews'}
+                          </span>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {new Date(billingData.subscription.trialEnd || billingData.subscription.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {billingData.subscription.cancelAtPeriodEnd && (
+                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-700 dark:text-yellow-400 text-sm">
+                          <i className="fas fa-exclamation-triangle mr-2"></i>
+                          Your subscription will be cancelled at the end of the current billing period.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                          <i className="fas fa-gift text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-blue-900 dark:text-blue-300">Start your 14-day free trial</h3>
+                          <p className="text-sm text-blue-700 dark:text-blue-400">Choose a plan below to get started. No charge during trial.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Usage Stats */}
+                  {billingData?.subscription && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Usage This Period</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {/* SMS Usage */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">SMS Sent</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {billingData.usage.sms}{billingData.usage.includedSms > 0 ? `/${billingData.usage.includedSms}` : ''}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                billingData.usage.includedSms > 0 && billingData.usage.sms / billingData.usage.includedSms > 0.9
+                                  ? 'bg-red-500' : 'bg-blue-600'
+                              }`}
+                              style={{ width: `${Math.min(100, billingData.usage.includedSms > 0 ? (billingData.usage.sms / billingData.usage.includedSms) * 100 : 0)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Email Usage */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Emails</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{billingData.usage.email}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
+                          </div>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Unlimited</span>
+                        </div>
+
+                        {/* WhatsApp Usage */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">WhatsApp</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{billingData.usage.whatsapp}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
+                          </div>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Pay per use</span>
+                        </div>
+
+                        {/* Leads */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Leads</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {billingData.usage.leads}{billingData.usage.includedLeads > 0 ? `/${billingData.usage.includedLeads}` : ''}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                billingData.usage.includedLeads > 0 && billingData.usage.leads / billingData.usage.includedLeads > 0.9
+                                  ? 'bg-red-500' : 'bg-purple-500'
+                              }`}
+                              style={{ width: `${Math.min(100, billingData.usage.includedLeads > 0 ? (billingData.usage.leads / billingData.usage.includedLeads) * 100 : 0)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Plan Cards */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                      {billingData?.subscription ? 'Change Plan' : 'Choose a Plan'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {plans.map((plan) => {
+                        const isCurrentPlan = billingData?.subscription?.planSlug === plan.slug;
+                        return (
+                          <div
+                            key={plan.slug}
+                            className={`relative bg-white dark:bg-gray-800 rounded-xl border-2 p-6 transition-all ${
+                              plan.popular
+                                ? 'border-blue-500 dark:border-blue-400 shadow-lg'
+                                : isCurrentPlan
+                                ? 'border-green-500 dark:border-green-400'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            {plan.popular && !isCurrentPlan && (
+                              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                                Most Popular
+                              </span>
+                            )}
+                            {isCurrentPlan && (
+                              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                                Current Plan
+                              </span>
+                            )}
+
+                            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{plan.name}</h4>
+                            <div className="flex items-baseline mb-4">
+                              <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">{plan.price}</span>
+                              <span className="text-gray-500 dark:text-gray-400 ml-1">{plan.period}</span>
+                            </div>
+
+                            <ul className="space-y-2 mb-6">
+                              {plan.features.map((feature, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                  <i className="fas fa-check text-green-500 mt-0.5 flex-shrink-0"></i>
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+
+                            {isCurrentPlan ? (
+                              <button
+                                onClick={handleManageBilling}
+                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                              >
+                                Manage Plan
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleCheckout(plan.stripePriceId)}
+                                disabled={!!checkoutLoading || !plan.stripePriceId}
+                                className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                  plan.popular
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400'
+                                    : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-400'
+                                }`}
+                              >
+                                {checkoutLoading === plan.stripePriceId ? (
+                                  <><i className="fas fa-spinner fa-spin mr-2"></i>Loading...</>
+                                ) : billingData?.subscription ? (
+                                  'Switch Plan'
+                                ) : (
+                                  'Start Free Trial'
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">
+                      All plans include a 14-day free trial. Cancel anytime. Prices in USD.
+                    </p>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
           {/* Coming Soon Sections */}
-          {(['messaging', 'email', 'team', 'auto-reply', 'billing'] as const).includes(activeSection as 'messaging' | 'email' | 'team' | 'auto-reply' | 'billing') && (
+          {(['messaging', 'email', 'team', 'auto-reply'] as const).includes(activeSection as 'messaging' | 'email' | 'team' | 'auto-reply') && (
             <section className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">

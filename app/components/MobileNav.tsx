@@ -43,7 +43,7 @@ export default function MobileNav({ navItems, isOpen, onClose, profile, onSignOu
                 <i className="fas fa-home text-white text-lg"></i>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">RealEstate AI</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Estate AI</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Agent Assistant</p>
               </div>
             </div>

@@ -33,7 +33,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [channel, setChannel] = useState<'whatsapp' | 'email' | 'both'>('whatsapp');
+  const [channel, setChannel] = useState<'whatsapp' | 'email' | 'sms' | 'both'>('whatsapp');
   const [templateName, setTemplateName] = useState('realestate_outreach');
   const [campaignName, setCampaignName] = useState('');
   const [sending, setSending] = useState(false);
@@ -98,8 +98,8 @@ export default function CampaignsPage() {
     setSendResults([]);
     setSendStats(null);
 
-    const channelsToSend: ('whatsapp' | 'email')[] =
-      channel === 'both' ? ['whatsapp', 'email'] : [channel];
+    const channelsToSend: ('whatsapp' | 'email' | 'sms')[] =
+      channel === 'both' ? ['whatsapp', 'email', 'sms'] : [channel];
 
     const allResults: SendResult[] = [];
     let totalSent = 0, totalFailed = 0, totalSkipped = 0;
@@ -165,7 +165,7 @@ export default function CampaignsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Campaigns</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Send outreach messages to your leads via WhatsApp or Email</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Send outreach messages to your leads via WhatsApp, SMS, or Email</p>
       </div>
 
       {/* Step Indicator */}
@@ -309,8 +309,9 @@ export default function CampaignsPage() {
               <div className="flex gap-3">
                 {[
                   { value: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp', color: 'green' },
+                  { value: 'sms', label: 'SMS', icon: 'fa-sms', color: 'cyan' },
                   { value: 'email', label: 'Email', icon: 'fa-envelope', color: 'blue' },
-                  { value: 'both', label: 'Both', icon: 'fa-paper-plane', color: 'purple' },
+                  { value: 'both', label: 'All', icon: 'fa-paper-plane', color: 'purple' },
                 ].map((ch) => (
                   <button
                     key={ch.value}

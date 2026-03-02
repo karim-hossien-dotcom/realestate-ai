@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
 import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { sendSms } from '@/app/lib/sms'
 
 const MAX_RETRIES = 3
 const BATCH_SIZE = 10 // Process max 10 follow-ups per run
@@ -135,6 +136,7 @@ export async function POST(request: NextRequest) {
         const channel = followUp.channel || 'both'
         let emailSent = false
         let whatsappSent = false
+        let smsSent = false
         const errors: string[] = []
 
         // Send Email
@@ -169,9 +171,21 @@ export async function POST(request: NextRequest) {
           errors.push('WhatsApp: No phone number for lead')
         }
 
+        // Send SMS
+        if (channel === 'sms' && lead.phone) {
+          const smsResult = await sendFollowUpSms(lead, profile, followUp)
+          if (smsResult.ok) {
+            smsSent = true
+          } else {
+            errors.push(`SMS: ${smsResult.error}`)
+          }
+        } else if (channel === 'sms' && !lead.phone) {
+          errors.push('SMS: No phone number for lead')
+        }
+
         // Determine final status
         let newStatus: string
-        if (emailSent || whatsappSent) {
+        if (emailSent || whatsappSent || smsSent) {
           if (errors.length === 0) {
             newStatus = 'sent'
             results.sent++
@@ -199,13 +213,14 @@ export async function POST(request: NextRequest) {
         await supabase.from('activity_logs').insert({
           user_id: followUp.user_id,
           event_type: 'follow_up_sent',
-          description: `Follow-up ${newStatus}: ${emailSent ? 'Email' : ''}${emailSent && whatsappSent ? ' + ' : ''}${whatsappSent ? 'WhatsApp' : ''}`,
+          description: `Follow-up ${newStatus}: ${[emailSent && 'Email', whatsappSent && 'WhatsApp', smsSent && 'SMS'].filter(Boolean).join(' + ') || 'None'}`,
           status: newStatus === 'sent' ? 'success' : newStatus === 'partial' ? 'success' : 'failed',
           metadata: {
             follow_up_id: followUp.id,
             lead_id: lead.id,
             email_sent: emailSent,
             whatsapp_sent: whatsappSent,
+            sms_sent: smsSent,
             errors,
           },
         })
@@ -229,6 +244,18 @@ export async function POST(request: NextRequest) {
             lead_id: lead.id,
             direction: 'outbound',
             channel: 'whatsapp',
+            to_number: lead.phone,
+            body: followUp.message_text,
+            status: 'sent',
+          })
+        }
+
+        if (smsSent) {
+          await supabase.from('messages').insert({
+            user_id: followUp.user_id,
+            lead_id: lead.id,
+            direction: 'outbound',
+            channel: 'sms',
             to_number: lead.phone,
             body: followUp.message_text,
             status: 'sent',
@@ -318,6 +345,22 @@ async function sendFollowUpEmail(
   })
 
   return result
+}
+
+async function sendFollowUpSms(
+  lead: Lead,
+  profile: Profile,
+  followUp: FollowUp
+): Promise<{ ok: boolean; error?: string }> {
+  if (!lead.phone) {
+    return { ok: false, error: 'No phone number' }
+  }
+
+  const agentName = profile.full_name || 'Your Real Estate Agent'
+  const recipientName = lead.owner_name?.split(' ')[0] || 'there'
+  const body = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out! - ${agentName}`
+
+  return await sendSms({ to: lead.phone, body })
 }
 
 async function sendFollowUpWhatsApp(

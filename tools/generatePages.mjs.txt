@@ -13,7 +13,7 @@ const pages = [
   {
     route: "", // home page ("/")
     title: "Dashboard",
-    description: "Main overview of your RealEstate AI activity.",
+    description: "Main overview of your Estate AI activity.",
   },
   {
     route: "leads",
@@ -60,7 +60,7 @@ const pages = [
   {
     route: "auth",
     title: "Authentication",
-    description: "Sign in or sign up to access your RealEstate AI dashboard.",
+    description: "Sign in or sign up to access your Estate AI dashboard.",
   },
 ];
 

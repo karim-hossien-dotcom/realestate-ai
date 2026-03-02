@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import { sendWhatsAppTemplate } from '@/app/lib/whatsapp';
+import { withAuth } from '@/app/lib/auth';
 
 export async function POST(request: Request) {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const to = String(body?.to || '').trim();
   const templateName = typeof body?.templateName === 'string' ? body.templateName : undefined;

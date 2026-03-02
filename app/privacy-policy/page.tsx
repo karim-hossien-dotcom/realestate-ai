@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
       </p>
       <ul>
         <li><strong>Company:</strong> EYWA Consulting Services Inc</li>
-        <li><strong>Email:</strong> privacy@eywaconsulting.com</li>
+        <li><strong>Email:</strong> privacy@realestate-ai.app</li>
         <li><strong>Phone:</strong> (848) 456-9428</li>
       </ul>
 
