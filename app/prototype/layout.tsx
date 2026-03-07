@@ -22,6 +22,7 @@ const navItems = [
   { href: '/prototype/calendar', label: 'Calendar', icon: 'fa-calendar' },
   { href: '/prototype/logs', label: 'Logs', icon: 'fa-file-alt' },
   { href: '/prototype/settings', label: 'Settings', icon: 'fa-cog' },
+  { href: '/prototype/test-playbook', label: 'Test Playbook', icon: 'fa-flask' },
 ];
 
 // All pages are now React components (no more iframes)

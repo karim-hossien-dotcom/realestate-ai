@@ -54,6 +54,55 @@ function getGoogleCalendarUrl(event: CalendarEvent): string {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
 }
 
+function downloadIcsFile(event: CalendarEvent): void {
+  const title = event.title || `${event.type === 'meeting' ? 'Meeting' : 'Follow-up'} - ${event.phone}`;
+  const description = event.note || '';
+  const location = event.property_address || '';
+
+  // Build start/end datetime strings (YYYYMMDDTHHMMSS)
+  const dateClean = event.date.replace(/-/g, '');
+  let dtStart = dateClean;
+  let dtEnd = dateClean;
+  if (event.time) {
+    const [h, m] = event.time.split(':');
+    dtStart = `${dateClean}T${h}${m}00`;
+    const endHour = (parseInt(h) + 1).toString().padStart(2, '0');
+    dtEnd = `${dateClean}T${endHour}${m}00`;
+  }
+
+  const uid = `${event.id}-${Date.now()}@estateai`;
+  const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Estate AI//Calendar//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
+    `LOCATION:${location}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function CalendarPage() {
   const { showToast } = useToast();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -192,16 +241,21 @@ export default function CalendarPage() {
         setInviteForm({ leadId: '', phone: '', date: '', time: '14:00', note: '' });
         fetchEvents();
 
-        // Open Google Calendar
+        // Offer calendar options
         const newEvent: CalendarEvent = {
-          id: 'new',
+          id: 'new-' + Date.now(),
           date: inviteForm.date,
           time: inviteForm.time,
           type: 'meeting',
           phone: inviteForm.phone,
           note: inviteForm.note,
         };
-        window.open(getGoogleCalendarUrl(newEvent), '_blank');
+        const choice = window.confirm('Add to Google Calendar?\n\nOK = Google Calendar\nCancel = Download .ics (Apple Calendar / Outlook)');
+        if (choice) {
+          window.open(getGoogleCalendarUrl(newEvent), '_blank');
+        } else {
+          downloadIcsFile(newEvent);
+        }
       } else {
         showToast(data.error || 'Failed to schedule', 'error');
       }
@@ -418,15 +472,24 @@ export default function CalendarPage() {
                         </span>
                       )}
                     </div>
-                    <a
-                      href={getGoogleCalendarUrl(event)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                      title="Add to Google Calendar"
-                    >
-                      <i className="fab fa-google text-sm"></i>
-                    </a>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <a
+                        href={getGoogleCalendarUrl(event)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Add to Google Calendar"
+                      >
+                        <i className="fab fa-google text-sm"></i>
+                      </a>
+                      <button
+                        onClick={() => downloadIcsFile(event)}
+                        className="p-1.5 text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"
+                        title="Add to Apple Calendar"
+                      >
+                        <i className="fab fa-apple text-sm"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

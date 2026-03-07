@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { sendWhatsAppTemplate, sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
 import { createClient } from '@/app/lib/supabase/server'
@@ -180,17 +180,29 @@ export async function POST(request: Request) {
       const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
-      // Send WhatsApp
-      const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || ''
-      const recipientName = lead.owner_name?.split(' ')[0] || 'there'
-      const bodyParams = effectiveTemplate === 'hello_world' ? [] : (lead.sms_text ? [lead.sms_text] : [recipientName])
+      // Send WhatsApp — prefer text messages (no payment method needed),
+      // fall back to template if no personalized message available
+      const messageBody = lead.sms_text
+        ? `Hello from KW Commercial:\n\n${lead.sms_text}\n\n- Nadine Khalil\n\nReply STOP to opt out`
+        : null
 
-      sendResult = await sendWhatsAppTemplate({
-        to: contact,
-        templateName,
-        languageCode,
-        bodyParams,
-      })
+      if (messageBody) {
+        // Send as text message (works without marketing template payment)
+        const textResult = await sendWhatsAppText({ to: contact, body: messageBody })
+        sendResult = { ok: textResult.ok, messageId: textResult.messageId, error: textResult.error }
+      } else {
+        // Fall back to template for leads without pre-generated messages
+        const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || ''
+        const recipientName = lead.owner_name?.split(' ')[0] || 'there'
+        const bodyParams = effectiveTemplate === 'hello_world' ? [] : [recipientName]
+
+        sendResult = await sendWhatsAppTemplate({
+          to: contact,
+          templateName,
+          languageCode,
+          bodyParams,
+        })
+      }
     }
 
     // Record message in DB
