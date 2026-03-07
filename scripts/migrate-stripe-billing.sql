@@ -73,13 +73,15 @@ CREATE POLICY "Users can read own usage" ON usage_records
 CREATE INDEX IF NOT EXISTS idx_usage_records_user_period ON usage_records(user_id, billing_period_start);
 
 -- 5. Seed default plans (update stripe_product_id and stripe_price_id after creating in Stripe Dashboard)
-INSERT INTO plans (name, slug, price_cents, included_sms, included_leads, features)
+INSERT INTO plans (name, slug, price_cents, included_sms, included_leads, stripe_product_id, stripe_price_id, features)
 VALUES
-  ('Starter', 'starter', 2900, 500, 200, '["Up to 200 leads", "500 SMS messages/month", "WhatsApp + Email + SMS", "AI message generation", "Lead scoring", "Basic analytics"]'::jsonb),
-  ('Pro', 'pro', 5900, 2000, 1000, '["Up to 1,000 leads", "2,000 SMS messages/month", "Everything in Starter", "Follow-up automation", "CRM integration (FUB)", "Advanced analytics", "Priority support"]'::jsonb),
-  ('Agency', 'agency', 14900, 10000, -1, '["Unlimited leads", "10,000 SMS messages/month", "Everything in Pro", "Team management", "White-label reports", "Dedicated support", "Custom integrations"]'::jsonb)
+  ('Starter', 'starter', 9900, 750, 250, 'prod_U6MmlkuwAJZIDE', 'price_1T8A2sBnEbq1TQAJMhNJiifA', '["Up to 250 leads", "750 SMS messages/month", "WhatsApp + Email + SMS", "AI message generation", "Lead scoring", "Basic analytics", "1 user"]'::jsonb),
+  ('Pro', 'pro', 24900, 3000, 1000, 'prod_U6MnS7Ya9QAzju', 'price_1T8A48BnEbq1TQAJLhCs69LI', '["Up to 1,000 leads", "3,000 SMS messages/month", "Everything in Starter", "Follow-up automation", "CRM integration (FUB)", "Advanced analytics", "Priority support", "Up to 5 users"]'::jsonb),
+  ('Agency', 'agency', 49900, 15000, -1, 'prod_U6Mo8Z0XAUR15r', 'price_1T8A4kBnEbq1TQAJOYrwh08Z', '["Unlimited leads", "15,000 SMS messages/month", "Everything in Pro", "Team management", "White-label reports", "Dedicated support", "Custom integrations", "Up to 15 users"]'::jsonb)
 ON CONFLICT (slug) DO UPDATE SET
   price_cents = EXCLUDED.price_cents,
   included_sms = EXCLUDED.included_sms,
   included_leads = EXCLUDED.included_leads,
+  stripe_product_id = EXCLUDED.stripe_product_id,
+  stripe_price_id = EXCLUDED.stripe_price_id,
   features = EXCLUDED.features;

@@ -4,18 +4,8 @@ import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
-
-type LeadInput = {
-  id?: string
-  phone?: string
-  email?: string
-  sms_text?: string
-  email_text?: string
-  owner_name?: string
-  property_address?: string
-}
-
-type Channel = 'whatsapp' | 'email' | 'sms'
+import { parseBody } from '@/app/lib/api'
+import { campaignSendSchema } from '@/app/lib/schemas'
 
 type SendResult = {
   phone: string
@@ -30,22 +20,14 @@ export async function POST(request: Request) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const body = await request.json().catch(() => ({}))
+  const parsed = await parseBody(request, campaignSendSchema)
+  if (!parsed.ok) return parsed.response
+
   const supabase = await createClient()
 
-  const leads: LeadInput[] = Array.isArray(body?.leads) ? body.leads : []
-  const channel: Channel = body?.channel === 'email' ? 'email' : body?.channel === 'sms' ? 'sms' : 'whatsapp'
-  const templateName = typeof body?.templateName === 'string' ? body.templateName : undefined
-  const languageCode = typeof body?.languageCode === 'string' ? body.languageCode : undefined
+  const { leads, channel, templateName, languageCode, campaignName: rawName } = parsed.data
   const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
-  const campaignName = typeof body?.campaignName === 'string' ? body.campaignName : `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
-
-  if (leads.length === 0) {
-    return NextResponse.json(
-      { ok: false, error: 'No leads provided.', sent: 0, failed: 0, results: [] },
-      { status: 400 }
-    )
-  }
+  const campaignName = rawName || `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
 
   // Get user profile for agent info (used in emails)
   const { data: profile } = await supabase

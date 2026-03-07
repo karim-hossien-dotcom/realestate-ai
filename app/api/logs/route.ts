@@ -54,9 +54,12 @@ export async function GET(request: NextRequest) {
     query = query.eq('event_type', eventType)
   }
 
-  // Filter by search term
+  // Filter by search term (sanitize to prevent PostgREST filter injection)
   if (search) {
-    query = query.or(`description.ilike.%${search}%,event_type.ilike.%${search}%`)
+    const sanitized = search.replace(/[%_\\(),."']/g, '')
+    if (sanitized.length > 0) {
+      query = query.or(`description.ilike.%${sanitized}%,event_type.ilike.%${sanitized}%`)
+    }
   }
 
   // Pagination

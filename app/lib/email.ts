@@ -24,9 +24,14 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmailBase = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
+  // Sanitize fromName to prevent email header injection
+  const safeName = params.fromName
+    ? params.fromName.replace(/[\r\n<>"]/g, '').slice(0, 100)
+    : null
+
   // Format: "Agent Name <email@domain.com>" if fromName provided
-  const fromEmail = params.fromName
-    ? `${params.fromName} <${fromEmailBase}>`
+  const fromEmail = safeName
+    ? `${safeName} <${fromEmailBase}>`
     : fromEmailBase;
 
   if (!apiKey) {
@@ -85,6 +90,9 @@ export function generateOutreachEmail(params: {
 
   const message = params.customMessage || `I noticed your property at ${params.propertyAddress} and wanted to reach out. I specialize in helping property owners in your area, and I'd love to discuss how I can assist you with any real estate needs you might have.`;
 
+  // Escape HTML entities to prevent XSS
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -93,18 +101,18 @@ export function generateOutreachEmail(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <p>Hi ${params.recipientName},</p>
+  <p>Hi ${esc(params.recipientName)},</p>
 
-  <p>${message}</p>
+  <p>${esc(message)}</p>
 
   <p>Would you be open to a quick call to discuss? I'm available at your convenience.</p>
 
   <p>Best regards,</p>
 
   <p>
-    <strong>${params.agentName}</strong><br>
-    ${params.agentPhone}<br>
-    <a href="mailto:${params.agentEmail}">${params.agentEmail}</a>
+    <strong>${esc(params.agentName)}</strong><br>
+    ${esc(params.agentPhone)}<br>
+    <a href="mailto:${encodeURI(params.agentEmail)}">${esc(params.agentEmail)}</a>
   </p>
 
   <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -161,6 +169,8 @@ export function generateFollowUpEmail(params: {
   const subject = subjects[idx];
   const message = messages[idx];
 
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -169,18 +179,18 @@ export function generateFollowUpEmail(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <p>Hi ${params.recipientName},</p>
+  <p>Hi ${esc(params.recipientName)},</p>
 
-  <p>${message}</p>
+  <p>${esc(message)}</p>
 
   <p>Feel free to call or text me anytime.</p>
 
   <p>Best,</p>
 
   <p>
-    <strong>${params.agentName}</strong><br>
-    ${params.agentPhone}<br>
-    <a href="mailto:${params.agentEmail}">${params.agentEmail}</a>
+    <strong>${esc(params.agentName)}</strong><br>
+    ${esc(params.agentPhone)}<br>
+    <a href="mailto:${encodeURI(params.agentEmail)}">${esc(params.agentEmail)}</a>
   </p>
 
   <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">

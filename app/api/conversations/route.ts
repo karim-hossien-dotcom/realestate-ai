@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
       const { data: messages } = await supabase
         .from('messages')
         .select('id, body, direction, created_at, channel')
+        .eq('user_id', auth.user.id)
         .eq('lead_id', lead.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
+        .eq('user_id', auth.user.id)
         .eq('lead_id', lead.id)
         .eq('direction', 'inbound')
 
@@ -179,11 +181,16 @@ export async function POST(request: NextRequest) {
       .eq('id', auth.user.id)
       .single()
 
+    // Escape HTML entities to prevent XSS in email
+    const escapeHtml = (str: string) =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    const safeMessage = escapeHtml(message).replace(/\n/g, '<br>')
+
     const emailResult = await sendEmail({
       to: lead.email,
       subject: `Message from ${profile?.full_name || 'Your Agent'}`,
       text: message,
-      html: `<p>${message.replace(/\n/g, '<br>')}</p>`,
+      html: `<p>${safeMessage}</p>`,
       fromName: profile?.full_name,
       replyTo: profile?.email,
     })

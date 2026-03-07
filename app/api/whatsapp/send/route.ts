@@ -1,40 +1,20 @@
-import { NextResponse } from 'next/server';
-
-import { sendWhatsAppTemplate } from '@/app/lib/whatsapp';
-import { withAuth } from '@/app/lib/auth';
+import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { withAuth } from '@/app/lib/auth'
+import { parseBody, success, error } from '@/app/lib/api'
+import { whatsappSendSchema } from '@/app/lib/schemas'
 
 export async function POST(request: Request) {
-  const auth = await withAuth();
-  if (!auth.ok) return auth.response;
+  const auth = await withAuth()
+  if (!auth.ok) return auth.response
 
-  const body = await request.json().catch(() => ({}));
-  const to = String(body?.to || '').trim();
-  const templateName = typeof body?.templateName === 'string' ? body.templateName : undefined;
-  const languageCode = typeof body?.languageCode === 'string' ? body.languageCode : undefined;
-  const bodyParams = Array.isArray(body?.bodyParams)
-    ? body.bodyParams.map((param: unknown) => String(param))
-    : [];
+  const parsed = await parseBody(request, whatsappSendSchema)
+  if (!parsed.ok) return parsed.response
+
+  const { to, templateName, languageCode, bodyParams } = parsed.data
 
   if (!process.env.WHATSAPP_ACCESS_TOKEN) {
-    console.log('[DEMO MODE] WhatsApp message simulated');
-    return NextResponse.json({
-      ok: true,
-      message: 'WhatsApp message sent.',
-      data: {
-        demo: true,
-        to,
-        templateName,
-        languageCode,
-        bodyParams,
-      },
-    });
-  }
-
-  if (!to) {
-    return NextResponse.json(
-      { ok: false, error: 'Missing WhatsApp recipient phone.', data: null },
-      { status: 400 }
-    );
+    console.log('[DEMO MODE] WhatsApp message simulated')
+    return success({ demo: true, to, templateName, languageCode, bodyParams })
   }
 
   const result = await sendWhatsAppTemplate({
@@ -42,18 +22,11 @@ export async function POST(request: Request) {
     templateName,
     languageCode,
     bodyParams,
-  });
+  })
 
   if (!result.ok) {
-    return NextResponse.json(
-      { ok: false, error: result.error || 'WhatsApp send failed.', data: result.data },
-      { status: result.status || 500 }
-    );
+    return error(result.error || 'WhatsApp send failed.', result.status || 500)
   }
 
-  return NextResponse.json({
-    ok: true,
-    message: 'WhatsApp message sent.',
-    data: result.data,
-  });
+  return success({ message: 'WhatsApp message sent.', ...result.data })
 }

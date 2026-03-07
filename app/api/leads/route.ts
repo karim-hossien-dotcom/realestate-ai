@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
+import { parseBody, success, error } from '@/app/lib/api'
+import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
 
 export async function GET() {
   const auth = await withAuth()
@@ -8,77 +10,56 @@ export async function GET() {
 
   const supabase = await createClient()
 
-  const { data: leads, error } = await supabase
+  const { data: leads, error: dbError } = await supabase
     .from('leads')
     .select('*')
     .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
 
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: error.message, leads: [] },
-      { status: 500 }
-    )
+  if (dbError) {
+    return error(dbError.message, 500)
   }
 
-  return NextResponse.json({
-    ok: true,
-    leads: leads || [],
-    total: leads?.length || 0,
-    source: 'supabase',
-  })
+  return success({ leads: leads || [], total: leads?.length || 0 })
 }
 
 export async function POST(request: Request) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const body = await request.json().catch(() => ({}))
+  const parsed = await parseBody(request, createLeadSchema)
+  if (!parsed.ok) return parsed.response
+
   const supabase = await createClient()
 
-  const { data: lead, error } = await supabase
+  const { data: lead, error: dbError } = await supabase
     .from('leads')
     .insert({
       user_id: auth.user.id,
-      property_address: body.property_address,
-      owner_name: body.owner_name,
-      phone: body.phone,
-      email: body.email,
-      contact_preference: body.contact_preference || 'sms',
-      status: body.status || 'new',
-      notes: body.notes,
-      tags: body.tags || [],
+      ...parsed.data,
     })
     .select()
     .single()
 
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: error.message },
-      { status: 500 }
-    )
+  if (dbError) {
+    return error(dbError.message, 500)
   }
 
-  return NextResponse.json({ ok: true, lead })
+  return success({ lead }, 201)
 }
 
 export async function PATCH(request: Request) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const body = await request.json().catch(() => ({}))
-  const { id, ...updates } = body
+  const parsed = await parseBody(request, updateLeadSchema)
+  if (!parsed.ok) return parsed.response
 
-  if (!id) {
-    return NextResponse.json(
-      { ok: false, error: 'Lead ID is required' },
-      { status: 400 }
-    )
-  }
+  const { id, ...updates } = parsed.data
 
   const supabase = await createClient()
 
-  const { data: lead, error } = await supabase
+  const { data: lead, error: dbError } = await supabase
     .from('leads')
     .update(updates)
     .eq('id', id)
@@ -86,14 +67,11 @@ export async function PATCH(request: Request) {
     .select()
     .single()
 
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: error.message },
-      { status: 500 }
-    )
+  if (dbError) {
+    return error(dbError.message, 500)
   }
 
-  return NextResponse.json({ ok: true, lead })
+  return success({ lead })
 }
 
 export async function DELETE(request: Request) {
@@ -104,26 +82,20 @@ export async function DELETE(request: Request) {
   const id = searchParams.get('id')
 
   if (!id) {
-    return NextResponse.json(
-      { ok: false, error: 'Lead ID is required' },
-      { status: 400 }
-    )
+    return error('Lead ID is required', 400)
   }
 
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('leads')
     .delete()
     .eq('id', id)
     .eq('user_id', auth.user.id)
 
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: error.message },
-      { status: 500 }
-    )
+  if (dbError) {
+    return error(dbError.message, 500)
   }
 
-  return NextResponse.json({ ok: true })
+  return success({ deleted: true })
 }

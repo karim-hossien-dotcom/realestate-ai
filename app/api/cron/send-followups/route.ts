@@ -41,11 +41,11 @@ type Profile = {
  * Should be called every 5 minutes by external cron service
  */
 export async function POST(request: NextRequest) {
-  // Verify cron secret
+  // Verify cron secret (required — reject if not configured or mismatch)
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     console.error('[Cron] Unauthorized cron request')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
@@ -287,10 +287,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Also allow GET for easy testing
-export async function GET(request: NextRequest) {
-  return POST(request)
-}
+// GET removed — cron must use POST with Bearer token auth
 
 async function markFollowUpFailed(
   supabase: ReturnType<typeof createServiceClient>,
