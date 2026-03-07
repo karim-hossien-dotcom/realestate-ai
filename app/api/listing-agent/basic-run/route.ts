@@ -41,8 +41,15 @@ export async function POST() {
     })
   }
 
-  const agentName = process.env.LISTING_AGENT_NAME || 'Nadine Khalil'
-  const brokerage = process.env.LISTING_AGENT_BROKERAGE || 'KW Commercial'
+  // Get user profile for agent info
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, company')
+    .eq('id', auth.user.id)
+    .single()
+
+  const agentName = profile?.full_name || process.env.LISTING_AGENT_NAME || 'Real Estate Agent'
+  const brokerage = profile?.company || process.env.LISTING_AGENT_BROKERAGE || 'Real Estate Brokerage'
   let processed = 0
   const errors: string[] = []
 

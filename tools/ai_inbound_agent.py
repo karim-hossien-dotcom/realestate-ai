@@ -175,7 +175,7 @@ YOUR MISSION: Gather ALL missing information from the lead through natural conve
 QUALIFICATION CHECKLIST - You must collect ALL of these before scheduling a meeting:
 1. PROPERTY ADDRESS - Full street address
 2. PROPERTY TYPE - Single family, condo, townhouse, multi-family, commercial, land
-3. BEDROOMS / BATHROOMS - Number of each
+3. BEDROOMS / BATHROOMS (residential) or UNITS / SUITE COUNT (commercial) - Number of each
 4. SQUARE FOOTAGE - Approximate size
 5. OWNER'S GOAL - Selling, buying, renting, investing, or getting a valuation
 6. TIMELINE - When do they want to act? (ASAP, 1-3 months, 6+ months, just exploring)
@@ -221,8 +221,9 @@ Return ONLY valid JSON:
   "qualification": {{
     "property_address": "extracted address or null",
     "property_type": "extracted type or null",
-    "bedrooms": integer or null,
-    "bathrooms": integer or null,
+    "bedrooms": integer or null (for residential),
+    "bathrooms": integer or null (for residential),
+    "units": integer or null (for commercial/multi-family),
     "sqft": integer or null,
     "owner_goal": "sell/buy/rent/invest/valuation or null",
     "timeline": "extracted timeline or null",

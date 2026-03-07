@@ -62,7 +62,7 @@ services:
   - type: web
     name: realestate-ai-webhook
     runtime: python
-    plan: free
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn tools.webhook_app:app --bind 0.0.0.0:$PORT
     envVars:

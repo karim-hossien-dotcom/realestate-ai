@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   // Get user profile for agent info (used in emails)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email, phone')
+    .select('full_name, email, phone, company')
     .eq('id', auth.user.id)
     .single()
 
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
       // Send WhatsApp — prefer text messages (no payment method needed),
       // fall back to template if no personalized message available
       const messageBody = lead.sms_text
-        ? `Hello from KW Commercial:\n\n${lead.sms_text}\n\n- Nadine Khalil\n\nReply STOP to opt out`
+        ? `Hello from ${profile?.company || 'our team'}:\n\n${lead.sms_text}\n\n- ${agentName}\n\nReply STOP to opt out`
         : null
 
       if (messageBody) {

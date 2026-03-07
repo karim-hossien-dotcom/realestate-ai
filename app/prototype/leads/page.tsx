@@ -35,6 +35,7 @@ export default function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLeads = useCallback(async () => {
@@ -100,6 +101,31 @@ export default function LeadsPage() {
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // Generate Messages
+  const handleGenerateMessages = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/listing-agent/basic-run', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        const count = data.data?.leadCount || 0;
+        showToast(
+          data.demo
+            ? 'Demo mode: Set OPENAI_API_KEY to generate real messages'
+            : `Generated messages for ${count} leads`,
+          data.demo ? 'info' : 'success'
+        );
+        fetchLeads();
+      } else {
+        showToast(data.error || 'Generation failed', 'error');
+      }
+    } catch {
+      showToast('Generation failed', 'error');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -246,6 +272,16 @@ export default function LeadsPage() {
             <i className="fas fa-file-import mr-2"></i>
             {importing ? 'Importing...' : 'Import CSV'}
           </button>
+          {leads.filter(l => !l.sms_text).length > 0 && (
+            <button
+              onClick={handleGenerateMessages}
+              disabled={generating}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium disabled:opacity-50 transition-colors"
+            >
+              <i className={`fas ${generating ? 'fa-spinner fa-spin' : 'fa-magic'} mr-2`}></i>
+              {generating ? 'Generating...' : 'Generate Messages'}
+            </button>
+          )}
           <button
             onClick={handleExport}
             className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"

@@ -548,6 +548,37 @@ def webhook_inbound():
                 except Exception as e:
                     print(f"Error creating confirmation follow-up: {e}")
 
+        # Auto-create follow-up when AI sets schedule_follow_up_days
+        follow_up_days = ai_result.get("schedule_follow_up_days")
+        if follow_up_days and isinstance(follow_up_days, (int, float)) and follow_up_days > 0 and SUPABASE_AVAILABLE and user_id:
+            try:
+                from datetime import timedelta
+                lead = find_lead_by_phone(user_id, wa_id)
+                if lead:
+                    follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
+                    lead_name = lead.get("owner_name", "there").split(" ")[0]
+                    agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
+                    follow_up_msg = (
+                        f"Hi {lead_name}, I'm following up as promised. "
+                        f"Are you ready to discuss your property? "
+                        f"I'd love to help when the timing is right. - {agent_name}"
+                    )
+                    create_follow_up(
+                        user_id=user_id,
+                        lead_id=lead.get("id"),
+                        message_text=follow_up_msg,
+                        scheduled_at=follow_up_dt.isoformat(),
+                        channel="whatsapp",
+                    )
+                    log_activity(
+                        user_id, "followup",
+                        f"Auto-scheduled follow-up in {follow_up_days} days for {wa_id}",
+                        "success",
+                        {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat()},
+                    )
+            except Exception as e:
+                print(f"Error creating scheduled follow-up: {e}")
+
         # Log agent brief when lead is fully qualified
         agent_brief = ai_result.get("agent_brief")
         if agent_brief and SUPABASE_AVAILABLE and user_id:
@@ -788,6 +819,37 @@ def sms_inbound():
         return Response("", status=200, mimetype="text/plain")
 
     send_result = _send_sms_message(from_number, reply_text)
+
+    # Auto-create follow-up when AI sets schedule_follow_up_days
+    follow_up_days = ai_result.get("schedule_follow_up_days")
+    if follow_up_days and isinstance(follow_up_days, (int, float)) and follow_up_days > 0 and SUPABASE_AVAILABLE and user_id:
+        try:
+            from datetime import timedelta
+            lead = find_lead_by_phone(user_id, from_number)
+            if lead:
+                follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
+                lead_name = lead.get("owner_name", "there").split(" ")[0]
+                agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
+                follow_up_msg = (
+                    f"Hi {lead_name}, I'm following up as promised. "
+                    f"Are you ready to discuss your property? "
+                    f"I'd love to help when the timing is right. - {agent_name}"
+                )
+                create_follow_up(
+                    user_id=user_id,
+                    lead_id=lead.get("id"),
+                    message_text=follow_up_msg,
+                    scheduled_at=follow_up_dt.isoformat(),
+                    channel="sms",
+                )
+                log_activity(
+                    user_id, "followup",
+                    f"Auto-scheduled SMS follow-up in {follow_up_days} days for {from_number}",
+                    "success",
+                    {"phone": from_number, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat()},
+                )
+        except Exception as e:
+            print(f"Error creating SMS scheduled follow-up: {e}")
 
     # Log outbound
     send_status = "sent" if send_result.get("ok") else "failed"
