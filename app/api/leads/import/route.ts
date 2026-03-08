@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { parse } from 'csv-parse/sync'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
+import { checkPhonesTaken } from '@/app/lib/api'
 
 type CsvLead = {
   property_address?: string
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
 
     // Prepare leads for insert
-    const leadsToInsert = records.map(record => ({
+    const allLeads = records.map(record => ({
       user_id: auth.user.id,
       property_address: record.property_address || null,
       owner_name: record.owner_name || null,
@@ -71,11 +72,30 @@ export async function POST(req: NextRequest) {
       score_category: 'Warm',
     }))
 
+    // Check for cross-user phone duplicates
+    const phonesToCheck = allLeads.map(l => l.phone).filter(Boolean) as string[]
+    const takenPhones = await checkPhonesTaken(phonesToCheck, auth.user.id)
+
+    // Filter out leads whose phone belongs to another agent
+    const leadsToInsert = allLeads.filter(lead => {
+      if (!lead.phone) return true
+      const normalized = lead.phone.replace(/^\+/, '')
+      return !takenPhones.has(normalized)
+    })
+    const duplicates = allLeads.length - leadsToInsert.length
+
     // Insert leads in batches of 100
     const BATCH_SIZE = 100
     let inserted = 0
-    let duplicates = 0
     const errors: string[] = []
+
+    if (duplicates > 0) {
+      const dupList = Array.from(takenPhones.entries())
+        .map(([phone, owner]) => `${phone} (${owner})`)
+        .slice(0, 10)
+        .join(', ')
+      errors.push(`${duplicates} leads skipped — phone already assigned to another agent: ${dupList}`)
+    }
 
     for (let i = 0; i < leadsToInsert.length; i += BATCH_SIZE) {
       const batch = leadsToInsert.slice(i, i + BATCH_SIZE)

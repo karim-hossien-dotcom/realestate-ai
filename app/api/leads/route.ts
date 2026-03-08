@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
-import { parseBody, success, error } from '@/app/lib/api'
+import { parseBody, success, error, checkPhoneTaken } from '@/app/lib/api'
 import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
 
 export async function GET() {
@@ -29,6 +29,17 @@ export async function POST(request: Request) {
 
   const parsed = await parseBody(request, createLeadSchema)
   if (!parsed.ok) return parsed.response
+
+  // Check if phone already belongs to another agent's lead
+  if (parsed.data.phone) {
+    const dup = await checkPhoneTaken(parsed.data.phone, auth.user.id)
+    if (dup.taken) {
+      return error(
+        `This phone number is already assigned to a lead owned by ${dup.ownerName}. Each lead can only belong to one agent.`,
+        409
+      )
+    }
+  }
 
   const supabase = await createClient()
 

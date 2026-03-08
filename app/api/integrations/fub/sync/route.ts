@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { fetchPeople, convertPersonToLead } from '@/app/lib/integrations/follow-up-boss'
+import { checkPhoneTaken } from '@/app/lib/api'
 
 /**
  * POST /api/integrations/fub/sync
@@ -58,6 +59,7 @@ export async function POST() {
 
   let synced = 0
   let updated = 0
+  let skipped = 0
   let errors = 0
 
   for (const person of people) {
@@ -95,6 +97,16 @@ export async function POST() {
           updated++
         }
       } else {
+        // Check if phone already belongs to another agent
+        if (lead.phone) {
+          const dup = await checkPhoneTaken(lead.phone, auth.user.id)
+          if (dup.taken) {
+            console.log(`[FUB Sync] Skipped ${lead.phone} — owned by ${dup.ownerName}`)
+            skipped++
+            continue
+          }
+        }
+
         // Insert new lead
         const { error: insertError } = await supabase
           .from('leads')
@@ -130,20 +142,21 @@ export async function POST() {
   await logActivity(
     auth.user.id,
     'crm_sync',
-    `Synced ${synced} new leads, updated ${updated} existing leads from Follow Up Boss`,
+    `Synced ${synced} new leads, updated ${updated}, skipped ${skipped} duplicates from Follow Up Boss`,
     errors > 0 ? 'pending' : 'success',
-    { provider: 'follow_up_boss', synced, updated, errors, total: people.length }
+    { provider: 'follow_up_boss', synced, updated, skipped, errors, total: people.length }
   )
 
-  console.log(`[FUB Sync] Complete - synced: ${synced}, updated: ${updated}, errors: ${errors}`)
+  console.log(`[FUB Sync] Complete - synced: ${synced}, updated: ${updated}, skipped: ${skipped}, errors: ${errors}`)
 
   return NextResponse.json({
     ok: true,
-    message: `Synced ${synced} new leads, updated ${updated} existing`,
+    message: `Synced ${synced} new leads, updated ${updated} existing${skipped > 0 ? `, ${skipped} skipped (phone owned by another agent)` : ''}`,
     stats: {
       total: people.length,
       synced,
       updated,
+      skipped,
       errors,
     },
   })
