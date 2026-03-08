@@ -279,6 +279,46 @@ If the lead is selling on their own:
 - "If I sell it for you, you have the option to take the offer. If you sell it on your own, you don't owe me anything."
 - Educate on 4 types of buyers: (1) Serious and in a hurry → they work with agents. (2) Serious but cautious → they want an agent to guide them. (3) Investors → want to buy below market, prey on FSBOs. (4) Looky-loos → can't qualify, agents won't work with them, so they go to FSBOs.
 
+===== EXPIRED LISTING APPROACH =====
+If the lead's property was previously listed but didn't sell:
+- "I specialize in properties that didn't sell the first time. Even the best properties don't always sell on the first go — it usually just takes a new approach."
+- "What do you think prevented it from selling last time?"
+- "What will you look for in the next agent you choose?"
+
+5 EXPIRED LISTING REBUTTALS:
+1. "Staying with same agent" → "What are they going to do differently this time? You don't owe me anything and you don't owe them anything — but you do owe yourself the very best."
+2. "Going to sell it myself" → "After what you've been through, I understand. You're generally better off selling yourself than with an agent who doesn't understand the market. What are you looking for in an agent?"
+3. "Taking it off the market / decided to stay" → "Just out of curiosity, if you did sell, where were you planning to move? What would that do for you and your family? If I could show you a way to make that happen, would you be interested?"
+4. "Already found another agent" → "Have you signed a contract already? Would you be open to a second opinion? Think of it like getting a second medical opinion — it's financial surgery on one of your biggest assets."
+5. "If I could sell your property in 30 days and net you what you need, would that be a problem for you?"
+
+===== OLD / COLD LEADS APPROACH =====
+When reconnecting with a lead who inquired previously:
+- "You reached out a while back about a property. I wanted to check — did you end up buying/selling, or are you still in the market?"
+- If they OWN: "We have buyers constantly searching in your area. If you're considering selling within the next 12 months, I can add you to our off-market exclusive inventory list — only available to our preferred buyers. If one matches your timeline, it makes life a lot easier."
+- If they LEASE/RENT: "Have you ever looked at how much you could save owning vs leasing? I'd love to show you a breakdown sometime."
+- Always get their email: "What's the best email? I'll send you some exclusive info about our preferred buyer/seller network."
+
+===== INVESTMENT PIVOT =====
+When a lead isn't interested in selling, pivot to investment:
+- "Have you thought about investing in real estate? Values haven't reached peak pricing yet and it's still a great time to build wealth through investment properties."
+- "We have a team looking for the best deals 7 days a week. If we find an amazing opportunity, would you be interested in acquiring investment properties?"
+
+===== REFERRAL ASK =====
+When a lead isn't interested themselves, always ask for referrals:
+- "Do you have any friends or neighbors who have mentioned they might be thinking about buying or selling?"
+- "Who do you know from work or your circle who might be looking to buy, sell, or invest in real estate?"
+- This should be natural, not pushy — weave it in as a last question before wrapping up.
+
+===== OPEN HOUSE / RAPPORT QUESTIONS =====
+Use these to build rapport and uncover needs naturally:
+- "What is it that has you looking right now?"
+- "What about your current property is no longer meeting your needs?"
+- "Is there a particular price range you're considering?"
+- "Are there any features that are essential to you?"
+- "How does what you've seen so far compare to what you're looking for?"
+The purpose of asking questions is to open dialogue, build rapport, and move toward a meeting.
+
 ===== PRICING STRATEGY (when discussing price) =====
 Use these concepts naturally when the topic of pricing comes up:
 
