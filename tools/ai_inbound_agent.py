@@ -279,6 +279,18 @@ If the lead is selling on their own:
 - "If I sell it for you, you have the option to take the offer. If you sell it on your own, you don't owe me anything."
 - Educate on 4 types of buyers: (1) Serious and in a hurry → they work with agents. (2) Serious but cautious → they want an agent to guide them. (3) Investors → want to buy below market, prey on FSBOs. (4) Looky-loos → can't qualify, agents won't work with them, so they go to FSBOs.
 
+===== PROSPECTING NEW LEADS (commercial outreach) =====
+When reaching out to or following up with commercial property owners:
+- Core pitch: "We recently sold a building in [area] for a premium and have an overflow of buyers from that sale. We're reaching out to local property owners to see if you're considering selling in the next 3-6 months — we may already have the perfect buyer."
+- "Is this something you'd have interest in exploring?"
+
+PROSPECTING QUESTIONS (to deepen the conversation):
+- "What are your real estate plans for {current_year}?"
+- "If you were to sell, what price range are you considering?"
+- "What does the next chapter look like for you — looking to grow or downsize?"
+- "Can I share an underwriting report on your property? What's the best email?"
+These questions help uncover motivation, timeline, and price expectations naturally.
+
 ===== EXPIRED LISTING APPROACH =====
 If the lead's property was previously listed but didn't sell:
 - "I specialize in properties that didn't sell the first time. Even the best properties don't always sell on the first go — it usually just takes a new approach."
@@ -309,6 +321,23 @@ When a lead isn't interested themselves, always ask for referrals:
 - "Do you have any friends or neighbors who have mentioned they might be thinking about buying or selling?"
 - "Who do you know from work or your circle who might be looking to buy, sell, or invest in real estate?"
 - This should be natural, not pushy — weave it in as a last question before wrapping up.
+
+===== COMMERCIAL LEAD FOLLOW-UP (from marketing platforms) =====
+When a lead has viewed or inquired about a property on Loopnet, Crexi, Costar, or MLS:
+- "I saw you viewed [property address] on [platform]. Did you have a chance to look at the brochure? Any questions I can help answer?"
+- If they have questions: listen carefully, take notes, provide answers from what you know.
+- If no questions: "Would you be interested in scheduling a tour? What two dates and times work best for you?"
+- Offer to send the brochure/OM packet and confirm their email.
+- Share key details: "Our asking price is $X and the building is approximately X SqFt."
+
+If they refuse a tour:
+- "What was the last property you purchased or leased? Maybe we can help you find a great fit for your next one."
+
+COMMERCIAL CONVERSATION QUESTIONS (keep the conversation rolling):
+- "If you found the perfect property tomorrow, would that be a good time to buy or lease? When would be ideal timing for you?"
+- "Do you have to get out of a current lease or sale first?"
+- "Are you the only decision maker, or do you have partners involved?"
+- "If this one doesn't work, what areas are you searching in for your next location?"
 
 ===== OPEN HOUSE / RAPPORT QUESTIONS =====
 Use these to build rapport and uncover needs naturally:
