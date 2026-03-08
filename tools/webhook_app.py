@@ -20,6 +20,8 @@ try:
         remove_from_dnc_list,
         log_activity,
         find_lead_by_phone,
+        find_user_by_lead_phone,
+        get_user_profile,
         update_lead_last_response,
         get_default_user_id,
         create_meeting,
@@ -150,10 +152,50 @@ def _send_whatsapp_message(to_number: str, body: str) -> dict:
 
 
 def _get_user_id() -> Optional[str]:
-    """Get the user ID to associate with messages"""
+    """Get the user ID to associate with messages (legacy fallback)"""
     if SUPABASE_AVAILABLE:
         return get_default_user_id()
     return None
+
+
+def _resolve_user_context(phone: str) -> dict:
+    """
+    Resolve which agent owns a lead by searching across all users.
+    Returns {user_id, agent_name, agent_brokerage, agent_phone, agent_email}.
+    Falls back to env vars + first user if lead not found.
+    """
+    default_name = os.getenv("AGENT_NAME", "Nadine Khalil")
+    default_brokerage = os.getenv("AGENT_BROKERAGE", "KW Commercial")
+    default_phone = os.getenv("AGENT_PHONE")
+    default_email = os.getenv("AGENT_EMAIL")
+
+    fallback = {
+        "user_id": _get_user_id(),
+        "agent_name": default_name,
+        "agent_brokerage": default_brokerage,
+        "agent_phone": default_phone,
+        "agent_email": default_email,
+    }
+
+    if not SUPABASE_AVAILABLE:
+        return fallback
+
+    match = find_user_by_lead_phone(phone)
+    if not match or not match.get("user_id"):
+        return fallback
+
+    owner_id = match["user_id"]
+    profile = get_user_profile(owner_id)
+    if not profile:
+        return {**fallback, "user_id": owner_id}
+
+    return {
+        "user_id": owner_id,
+        "agent_name": profile.get("full_name") or default_name,
+        "agent_brokerage": profile.get("company") or default_brokerage,
+        "agent_phone": profile.get("phone") or default_phone,
+        "agent_email": profile.get("email") or default_email,
+    }
 
 
 def _update_lead_from_qualification(
@@ -286,7 +328,6 @@ def webhook_inbound():
     messages = _extract_messages(payload)
 
     now = datetime.now(timezone.utc).isoformat()
-    user_id = _get_user_id()
 
     for msg in messages:
         wa_id = msg["wa_id"]
@@ -298,6 +339,14 @@ def webhook_inbound():
         if _is_duplicate_message(msg_id):
             print(f"Skipping duplicate message {msg_id} from {wa_id}")
             continue
+
+        # Resolve which agent owns this lead (multi-tenant routing)
+        ctx = _resolve_user_context(wa_id)
+        user_id = ctx["user_id"]
+        agent_name = ctx["agent_name"]
+        agent_brokerage = ctx["agent_brokerage"]
+        agent_phone = ctx["agent_phone"]
+        agent_email = ctx["agent_email"]
 
         msg_type = msg.get("type", "text")
 
@@ -317,7 +366,7 @@ def webhook_inbound():
             ack_reply = (
                 f"Thanks for sending that {label}! I'm currently only able to read text messages. "
                 f"Could you describe what you'd like to share in a text message? "
-                f"I'm here to help! - {os.getenv('AGENT_NAME', 'Nadine Khalil')}"
+                f"I'm here to help! - {agent_name}"
             )
             _send_whatsapp_message(wa_id, ack_reply)
 
@@ -417,19 +466,20 @@ def webhook_inbound():
             body, wa_id, WHATSAPP_PHONE_NUMBER_ID,
             conversation_history=conversation_history,
             lead_details=lead_details,
+            agent_name=agent_name,
+            agent_brokerage=agent_brokerage,
         )
 
         # If AI detects escalation need, notify the agent
         if ai_result.get("intent") == "escalate":
             escalation_reply = ai_result.get(
                 "reply",
-                f"Great question! Let me have {os.getenv('AGENT_NAME', 'Nadine Khalil')} "
-                f"get back to you directly. She'll reach out shortly."
+                "I hear you, and I want to make sure this is handled properly. "
+                "Let me review the details and get back to you directly."
             )
             _send_whatsapp_message(wa_id, escalation_reply)
 
-            # Notify agent via WhatsApp if AGENT_PHONE is configured
-            agent_phone = os.getenv("AGENT_PHONE")
+            # Notify agent via WhatsApp if agent phone is available
             if agent_phone:
                 agent_msg = (
                     f"ESCALATION NEEDED\n"
@@ -530,7 +580,7 @@ def webhook_inbound():
                         f"Hi {lead_name}, just a reminder about our meeting tomorrow "
                         f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
                         f"at {meeting_data.get('property_address', 'your property')}. "
-                        f"Looking forward to speaking with you! - {os.getenv('AGENT_NAME', 'Nadine Khalil')}"
+                        f"Looking forward to speaking with you! - {agent_name}"
                     )
                     create_follow_up(
                         user_id=user_id,
@@ -557,7 +607,6 @@ def webhook_inbound():
                 if lead:
                     follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
                     lead_name = lead.get("owner_name", "there").split(" ")[0]
-                    agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
 
                     # Build a context-aware follow-up using AI notes
                     ai_notes = ai_result.get("notes", "")
@@ -568,7 +617,7 @@ def webhook_inbound():
                     if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
                         # AI captured future interest — use it
                         follow_up_msg = (
-                            f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                            f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
                             f"We spoke a few months back and you mentioned you'd be ready around now. "
                             f"I've been keeping an eye on the market for you — "
                             f"I have some opportunities that might match what you're looking for. "
@@ -584,7 +633,7 @@ def webhook_inbound():
                         )
                     else:
                         follow_up_msg = (
-                            f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                            f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
                             f"We connected a few months ago and you mentioned checking back around now. "
                             f"I'd love to catch up and see if I can help. "
                             f"Would you have a few minutes this week?"
@@ -736,7 +785,14 @@ def sms_inbound():
         return Response("", status=200, mimetype="text/plain")
 
     now = datetime.now(timezone.utc).isoformat()
-    user_id = _get_user_id()
+
+    # Resolve which agent owns this lead (multi-tenant routing)
+    ctx = _resolve_user_context(from_number)
+    user_id = ctx["user_id"]
+    agent_name = ctx["agent_name"]
+    agent_brokerage = ctx["agent_brokerage"]
+    agent_phone = ctx["agent_phone"]
+    agent_email = ctx["agent_email"]
 
     print(f"[SMS] Inbound from {from_number}: {body[:100]}")
 
@@ -807,6 +863,8 @@ def sms_inbound():
         body, from_number, TWILIO_PHONE_NUMBER,
         conversation_history=conversation_history,
         lead_details=lead_details,
+        agent_name=agent_name,
+        agent_brokerage=agent_brokerage,
     )
 
     # Handle stop intent
@@ -830,10 +888,31 @@ def sms_inbound():
     if ai_result.get("intent") == "escalate":
         escalation_reply = ai_result.get(
             "reply",
-            f"Great question! Let me have {os.getenv('AGENT_NAME', 'Nadine Khalil')} "
-            f"get back to you directly.",
+            "I hear you, and I want to make sure this is handled properly. "
+            "Let me review the details and get back to you directly.",
         )
         _send_sms_message(from_number, escalation_reply)
+
+        # Notify agent via SMS if agent phone is available
+        if agent_phone:
+            notify_msg = (
+                f"ESCALATION NEEDED (SMS)\n"
+                f"Lead: {from_number}\n"
+                f"Message: {body[:200]}\n"
+                f"AI Notes: {ai_result.get('notes', 'N/A')}\n"
+                f"Please follow up directly."
+            )
+            _send_sms_message(agent_phone, notify_msg)
+
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id,
+                "escalation",
+                f"Lead {from_number} escalated to agent via SMS: {body[:100]}",
+                "pending",
+                {"phone": from_number, "message": body, "notes": ai_result.get("notes"), "channel": "sms"},
+            )
+
         _log_sms_to_supabase(user_id, from_number, body, "outbound",
                              reply_text=escalation_reply, send_status="sent")
         return Response("", status=200, mimetype="text/plain")
@@ -856,7 +935,6 @@ def sms_inbound():
             if lead:
                 follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
                 lead_name = lead.get("owner_name", "there").split(" ")[0]
-                agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
 
                 ai_notes = ai_result.get("notes", "")
                 qualification = ai_result.get("qualification", {})
@@ -865,7 +943,7 @@ def sms_inbound():
 
                 if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
                     follow_up_msg = (
-                        f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                        f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
                         f"We spoke a few months back and you mentioned you'd be ready around now. "
                         f"I have some opportunities that might match what you're looking for. "
                         f"Would you have time for a quick call this week?"
@@ -880,7 +958,7 @@ def sms_inbound():
                     )
                 else:
                     follow_up_msg = (
-                        f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                        f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
                         f"We connected a few months ago and you mentioned checking back around now. "
                         f"Would you have a few minutes this week?"
                     )

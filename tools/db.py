@@ -383,3 +383,49 @@ def get_default_user_id() -> Optional[str]:
     except Exception as e:
         print(f"Error getting default user: {e}")
         return None
+
+
+def find_user_by_lead_phone(phone: str) -> Optional[dict]:
+    """
+    Search leads across ALL users (no user_id filter) to find which agent owns this lead.
+    Returns {"user_id": ..., "lead": {...}} or None.
+    """
+    client = get_supabase_client()
+    if not client:
+        return None
+
+    try:
+        normalized = phone.lstrip("+")
+        result = client.table("leads").select("*").or_(
+            f"phone.eq.{normalized},phone.eq.+{normalized}"
+        ).limit(1).execute()
+
+        if result.data:
+            lead = result.data[0]
+            return {"user_id": lead.get("user_id"), "lead": lead}
+        return None
+    except Exception as e:
+        print(f"Error finding user by lead phone: {e}")
+        return None
+
+
+def get_user_profile(user_id: str) -> Optional[dict]:
+    """
+    Fetch a user's profile (full_name, company, phone, email).
+    Returns dict or None.
+    """
+    client = get_supabase_client()
+    if not client:
+        return None
+
+    try:
+        result = client.table("profiles").select(
+            "id, full_name, company, phone, email"
+        ).eq("id", user_id).limit(1).execute()
+
+        if result.data:
+            return result.data[0]
+        return None
+    except Exception as e:
+        print(f"Error getting user profile: {e}")
+        return None
