@@ -558,11 +558,38 @@ def webhook_inbound():
                     follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
                     lead_name = lead.get("owner_name", "there").split(" ")[0]
                     agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
-                    follow_up_msg = (
-                        f"Hi {lead_name}, I'm following up as promised. "
-                        f"Are you ready to discuss your property? "
-                        f"I'd love to help when the timing is right. - {agent_name}"
-                    )
+
+                    # Build a context-aware follow-up using AI notes
+                    ai_notes = ai_result.get("notes", "")
+                    qualification = ai_result.get("qualification", {})
+                    property_addr = qualification.get("property_address") or lead.get("property_address") or ""
+                    owner_goal = qualification.get("owner_goal") or ""
+
+                    if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
+                        # AI captured future interest — use it
+                        follow_up_msg = (
+                            f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                            f"We spoke a few months back and you mentioned you'd be ready around now. "
+                            f"I've been keeping an eye on the market for you — "
+                            f"I have some opportunities that might match what you're looking for. "
+                            f"Would you have time for a quick call this week?"
+                        )
+                    elif property_addr:
+                        follow_up_msg = (
+                            f"Hi {lead_name}, it's {agent_name}. "
+                            f"We chatted a while back about your property at {property_addr}. "
+                            f"The market has had some interesting movement since then — "
+                            f"happy to share an updated analysis if you're curious. "
+                            f"Are you still thinking about {owner_goal or 'your options'}?"
+                        )
+                    else:
+                        follow_up_msg = (
+                            f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                            f"We connected a few months ago and you mentioned checking back around now. "
+                            f"I'd love to catch up and see if I can help. "
+                            f"Would you have a few minutes this week?"
+                        )
+
                     create_follow_up(
                         user_id=user_id,
                         lead_id=lead.get("id"),
@@ -572,9 +599,9 @@ def webhook_inbound():
                     )
                     log_activity(
                         user_id, "followup",
-                        f"Auto-scheduled follow-up in {follow_up_days} days for {wa_id}",
+                        f"Auto-scheduled follow-up in {follow_up_days} days for {wa_id} (notes: {ai_notes[:100]})",
                         "success",
-                        {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat()},
+                        {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
                     )
             except Exception as e:
                 print(f"Error creating scheduled follow-up: {e}")
@@ -830,11 +857,34 @@ def sms_inbound():
                 follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
                 lead_name = lead.get("owner_name", "there").split(" ")[0]
                 agent_name = os.getenv("AGENT_NAME", "Nadine Khalil")
-                follow_up_msg = (
-                    f"Hi {lead_name}, I'm following up as promised. "
-                    f"Are you ready to discuss your property? "
-                    f"I'd love to help when the timing is right. - {agent_name}"
-                )
+
+                ai_notes = ai_result.get("notes", "")
+                qualification = ai_result.get("qualification", {})
+                property_addr = qualification.get("property_address") or lead.get("property_address") or ""
+                owner_goal = qualification.get("owner_goal") or ""
+
+                if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
+                    follow_up_msg = (
+                        f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                        f"We spoke a few months back and you mentioned you'd be ready around now. "
+                        f"I have some opportunities that might match what you're looking for. "
+                        f"Would you have time for a quick call this week?"
+                    )
+                elif property_addr:
+                    follow_up_msg = (
+                        f"Hi {lead_name}, it's {agent_name}. "
+                        f"We chatted about your property at {property_addr}. "
+                        f"The market has had some movement since then — "
+                        f"happy to share an updated analysis. "
+                        f"Are you still thinking about {owner_goal or 'your options'}?"
+                    )
+                else:
+                    follow_up_msg = (
+                        f"Hi {lead_name}, it's {agent_name} from {os.getenv('AGENT_BROKERAGE', 'KW Commercial')}. "
+                        f"We connected a few months ago and you mentioned checking back around now. "
+                        f"Would you have a few minutes this week?"
+                    )
+
                 create_follow_up(
                     user_id=user_id,
                     lead_id=lead.get("id"),
@@ -844,9 +894,9 @@ def sms_inbound():
                 )
                 log_activity(
                     user_id, "followup",
-                    f"Auto-scheduled SMS follow-up in {follow_up_days} days for {from_number}",
+                    f"Auto-scheduled SMS follow-up in {follow_up_days} days for {from_number} (notes: {ai_notes[:100]})",
                     "success",
-                    {"phone": from_number, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat()},
+                    {"phone": from_number, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
                 )
         except Exception as e:
             print(f"Error creating SMS scheduled follow-up: {e}")
