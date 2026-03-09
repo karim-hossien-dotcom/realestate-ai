@@ -95,7 +95,7 @@ def main():
     )
     parser.add_argument(
         "--contact-email",
-        help="Optional email to reference in follow-ups (e.g., Nadine's Gmail).",
+        help="Optional email to reference in follow-ups (e.g., agent's email).",
     )
     args = parser.parse_args()
 

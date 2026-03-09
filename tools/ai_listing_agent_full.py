@@ -376,8 +376,8 @@ def main():
     parser.add_argument("input_csv", help="Input CSV with leads")
     parser.add_argument("output_csv", help="Output CSV with AI-generated messages")
     parser.add_argument("base_script", help="Default base script (text file)")
-    parser.add_argument("agent_name", help="Your name (e.g., 'Nadine Khalil')")
-    parser.add_argument("brokerage", help="Your brokerage (e.g., 'KW Commercial')")
+    parser.add_argument("agent_name", help="Your name (e.g., 'Jane Smith')")
+    parser.add_argument("brokerage", help="Your brokerage (e.g., 'ABC Realty')")
     parser.add_argument("--model", default="gpt-4.1-mini", help="OpenAI model name")
     parser.add_argument("--temperature", type=float, default=0.4,
                         help="Creativity level (0–1)")

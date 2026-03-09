@@ -9,7 +9,7 @@ export default function TermsPage() {
       <h2>1. Program Description</h2>
       <p>
         Estate AI Real Estate Outreach is a messaging program operated by EYWA Consulting
-        Services Inc on behalf of licensed real estate agents at Keller Williams Commercial.
+        Services Inc on behalf of licensed real estate agents using the Estate AI platform.
         By opting in, you agree to receive SMS/MMS text messages and WhatsApp messages related
         to real estate opportunities, property inquiries, appointment scheduling, and follow-up
         communications from your assigned real estate agent.
@@ -19,7 +19,7 @@ export default function TermsPage() {
       <p>
         By providing your phone number and opting in to this program, you consent to receive
         recurring automated marketing and informational text messages from Estate AI and
-        Keller Williams Commercial agents. Consent is not a condition of any purchase.
+        Estate AI agents. Consent is not a condition of any purchase.
       </p>
 
       <h2>3. Message Frequency</h2>
@@ -85,7 +85,7 @@ export default function TermsPage() {
       <h2>11. Contact Information</h2>
       <ul>
         <li><strong>Company:</strong> EYWA Consulting Services Inc</li>
-        <li><strong>Address:</strong> Keller Williams Commercial</li>
+        <li><strong>Address:</strong> New Jersey, United States</li>
         <li><strong>Email:</strong> support@realestate-ai.app</li>
         <li><strong>Phone:</strong> (848) 456-9428</li>
       </ul>

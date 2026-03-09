@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const session = await createPortalSession(
       profile.stripe_customer_id,
-      `${origin}/prototype/settings`
+      `${origin}/settings`
     )
 
     return NextResponse.json({ ok: true, url: session.url })

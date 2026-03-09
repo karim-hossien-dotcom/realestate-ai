@@ -2,7 +2,7 @@
   "name": "Estate AI",
   "short_name": "RE AI",
   "description": "AI-powered assistant for real estate agents",
-  "start_url": "/prototype/dashboard",
+  "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#2563eb",

@@ -130,8 +130,8 @@ export async function generateMessagesForLeads(
 ): Promise<(Lead & GeneratedMessages)[]> {
   const {
     baseScript = DEFAULT_BASE_SCRIPT,
-    agentName = process.env.AGENT_NAME || 'Nadine Khalil',
-    brokerage = process.env.BROKERAGE || 'KW Commercial',
+    agentName = process.env.AGENT_NAME || 'Your Agent',
+    brokerage = process.env.BROKERAGE || 'Estate AI',
     model = 'gpt-4.1-mini',
     temperature = 0.4,
   } = options

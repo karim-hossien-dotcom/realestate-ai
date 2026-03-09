@@ -1,8 +1,8 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { createClient } from '@/app/lib/supabase/server'
 import { getOrCreateCustomer, createCheckoutSession } from '@/app/lib/stripe'
-import { parseBody, success, error } from '@/app/lib/api'
+import { parseBody } from '@/app/lib/api'
 import { stripeCheckoutSchema } from '@/app/lib/schemas'
 
 export async function POST(request: NextRequest) {
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     const session = await createCheckoutSession({
       customerId,
       priceId: parsed.data.priceId,
-      successUrl: `${origin}/prototype/settings?billing=success`,
-      cancelUrl: `${origin}/prototype/settings?billing=cancelled`,
+      successUrl: `${origin}/settings?billing=success`,
+      cancelUrl: `${origin}/settings?billing=cancelled`,
       trialDays: 14,
     })
 
@@ -55,12 +55,12 @@ export async function POST(request: NextRequest) {
       { priceId: parsed.data.priceId }
     )
 
-    return success({ url: session.url })
+    return NextResponse.json({ ok: true, url: session.url })
   } catch (err) {
     console.error('[Stripe Checkout] Error:', err)
-    return error(
-      err instanceof Error ? err.message : 'Failed to create checkout',
-      500
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : 'Failed to create checkout' },
+      { status: 500 }
     )
   }
 }

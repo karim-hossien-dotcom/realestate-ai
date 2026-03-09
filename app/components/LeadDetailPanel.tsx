@@ -304,7 +304,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 <i className="fas fa-clock w-4"></i>Add Follow-Up
               </button>
               <button
-                onClick={() => window.location.href = `/prototype/conversations?leadId=${lead.id}`}
+                onClick={() => window.location.href = `/conversations?leadId=${lead.id}`}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
               >
                 <i className="fas fa-comments w-4"></i>View Messages

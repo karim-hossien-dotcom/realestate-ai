@@ -186,8 +186,8 @@ def _resolve_user_context(phone: str) -> dict:
     Returns {user_id, agent_name, agent_brokerage, agent_phone, agent_email}.
     Falls back to env vars + first user if lead not found.
     """
-    default_name = os.getenv("AGENT_NAME", "Nadine Khalil")
-    default_brokerage = os.getenv("AGENT_BROKERAGE", "KW Commercial")
+    default_name = os.getenv("AGENT_NAME", "Your Agent")
+    default_brokerage = os.getenv("AGENT_BROKERAGE", "Estate AI")
     default_phone = os.getenv("AGENT_PHONE")
     default_email = os.getenv("AGENT_EMAIL")
 

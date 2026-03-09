@@ -10,8 +10,8 @@ const scriptName = 'ai_listing_agent_full.py';
 const inputCsv = process.env.LISTING_AGENT_INPUT || 'output.csv';
 const outputCsv = process.env.LISTING_AGENT_OUTPUT || 'output_full.csv';
 const baseScript = process.env.LISTING_AGENT_BASE_SCRIPT || 'base_script.txt';
-const agentName = process.env.LISTING_AGENT_NAME || 'Nadine Khalil';
-const brokerage = process.env.LISTING_AGENT_BROKERAGE || 'KW Commercial';
+const agentName = process.env.LISTING_AGENT_NAME || 'Your Agent';
+const brokerage = process.env.LISTING_AGENT_BROKERAGE || 'Estate AI';
 
 function runPython(command: string) {
   return spawnSync(

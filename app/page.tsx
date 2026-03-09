@@ -53,7 +53,7 @@ export default function AuthPage() {
         if (error) {
           setError(error.message);
         } else {
-          router.push('/prototype/dashboard');
+          router.push('/dashboard');
           router.refresh();
         }
       } catch {
@@ -93,7 +93,7 @@ export default function AuthPage() {
         } else if (data.user && !data.session) {
           setError('Check your email to confirm your account before signing in.');
         } else {
-          router.push('/prototype/dashboard');
+          router.push('/dashboard');
           router.refresh();
         }
       } catch {

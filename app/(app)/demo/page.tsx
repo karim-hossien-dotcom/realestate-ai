@@ -15,7 +15,7 @@ export default function PrototypeDemoPage() {
               <div className="font-semibold">1) Start here</div>
               <div className="text-gray-700">Open the dashboard:</div>
               <div className="mt-1 rounded-md bg-gray-100 px-3 py-2 font-mono">
-                /prototype/dashboard
+                /dashboard
               </div>
             </div>
 
@@ -34,7 +34,7 @@ export default function PrototypeDemoPage() {
                 You should see a demo message and sample follow-ups (no WhatsApp token required).
               </div>
               <div className="mt-1 rounded-md bg-gray-100 px-3 py-2 font-mono">
-                /prototype/follow-ups
+                /follow-ups
               </div>
             </div>
 

@@ -14,21 +14,21 @@ type Profile = {
 };
 
 const navItems = [
-  { href: '/prototype/dashboard', label: 'Dashboard', icon: 'fa-chart-line' },
-  { href: '/prototype/leads', label: 'Leads', icon: 'fa-users' },
-  { href: '/prototype/campaigns', label: 'Campaigns', icon: 'fa-bullhorn' },
-  { href: '/prototype/follow-ups', label: 'Follow-Ups', icon: 'fa-clock' },
-  { href: '/prototype/conversations', label: 'Conversations', icon: 'fa-comments' },
-  { href: '/prototype/calendar', label: 'Calendar', icon: 'fa-calendar' },
-  { href: '/prototype/logs', label: 'Logs', icon: 'fa-file-alt' },
-  { href: '/prototype/settings', label: 'Settings', icon: 'fa-cog' },
-  { href: '/prototype/test-playbook', label: 'Test Playbook', icon: 'fa-flask' },
+  { href: '/dashboard', label: 'Dashboard', icon: 'fa-chart-line' },
+  { href: '/leads', label: 'Leads', icon: 'fa-users' },
+  { href: '/campaigns', label: 'Campaigns', icon: 'fa-bullhorn' },
+  { href: '/follow-ups', label: 'Follow-Ups', icon: 'fa-clock' },
+  { href: '/conversations', label: 'Conversations', icon: 'fa-comments' },
+  { href: '/calendar', label: 'Calendar', icon: 'fa-calendar' },
+  { href: '/logs', label: 'Logs', icon: 'fa-file-alt' },
+  { href: '/settings', label: 'Settings', icon: 'fa-cog' },
+  { href: '/test-playbook', label: 'Test Playbook', icon: 'fa-flask' },
 ];
 
 // All pages are now React components (no more iframes)
 const iframePages: string[] = [];
 
-export default function PrototypeLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -62,8 +62,8 @@ export default function PrototypeLayout({
     window.location.href = '/';
   };
 
-  // Skip layout for settings page which has its own full layout
-  if (pathname === '/prototype' || iframePages.includes(pathname)) {
+  // Skip layout for full-screen pages
+  if (iframePages.includes(pathname)) {
     return <ThemeProvider><ToastProvider><div className="w-screen h-screen">{children}</div></ToastProvider></ThemeProvider>;
   }
 

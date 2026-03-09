@@ -260,13 +260,13 @@ export default function FollowUpsPage() {
                   {/* Right: actions */}
                   <div className="flex sm:flex-col gap-2 flex-shrink-0">
                     <button
-                      onClick={() => window.location.href = `/prototype/conversations?leadId=${fu.leadId}`}
+                      onClick={() => window.location.href = `/conversations?leadId=${fu.leadId}`}
                       className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                     >
                       <i className="fas fa-comments mr-1"></i>View
                     </button>
                     <button
-                      onClick={() => window.location.href = '/prototype/campaigns'}
+                      onClick={() => window.location.href = '/campaigns'}
                       className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
                     >
                       <i className="fas fa-paper-plane mr-1"></i>Send

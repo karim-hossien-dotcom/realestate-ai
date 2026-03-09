@@ -8,7 +8,7 @@ export type EmailParams = {
   html?: string;
   text?: string;
   replyTo?: string;
-  fromName?: string; // Agent's name - shows as "Nadine Khalil <outreach@domain.com>"
+  fromName?: string; // Agent's name - shows as "Agent Name <outreach@domain.com>"
 };
 
 export type EmailSendResult = {

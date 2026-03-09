@@ -41,7 +41,7 @@ export default function OnboardingPage() {
 
           // If profile is already complete, redirect to dashboard
           if (data.profile.full_name && data.profile.company && data.profile.phone) {
-            router.push('/prototype/dashboard');
+            router.push('/dashboard');
           }
         }
       })
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
 
       if (data.ok) {
         // Redirect to dashboard
-        router.push('/prototype/dashboard');
+        router.push('/dashboard');
       } else {
         setError(data.error || 'Failed to save profile');
       }
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = () => {
-    router.push('/prototype/dashboard');
+    router.push('/dashboard');
   };
 
   if (loading) {
@@ -188,7 +188,7 @@ export default function OnboardingPage() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Nadine Khalil"
+                  placeholder="e.g. Jane Smith"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                   autoFocus
                 />
@@ -215,7 +215,7 @@ export default function OnboardingPage() {
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  placeholder="e.g. KW Commercial"
+                  placeholder="e.g. ABC Realty"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                   autoFocus
                 />

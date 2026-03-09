@@ -6,6 +6,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions }
 export async function updateSession(request: NextRequest) {
   // Check public API routes FIRST - skip all auth for these
   const isPublicApiRoute = request.nextUrl.pathname === '/api/whatsapp/webhook' ||
+                           request.nextUrl.pathname === '/api/stripe/webhook' ||
                            request.nextUrl.pathname.startsWith('/api/cron/')
 
   if (isPublicApiRoute) {
@@ -42,13 +43,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Define protected and auth routes
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/prototype') ||
-                           request.nextUrl.pathname.startsWith('/api/')
-  const isAuthRoute = request.nextUrl.pathname === '/'
+  // Define public and auth routes
+  const pathname = request.nextUrl.pathname
+  const publicPaths = ['/', '/privacy-policy', '/terms', '/cookies', '/reset-password']
+  const isPublicRoute = publicPaths.includes(pathname) || pathname.startsWith('/auth/')
+  const isAuthRoute = pathname === '/'
 
   // Redirect unauthenticated users from protected routes to login
-  if (!user && isProtectedRoute) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
@@ -57,7 +59,7 @@ export async function updateSession(request: NextRequest) {
   // Redirect authenticated users from auth page to dashboard
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/prototype/dashboard'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

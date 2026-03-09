@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
-import { parseBody, success, error, checkPhoneTaken } from '@/app/lib/api'
+import { parseBody, checkPhoneTaken } from '@/app/lib/api'
 import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
 
 export async function GET(request: Request) {
@@ -31,10 +31,11 @@ export async function GET(request: Request) {
     .range(from, to)
 
   if (dbError) {
-    return error(dbError.message, 500)
+    return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
-  return success({
+  return NextResponse.json({
+    ok: true,
     leads: leads || [],
     total: total || 0,
     page,
@@ -54,9 +55,9 @@ export async function POST(request: Request) {
   if (parsed.data.phone) {
     const dup = await checkPhoneTaken(parsed.data.phone, auth.user.id)
     if (dup.taken) {
-      return error(
-        `This phone number is already assigned to a lead owned by ${dup.ownerName}. Each lead can only belong to one agent.`,
-        409
+      return NextResponse.json(
+        { ok: false, error: `This phone number is already assigned to a lead owned by ${dup.ownerName}. Each lead can only belong to one agent.` },
+        { status: 409 }
       )
     }
   }
@@ -73,10 +74,10 @@ export async function POST(request: Request) {
     .single()
 
   if (dbError) {
-    return error(dbError.message, 500)
+    return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
-  return success({ lead }, 201)
+  return NextResponse.json({ ok: true, lead }, { status: 201 })
 }
 
 export async function PATCH(request: Request) {
@@ -99,10 +100,10 @@ export async function PATCH(request: Request) {
     .single()
 
   if (dbError) {
-    return error(dbError.message, 500)
+    return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
-  return success({ lead })
+  return NextResponse.json({ ok: true, lead })
 }
 
 export async function DELETE(request: Request) {
@@ -118,10 +119,10 @@ export async function DELETE(request: Request) {
       const body = await request.json()
       const ids = body?.ids as string[] | undefined
       if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return error('Lead ID or ids[] required', 400)
+        return NextResponse.json({ ok: false, error: 'Lead ID or ids[] required' }, { status: 400 })
       }
       if (ids.length > 200) {
-        return error('Max 200 leads per batch delete', 400)
+        return NextResponse.json({ ok: false, error: 'Max 200 leads per batch delete' }, { status: 400 })
       }
 
       const supabase = await createClient()
@@ -132,12 +133,12 @@ export async function DELETE(request: Request) {
         .eq('user_id', auth.user.id)
 
       if (dbError) {
-        return error(dbError.message, 500)
+        return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
       }
 
-      return success({ deleted: ids.length })
+      return NextResponse.json({ ok: true, deleted: ids.length })
     } catch {
-      return error('Lead ID or ids[] required', 400)
+      return NextResponse.json({ ok: false, error: 'Lead ID or ids[] required' }, { status: 400 })
     }
   }
 
@@ -150,8 +151,8 @@ export async function DELETE(request: Request) {
     .eq('user_id', auth.user.id)
 
   if (dbError) {
-    return error(dbError.message, 500)
+    return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
-  return success({ deleted: true })
+  return NextResponse.json({ ok: true, deleted: true })
 }

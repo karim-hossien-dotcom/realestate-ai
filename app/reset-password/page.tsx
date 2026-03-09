@@ -51,7 +51,7 @@ export default function ResetPasswordPage() {
         setError(error.message);
       } else {
         setSuccess(true);
-        setTimeout(() => router.push('/prototype/dashboard'), 2000);
+        setTimeout(() => router.push('/dashboard'), 2000);
       }
     } catch {
       setError('An unexpected error occurred');

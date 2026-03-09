@@ -21,11 +21,11 @@ def build_ics(
     dtstamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     dtstart = start_dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     dtend = end_dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    uid = f"{uuid.uuid4()}@nadine-agent"
+    uid = f"{uuid.uuid4()}@estate-ai"
 
     ics = f"""BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Nadine Listing Agent//EN
+PRODID:-//Estate AI Agent//EN
 METHOD:REQUEST
 BEGIN:VEVENT
 UID:{uid}
@@ -83,11 +83,11 @@ def send_invite(
 def main():
     print("=== Send Calendar Invite (Manual Trigger) ===\n")
 
-    organizer_name = os.environ.get("ORGANIZER_NAME", "Nadine Khalil")
+    organizer_name = os.environ.get("ORGANIZER_NAME", "Your Agent")
     organizer_email = os.environ.get("ORGANIZER_EMAIL")
 
     if not organizer_email:
-        raise ValueError("Set ORGANIZER_EMAIL to Nadine's Gmail in environment variables.")
+        raise ValueError("Set ORGANIZER_EMAIL in environment variables.")
 
     smtp_host = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("EMAIL_PORT", "587"))

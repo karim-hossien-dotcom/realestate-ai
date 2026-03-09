@@ -26,8 +26,8 @@ from openai import OpenAI
 
 # ---------- CONFIG ----------
 # You can change these or set them as environment variables.
-AGENT_NAME = os.getenv("AGENT_NAME", "Nadine Khalil")
-AGENT_BROKERAGE = os.getenv("AGENT_BROKERAGE", "KW Commercial")
+AGENT_NAME = os.getenv("AGENT_NAME", "Your Agent")
+AGENT_BROKERAGE = os.getenv("AGENT_BROKERAGE", "Estate AI")
 LOG_FILE = os.getenv("INBOUND_LOG_FILE", "inbound_log.csv")
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "")
 WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN", "")

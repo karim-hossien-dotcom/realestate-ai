@@ -520,13 +520,13 @@ export default function ConversationsPage() {
             {/* Quick Actions */}
             <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2">
               <button
-                onClick={() => window.location.href = `/prototype/leads`}
+                onClick={() => window.location.href = `/leads`}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
               >
                 <i className="fas fa-user"></i>View Full Profile
               </button>
               <button
-                onClick={() => window.location.href = `/prototype/campaigns`}
+                onClick={() => window.location.href = `/campaigns`}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
               >
                 <i className="fas fa-paper-plane"></i>Send Campaign

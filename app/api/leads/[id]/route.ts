@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/app/lib/auth'
-import { createClient, createServiceClient } from '@/app/lib/supabase/server'
+import { createClient } from '@/app/lib/supabase/server'
 
 // GET /api/leads/[id] - Get a single lead
 export async function GET(
@@ -70,7 +70,7 @@ export async function PATCH(
 
   updates.updated_at = new Date().toISOString()
 
-  const supabase = createServiceClient()
+  const supabase = await createClient()
 
   // Verify ownership first
   const { data: existingLead } = await supabase

@@ -9,7 +9,7 @@ AI-powered real estate CRM that automates lead outreach, follow-ups, and convers
 - **Database/Auth:** Supabase (13 tables, RLS enabled)
 - **AI:** OpenAI GPT-4o (lead scoring, follow-up generation, inbound agent)
 - **Messaging:** Meta WhatsApp Business API + Twilio SMS + Resend Email
-- **Payments:** Stripe (3 tiers: Starter $29, Pro $59, Agency $149)
+- **Payments:** Stripe (3 tiers: Starter $99, Pro $249, Agency $499)
 - **Python Backend:** Flask webhook server (WhatsApp/SMS inbound)
 - **Deployment:** Render (Node.js + Python services)
 - **Domain:** realestate-ai.app
@@ -28,7 +28,7 @@ app/
     sms.ts      → Twilio
     email.ts    → Resend
     stripe.ts   → Billing
-  prototype/    → 8 main app pages (dashboard, leads, campaigns, etc.)
+  (app)/        → 8 main app pages (dashboard, leads, campaigns, etc.) — route group, no URL prefix
 tools/          → Python backend (Flask webhooks, AI agents)
 scripts/        → Migration scripts
 supabase/       → Schema + migrations
@@ -40,7 +40,7 @@ supabase/       → Schema + migrations
 - Auth: Every API route must call `withAuth()` first
 - Activity logging: Use `logActivity()` for audit trail
 - Input validation: Use Zod schemas at API boundaries
-- API responses: Use `{ success, data, error }` envelope format
+- API responses: Use `{ ok, ...data }` envelope — return properties flat at the top level, not nested under `data`
 - Immutability: Create new objects, never mutate existing ones
 - File size: Keep under 400 lines (800 max)
 - Functions: Keep under 50 lines
