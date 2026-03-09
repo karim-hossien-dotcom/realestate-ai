@@ -36,7 +36,7 @@ export default function LeadCard({ lead, onClick, selected, onSelect }: LeadCard
     <div
       onClick={() => onClick(lead)}
       className={`bg-white dark:bg-gray-800 border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
-        selected ? 'border-blue-500 ring-1 ring-blue-200' : 'border-gray-200 dark:border-gray-700'
+        selected ? 'border-blue-500 ring-1 ring-blue-200 dark:ring-blue-500/40' : 'border-gray-200 dark:border-gray-700'
       }`}
     >
       <div className="flex items-start gap-3">
@@ -79,7 +79,7 @@ export default function LeadCard({ lead, onClick, selected, onSelect }: LeadCard
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <StatusBadge status={lead.status} />
             {lead.tags?.slice(0, 3).map((tag) => (
-              <span key={tag} className="inline-flex px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+              <span key={tag} className="inline-flex px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                 {tag}
               </span>
             ))}
@@ -143,15 +143,15 @@ export function LeadRow({ lead, onClick, selected, onSelect }: LeadCardProps) {
             {initial}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{lead.owner_name || 'Unknown'}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{lead.owner_name || 'Unknown'}</p>
             {lead.property_address && (
               <p className="text-xs text-gray-500 truncate">{lead.property_address}</p>
             )}
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-600">{lead.phone || '—'}</td>
-      <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{lead.email || '—'}</td>
+      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{lead.phone || '—'}</td>
+      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hidden lg:table-cell">{lead.email || '—'}</td>
       <td className="px-4 py-3"><StatusBadge status={lead.status} /></td>
       <td className="px-4 py-3"><ScoreBadge score={lead.score} category={lead.score_category} /></td>
       <td className="px-4 py-3 text-xs text-gray-400 hidden xl:table-cell">{timeAgo(lead.last_contacted)}</td>

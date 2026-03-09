@@ -112,11 +112,11 @@ export default function AuthPage() {
         {/* Mesh grid overlay */}
         <div className="absolute inset-0 mesh-grid" />
         {/* Subtle radial glow */}
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-glow-pulse animate-float" />
 
         <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full">
           <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-6">
+            <div className="flex items-center space-x-3 mb-6 animate-fade-in-up">
               <div className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
                 <i className="fas fa-home text-white text-xl" />
               </div>
@@ -128,15 +128,15 @@ export default function AuthPage() {
           </div>
 
           <div className="max-w-md">
-            <h2 className="text-4xl font-heading font-extrabold text-white mb-6 leading-tight">
+            <h2 className="text-4xl font-heading font-extrabold text-white mb-6 leading-tight animate-fade-in-up delay-100">
               Streamline Your Real Estate Business
             </h2>
-            <p className="text-lg text-blue-100/90 mb-8 leading-relaxed">
+            <p className="text-lg text-blue-100/90 mb-8 leading-relaxed animate-fade-in-up delay-200">
               Automate lead management, multi-channel outreach, and appointment scheduling with our
               AI-driven platform.
             </p>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-8 animate-fade-in-up delay-300">
               {[
                 'AI-powered SMS, Email & WhatsApp campaigns',
                 'Lead scoring & drag-and-drop pipeline',
@@ -155,7 +155,7 @@ export default function AuthPage() {
 
           {/* Frosted glass testimonial */}
           <div className="mt-auto pt-8">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10 animate-fade-in-up delay-500">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400/40 to-blue-600/40 rounded-full flex items-center justify-center border border-white/20">
                   <i className="fas fa-quote-left text-white/80 text-lg" />
@@ -175,7 +175,7 @@ export default function AuthPage() {
       </div>
 
       {/* RIGHT PANEL (auth forms) */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16">
+      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16 animate-slide-in-right">
         <div className="mx-auto w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
@@ -234,7 +234,7 @@ export default function AuthPage() {
 
           {/* SIGN IN FORM */}
           {activeTab === 'signin' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
               <div>
                 <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] mb-2">Welcome back</h2>
                 <p className="text-[var(--text-secondary)]">Sign in to your account to continue</p>
@@ -367,7 +367,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -377,7 +377,7 @@ export default function AuthPage() {
 
           {/* SIGN UP FORM */}
           {activeTab === 'signup' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
               <div>
                 <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] mb-2">
                   Create your account
@@ -497,7 +497,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? 'Creating account...' : 'Create Account'}
                 </button>
@@ -511,7 +511,7 @@ export default function AuthPage() {
               Why choose Estate AI?
             </h3>
             <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 animate-fade-in-up delay-500">
                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-500/10 rounded-lg flex items-center justify-center">
                   <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm" />
                 </div>
@@ -522,7 +522,7 @@ export default function AuthPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 animate-fade-in-up delay-600">
                 <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center">
                   <i className="fas fa-shield-alt text-emerald-600 dark:text-emerald-400 text-sm" />
                 </div>
@@ -533,7 +533,7 @@ export default function AuthPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 animate-fade-in-up delay-700">
                 <div className="w-8 h-8 bg-purple-100 dark:bg-purple-500/10 rounded-lg flex items-center justify-center">
                   <i className="fas fa-chart-line text-purple-600 dark:text-purple-400 text-sm" />
                 </div>

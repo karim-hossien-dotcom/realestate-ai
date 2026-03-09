@@ -235,8 +235,8 @@ export default function LeadsPage() {
     return (
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
-          <div className="h-10 bg-gray-200 rounded w-28 animate-pulse"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-28 animate-pulse"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
@@ -249,7 +249,7 @@ export default function LeadsPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
           <i className="fas fa-exclamation-circle mr-2"></i>{error}
           <button onClick={() => { setLoading(true); fetchLeads(); }} className="ml-4 text-sm underline">Retry</button>
         </div>
@@ -295,13 +295,13 @@ export default function LeadsPage() {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors"
           >
             <i className="fas fa-download mr-2"></i>Export
           </button>
           <button
             onClick={() => { setLoading(true); fetchLeads(); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
+            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition-colors"
             title="Refresh"
           >
             <i className="fas fa-sync-alt"></i>
@@ -327,7 +327,7 @@ export default function LeadsPage() {
             placeholder="Search leads..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-[var(--surface)] text-gray-900 dark:text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
@@ -335,7 +335,7 @@ export default function LeadsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-[var(--surface)] text-gray-900 dark:text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="all">All Statuses</option>
           {ALL_STATUSES.map(s => (
@@ -344,7 +344,7 @@ export default function LeadsPage() {
         </select>
 
         {/* View Toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+        <div className="flex items-center bg-gray-100 dark:bg-[var(--surface)] rounded-lg p-0.5">
           <button
             onClick={() => setViewMode('table')}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -369,7 +369,7 @@ export default function LeadsPage() {
             <span className="text-sm text-gray-500 dark:text-gray-400">{selectedIds.size} selected</span>
             <button
               onClick={handleBulkDelete}
-              className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
             >
               <i className="fas fa-trash-alt mr-1"></i>Delete
             </button>
@@ -444,10 +444,10 @@ export default function LeadsPage() {
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    red: 'bg-red-50 text-red-600',
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+    green: 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400',
+    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
+    red: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',
   };
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -479,7 +479,7 @@ function TableView({
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200 dark:border-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
             <tr>
               <th className="px-4 py-3 text-left">
                 <input
@@ -510,7 +510,7 @@ function TableView({
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-3 border-t border-gray-200 text-sm text-gray-500 dark:text-gray-400">
+      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
         Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}
       </div>
     </div>
@@ -524,27 +524,27 @@ function KanbanColumn({ column, leads, onClickLead }: {
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.status });
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
-    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-    green: 'bg-green-50 border-green-200 text-green-700',
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    purple: 'bg-purple-50 border-purple-200 text-purple-700',
-    red: 'bg-red-50 border-red-200 text-red-700',
+    blue: 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-300',
+    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-300',
+    green: 'bg-green-50 border-green-200 text-green-700 dark:bg-green-500/10 dark:border-green-500/30 dark:text-green-300',
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300',
+    purple: 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/30 dark:text-purple-300',
+    red: 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300',
   };
   const headerColor = colorMap[column.color] || colorMap.blue;
 
   return (
-    <div className="flex-shrink-0 w-72 bg-gray-50 rounded-lg">
+    <div className="flex-shrink-0 w-72 bg-gray-50 dark:bg-[var(--surface)] rounded-lg">
       <div className={`px-3 py-2 rounded-t-lg border ${headerColor} flex items-center justify-between`}>
         <span className="text-sm font-semibold">{column.label}</span>
-        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-white/50">
+        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-white/50 dark:bg-white/10">
           {leads.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
         className={`p-2 space-y-2 min-h-[200px] max-h-[calc(100vh-400px)] overflow-y-auto transition-colors ${
-          isOver ? 'bg-blue-50/50 ring-2 ring-blue-300 ring-inset rounded-b-lg' : ''
+          isOver ? 'bg-blue-50/50 dark:bg-blue-500/10 ring-2 ring-blue-300 dark:ring-blue-500/50 ring-inset rounded-b-lg' : ''
         }`}
       >
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>

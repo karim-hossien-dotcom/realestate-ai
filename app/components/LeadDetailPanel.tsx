@@ -153,7 +153,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
             {!editMode ? (
               <button
                 onClick={() => setEditMode(true)}
-                className="text-sm px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="text-sm px-3 py-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
               >
                 <i className="fas fa-edit mr-1"></i>Edit
               </button>
@@ -166,7 +166,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 {saving ? 'Saving...' : 'Save'}
               </button>
             )}
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <i className="fas fa-times"></i>
             </button>
           </div>
@@ -179,7 +179,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
             <select
               value={form.status}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
             >
               {statuses.map((s) => (
                 <option key={s} value={s}>{STATUS_LABELS[s]}</option>
@@ -196,25 +196,25 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                   value={form.owner_name}
                   onChange={(e) => setForm(prev => ({ ...prev, owner_name: e.target.value }))}
                   placeholder="Full Name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <input
                   value={form.phone}
                   onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="Phone"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <input
                   value={form.email}
                   onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="Email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <input
                   value={form.property_address}
                   onChange={(e) => setForm(prev => ({ ...prev, property_address: e.target.value }))}
                   placeholder="Property Address"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                 />
               </>
             ) : (
@@ -234,7 +234,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Tags</h3>
               <div className="flex flex-wrap gap-1">
                 {lead.tags.map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded text-xs">
                     {tag}
                   </span>
                 ))}
@@ -250,11 +250,11 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 value={form.notes}
                 onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Add notes about this lead..."
               />
             ) : (
-              <p className="text-sm text-gray-600 whitespace-pre-wrap">
+              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                 {lead.notes || 'No notes yet.'}
               </p>
             )}
@@ -265,14 +265,14 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Generated Messages</h3>
               {lead.sms_text && (
-                <div className="bg-gray-50 rounded-lg p-3 mb-2">
-                  <p className="text-xs font-medium text-gray-500 mb-1">SMS/WhatsApp</p>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-2">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">SMS/WhatsApp</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{lead.sms_text}</p>
                 </div>
               )}
               {lead.email_text && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-gray-500 mb-1">Email</p>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{lead.email_text}</p>
                 </div>
               )}
@@ -280,7 +280,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
           )}
 
           {/* Timestamps */}
-          <div className="text-xs text-gray-400 space-y-1 pt-2 border-t border-gray-100">
+          <div className="text-xs text-gray-400 space-y-1 pt-2 border-t border-gray-100 dark:border-gray-700">
             <p>Created: {new Date(lead.created_at).toLocaleDateString()}</p>
             <p>Updated: {new Date(lead.updated_at).toLocaleDateString()}</p>
             {lead.last_contacted && <p>Last contacted: {new Date(lead.last_contacted).toLocaleString()}</p>}
@@ -293,25 +293,25 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleAction('schedule_meeting')}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors"
               >
                 <i className="fas fa-calendar-plus w-4"></i>Schedule Meeting
               </button>
               <button
                 onClick={() => handleAction('add_followup')}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
               >
                 <i className="fas fa-clock w-4"></i>Add Follow-Up
               </button>
               <button
                 onClick={() => window.location.href = `/conversations?leadId=${lead.id}`}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
               >
                 <i className="fas fa-comments w-4"></i>View Messages
               </button>
               <button
                 onClick={() => handleAction('add_to_dnc')}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
               >
                 <i className="fas fa-ban w-4"></i>Add to DNC
               </button>
@@ -323,7 +323,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+              className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
             >
               <i className="fas fa-trash-alt mr-1"></i>
               {deleting ? 'Deleting...' : 'Delete this lead'}

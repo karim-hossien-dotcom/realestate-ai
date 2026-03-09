@@ -108,24 +108,24 @@ export default function AppLayout({
           </div>
         </div>
 
-        <nav className={`mt-6 flex-1 overflow-y-auto ${sidebarExpanded ? 'px-4' : 'px-2'}`}>
-          <ul className="space-y-1">
+        <nav className={`mt-4 flex-1 overflow-y-auto ${sidebarExpanded ? 'px-2' : 'px-2'}`}>
+          <ul className="space-y-0.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center py-2.5 rounded-lg transition-colors relative ${
-                      sidebarExpanded ? 'px-4' : 'px-3 justify-center'
+                    className={`flex items-center py-2 rounded-lg transition-colors relative border-l-[3px] ${
+                      sidebarExpanded ? 'px-3 gap-3' : 'px-2 justify-center'
                     } ${
                       isActive
-                        ? 'text-[var(--primary)] bg-blue-50 dark:bg-blue-500/10 border-l-[3px] border-[var(--primary)]'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]'
+                        ? 'text-[var(--primary)] bg-blue-50 dark:bg-blue-500/10 border-[var(--primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] border-transparent'
                     }`}
                     title={!sidebarExpanded ? item.label : undefined}
                   >
-                    <i className={`fas ${item.icon} ${sidebarExpanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
+                    <i className={`fas fa-fw ${item.icon} ${sidebarExpanded ? '' : 'text-lg'}`}></i>
                     {sidebarExpanded && <span className="whitespace-nowrap text-sm">{item.label}</span>}
                   </Link>
                 </li>
@@ -156,11 +156,11 @@ export default function AppLayout({
             <button
               onClick={handleSignOut}
               className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
-                sidebarExpanded ? 'px-4' : 'justify-center px-2'
+                sidebarExpanded ? 'px-3 gap-3' : 'justify-center px-2'
               }`}
               title={!sidebarExpanded ? 'Sign Out' : undefined}
             >
-              <i className={`fas fa-sign-out-alt ${sidebarExpanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
+              <i className={`fas fa-fw fa-sign-out-alt ${sidebarExpanded ? '' : 'text-lg'}`}></i>
               {sidebarExpanded && <span>Sign Out</span>}
             </button>
           </div>
@@ -210,11 +210,11 @@ function ThemeToggleButton({ expanded }: { expanded: boolean }) {
     <button
       onClick={toggleTheme}
       className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
-        expanded ? 'px-4' : 'justify-center px-2'
+        expanded ? 'px-3 gap-3' : 'justify-center px-2'
       }`}
       title={!expanded ? (theme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}
     >
-      <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} ${expanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
+      <i className={`fas fa-fw ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} ${expanded ? '' : 'text-lg'}`}></i>
       {expanded && <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
     </button>
   );
