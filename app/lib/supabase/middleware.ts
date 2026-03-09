@@ -54,10 +54,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users from auth page to prototype
+  // Redirect authenticated users from auth page to dashboard
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/prototype'
+    url.pathname = '/prototype/dashboard'
     return NextResponse.redirect(url)
   }
 
