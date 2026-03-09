@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
+import { Footer } from './components/Footer';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
@@ -549,6 +550,7 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

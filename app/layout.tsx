@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Script from 'next/script';
+import { CookieConsent } from './components/CookieConsent';
 
 export const metadata: Metadata = {
   title: 'Estate AI',
@@ -49,6 +50,7 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
         {children}
+        <CookieConsent />
       </body>
     </html>
   );
