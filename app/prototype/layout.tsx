@@ -120,7 +120,7 @@ export default function PrototypeLayout({
                       sidebarExpanded ? 'px-4' : 'px-3 justify-center'
                     } ${
                       isActive
-                        ? 'text-[var(--primary)] bg-[var(--primary)]/8 dark:bg-[var(--primary)]/10 border-l-3 border-[var(--primary)]'
+                        ? 'text-[var(--primary)] bg-blue-50 dark:bg-blue-500/10 border-l-[3px] border-[var(--primary)]'
                         : 'text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]'
                     }`}
                     title={!sidebarExpanded ? item.label : undefined}
