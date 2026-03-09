@@ -155,7 +155,7 @@ export default function AppLayout({
             <ThemeToggleButton expanded={sidebarExpanded} />
             <button
               onClick={handleSignOut}
-              className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
+              className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors border-l-[3px] border-transparent ${
                 sidebarExpanded ? 'px-3 gap-3' : 'justify-center px-2'
               }`}
               title={!sidebarExpanded ? 'Sign Out' : undefined}
@@ -209,7 +209,7 @@ function ThemeToggleButton({ expanded }: { expanded: boolean }) {
   return (
     <button
       onClick={toggleTheme}
-      className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
+      className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors border-l-[3px] border-transparent ${
         expanded ? 'px-3 gap-3' : 'justify-center px-2'
       }`}
       title={!expanded ? (theme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}

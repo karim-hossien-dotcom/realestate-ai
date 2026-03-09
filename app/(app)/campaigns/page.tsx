@@ -166,7 +166,7 @@ export default function CampaignsPage() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+        <div className="h-8 bg-[var(--surface-elevated)] rounded w-48 animate-pulse"></div>
         <SkeletonTable rows={8} />
       </div>
     );
@@ -175,7 +175,7 @@ export default function CampaignsPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300">
           <i className="fas fa-exclamation-circle mr-2"></i>{error}
           <button onClick={() => { setLoading(true); fetchLeads(); }} className="ml-4 text-sm underline">Retry</button>
         </div>
@@ -188,7 +188,7 @@ export default function CampaignsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Campaigns</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Send outreach messages to your leads via WhatsApp, SMS, or Email</p>
+        <p className="text-sm text-[var(--text-secondary)]">Send outreach messages to your leads via WhatsApp, SMS, or Email</p>
       </div>
 
       {/* Step Indicator */}
@@ -199,7 +199,7 @@ export default function CampaignsPage() {
           { num: 3, label: 'Review & Send' },
         ].map((s, i) => (
           <div key={s.num} className="flex items-center gap-2">
-            {i > 0 && <div className={`w-8 h-0.5 ${step >= s.num ? 'bg-blue-600' : 'bg-gray-300'}`}></div>}
+            {i > 0 && <div className={`w-8 h-0.5 ${step >= s.num ? 'bg-blue-600' : 'bg-[var(--border)]'}`}></div>}
             <button
               onClick={() => {
                 if (s.num === 1) setStep(1);
@@ -210,8 +210,8 @@ export default function CampaignsPage() {
                 step === s.num
                   ? 'bg-blue-600 text-white'
                   : step > s.num
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+                  : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
               }`}
             >
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs bg-white/20">
@@ -242,7 +242,7 @@ export default function CampaignsPage() {
               placeholder="Search leads..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-4 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -253,10 +253,10 @@ export default function CampaignsPage() {
               description="Leads need generated messages before they can be included in campaigns. Go to Leads and run the message generation pipeline."
             />
           ) : (
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200 dark:border-gray-700">
+                  <thead className="bg-[var(--surface-elevated)] border-b border-[var(--border)]">
                     <tr>
                       <th className="px-4 py-3 text-left">
                         <input
@@ -266,16 +266,16 @@ export default function CampaignsPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Address</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Message Preview</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Phone</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase hidden md:table-cell">Address</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Score</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase hidden lg:table-cell">Message Preview</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredLeads.map((lead) => (
-                      <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50 dark:bg-gray-900">
+                      <tr key={lead.id} className="border-b border-[var(--border)] hover:bg-[var(--surface-elevated)]">
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
@@ -284,11 +284,11 @@ export default function CampaignsPage() {
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{lead.owner_name || '—'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{lead.phone || '—'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell truncate max-w-[200px]">{lead.property_address || '—'}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{lead.owner_name || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{lead.phone || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[var(--text-secondary)] hidden md:table-cell truncate max-w-[200px]">{lead.property_address || '—'}</td>
                         <td className="px-4 py-3"><ScoreBadge score={lead.score} category={lead.score_category} /></td>
-                        <td className="px-4 py-3 text-xs text-gray-500 hidden lg:table-cell truncate max-w-[250px]">{lead.sms_text || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-[var(--text-secondary)] hidden lg:table-cell truncate max-w-[250px]">{lead.sms_text || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -313,22 +313,22 @@ export default function CampaignsPage() {
       {/* Step 2: Content */}
       {step === 2 && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-5">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6 space-y-5">
             {/* Campaign Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Campaign Name</label>
               <input
                 type="text"
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder={`Campaign ${new Date().toLocaleDateString()}`}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Channel */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Channel</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Channel</label>
               <div className="flex gap-3">
                 {[
                   { value: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp', color: 'green' },
@@ -341,8 +341,8 @@ export default function CampaignsPage() {
                     onClick={() => setChannel(ch.value as typeof channel)}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                       channel === ch.value
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 bg-white dark:bg-gray-800 text-gray-600 hover:border-gray-300'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'
+                        : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]'
                     }`}
                   >
                     <i className={`fas ${ch.icon}`}></i>
@@ -355,24 +355,24 @@ export default function CampaignsPage() {
             {/* WhatsApp Template */}
             {(channel === 'whatsapp' || channel === 'both') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Template</label>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">WhatsApp Template</label>
                 <select
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="realestate_outreach">Real Estate Outreach</option>
                   <option value="hello_world">Hello World (Test)</option>
                 </select>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Template must be approved in Meta Business Manager</p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">Template must be approved in Meta Business Manager</p>
               </div>
             )}
 
             {/* Message Preview */}
             {selectedLeads[0]?.sms_text && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message Preview (first lead)</label>
-                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 border border-gray-200 dark:border-gray-700">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Message Preview (first lead)</label>
+                <div className="bg-[var(--surface-elevated)] rounded-lg p-4 text-sm text-[var(--text-primary)] border border-[var(--border)]">
                   {selectedLeads[0].sms_text}
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default function CampaignsPage() {
           <div className="flex justify-between">
             <button
               onClick={() => setStep(1)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-100 text-sm font-medium"
+              className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium"
             >
               <i className="fas fa-arrow-left mr-2"></i>Back
             </button>
@@ -401,24 +401,24 @@ export default function CampaignsPage() {
       {step === 3 && (
         <div className="space-y-6">
           {/* Summary Card */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Campaign Summary</h3>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Campaign Summary</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-gray-500 uppercase">Audience</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedIds.size} leads</p>
+                <p className="text-xs text-[var(--text-secondary)] uppercase">Audience</p>
+                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedIds.size} leads</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Channel</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-100 capitalize">{channel}</p>
+                <p className="text-xs text-[var(--text-secondary)] uppercase">Channel</p>
+                <p className="text-xl font-bold text-[var(--text-primary)] capitalize">{channel}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Template</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{templateName}</p>
+                <p className="text-xs text-[var(--text-secondary)] uppercase">Template</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{templateName}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Campaign</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{campaignName || 'Auto-named'}</p>
+                <p className="text-xs text-[var(--text-secondary)] uppercase">Campaign</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{campaignName || 'Auto-named'}</p>
               </div>
             </div>
           </div>
@@ -429,7 +429,7 @@ export default function CampaignsPage() {
               {sending ? (
                 <div className="py-8">
                   <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-sm text-gray-600">Sending campaign... This may take a few minutes.</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Sending campaign... This may take a few minutes.</p>
                 </div>
               ) : (
                 <button
@@ -444,38 +444,38 @@ export default function CampaignsPage() {
             <div className="space-y-4">
               {/* Results stats */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-green-700">{sendStats.sent}</p>
-                  <p className="text-xs text-green-600 uppercase">Sent</p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center dark:bg-green-500/10 dark:border-green-500/30">
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{sendStats.sent}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 uppercase">Sent</p>
                 </div>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-red-700">{sendStats.failed}</p>
-                  <p className="text-xs text-red-600 uppercase">Failed</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center dark:bg-red-500/10 dark:border-red-500/30">
+                  <p className="text-2xl font-bold text-red-700 dark:text-red-300">{sendStats.failed}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 uppercase">Failed</p>
                 </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-yellow-700">{sendStats.skipped}</p>
-                  <p className="text-xs text-yellow-600 uppercase">Skipped</p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center dark:bg-yellow-500/10 dark:border-yellow-500/30">
+                  <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{sendStats.skipped}</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase">Skipped</p>
                 </div>
               </div>
 
               {/* Results table */}
               {sendResults.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
                   <div className="overflow-x-auto max-h-64">
                     <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                      <thead className="bg-[var(--surface-elevated)] border-b border-[var(--border)] sticky top-0">
                         <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Channel</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Contact</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Channel</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Status</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-[var(--text-secondary)] uppercase">Details</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sendResults.map((r, i) => (
-                          <tr key={i} className="border-b border-gray-100">
-                            <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{r.contact}</td>
-                            <td className="px-4 py-2 text-sm text-gray-600 capitalize">{r.channel}</td>
+                          <tr key={i} className="border-b border-[var(--border)] hover:bg-[var(--surface-elevated)]">
+                            <td className="px-4 py-2 text-sm text-[var(--text-primary)]">{r.contact}</td>
+                            <td className="px-4 py-2 text-sm text-[var(--text-secondary)] capitalize">{r.channel}</td>
                             <td className="px-4 py-2">
                               {r.ok ? (
                                 <span className="text-green-600 text-xs font-medium"><i className="fas fa-check-circle mr-1"></i>Sent</span>
@@ -485,7 +485,7 @@ export default function CampaignsPage() {
                                 <span className="text-red-600 text-xs font-medium"><i className="fas fa-times-circle mr-1"></i>Failed</span>
                               )}
                             </td>
-                            <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">{r.skipped || r.error || '—'}</td>
+                            <td className="px-4 py-2 text-xs text-[var(--text-secondary)]">{r.skipped || r.error || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -504,7 +504,7 @@ export default function CampaignsPage() {
                     setSendStats(null);
                     setCampaignName('');
                   }}
-                  className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg text-sm font-medium transition-colors"
                 >
                   <i className="fas fa-plus mr-2"></i>Create Another Campaign
                 </button>
@@ -517,7 +517,7 @@ export default function CampaignsPage() {
             <div className="flex justify-start">
               <button
                 onClick={() => setStep(2)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-100 text-sm font-medium"
+                className="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium"
               >
                 <i className="fas fa-arrow-left mr-2"></i>Back
               </button>
@@ -574,9 +574,9 @@ export default function CampaignsPage() {
 
 function MiniStat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg p-3 border ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-white dark:bg-gray-800 border-gray-200'}`}>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-gray-900 dark:text-gray-100'}`}>{value}</p>
+    <div className={`rounded-lg p-3 border ${highlight ? 'bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30' : 'bg-[var(--surface)] border-[var(--border)]'}`}>
+      <p className="text-xs text-[var(--text-secondary)]">{label}</p>
+      <p className={`text-xl font-bold ${highlight ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--text-primary)]'}`}>{value}</p>
     </div>
   );
 }

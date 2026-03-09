@@ -229,9 +229,9 @@ export default function ConversationsPage() {
   return (
     <div className="flex h-[calc(100vh-64px)] md:h-[calc(100vh-0px)] overflow-hidden">
       {/* Panel 1: Conversation List */}
-      <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 border-r border-gray-200 bg-white dark:bg-gray-800 flex-shrink-0`}>
+      <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 border-r border-[var(--border)] bg-[var(--surface)] flex-shrink-0`}>
         {/* Search + Refresh */}
-        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -240,13 +240,13 @@ export default function ConversationsPage() {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="w-full pl-9 pr-4 py-2 border border-[var(--border)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-[var(--surface-elevated)] text-[var(--text-primary)]"
               />
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)] rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
               title="Refresh"
             >
               <i className={`fas fa-sync-alt text-sm ${refreshing ? 'animate-spin' : ''}`}></i>
@@ -281,7 +281,7 @@ export default function ConversationsPage() {
             </div>
           ) : filteredConversations.length === 0 ? (
             <div className="p-6 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-[var(--text-secondary)]">
                 {conversations.length === 0 ? 'No conversations yet' : 'No matching conversations'}
               </p>
             </div>
@@ -296,7 +296,7 @@ export default function ConversationsPage() {
                     setSelectedId(convo.id);
                     setMobileView('thread');
                   }}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                  className={`w-full text-left px-4 py-3 border-b border-[var(--border)] hover:bg-[var(--surface-elevated)] transition-colors ${
                     isActive ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                 >
@@ -306,8 +306,8 @@ export default function ConversationsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{convo.owner_name || 'Unknown'}</span>
-                        <span className="text-xs text-gray-400 flex-shrink-0">
+                        <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{convo.owner_name || 'Unknown'}</span>
+                        <span className="text-xs text-[var(--text-secondary)] flex-shrink-0">
                           {timeAgo(convo.lastMessage?.created_at || convo.last_contacted)}
                         </span>
                       </div>
@@ -315,8 +315,8 @@ export default function ConversationsPage() {
                         {convo.lastMessage?.channel && (
                           <i className={`fas ${CHANNEL_ICONS[convo.lastMessage.channel] || 'fa-comment text-gray-400'} text-xs`}></i>
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {convo.lastMessage?.direction === 'outbound' && <span className="text-gray-400">You: </span>}
+                        <p className="text-xs text-[var(--text-secondary)] truncate">
+                          {convo.lastMessage?.direction === 'outbound' && <span className="text-[var(--text-secondary)]">You: </span>}
                           {convo.lastMessage?.body || 'No messages'}
                         </p>
                       </div>
@@ -335,7 +335,7 @@ export default function ConversationsPage() {
       </div>
 
       {/* Panel 2: Message Thread */}
-      <div className={`${mobileView === 'thread' || selectedId ? 'flex' : 'hidden'} md:flex flex-col flex-1 bg-gray-50 dark:bg-gray-900 min-w-0`}>
+      <div className={`${mobileView === 'thread' || selectedId ? 'flex' : 'hidden'} md:flex flex-col flex-1 bg-[var(--background)] min-w-0`}>
         {!selectedId ? (
           <div className="flex-1 flex items-center justify-center">
             <EmptyState
@@ -347,10 +347,10 @@ export default function ConversationsPage() {
         ) : (
           <>
             {/* Thread header */}
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+            <div className="bg-[var(--surface)] border-b border-[var(--border)] px-4 py-3 flex items-center gap-3">
               <button
                 onClick={() => { setMobileView('list'); setSelectedId(null); }}
-                className="md:hidden p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-300"
+                className="md:hidden p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <i className="fas fa-arrow-left"></i>
               </button>
@@ -358,13 +358,13 @@ export default function ConversationsPage() {
                 {(selectedConvo?.owner_name || '?').charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedConvo?.owner_name || 'Unknown'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedConvo?.phone || selectedConvo?.email || ''}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{selectedConvo?.owner_name || 'Unknown'}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{selectedConvo?.phone || selectedConvo?.email || ''}</p>
               </div>
               {selectedConvo && <StatusBadge status={selectedConvo.status} />}
               <button
                 onClick={() => setShowContext(!showContext)}
-                className="hidden md:block p-2 text-gray-400 hover:text-gray-600"
+                className="hidden md:block p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 title="Toggle context panel"
               >
                 <i className="fas fa-info-circle"></i>
@@ -377,13 +377,13 @@ export default function ConversationsPage() {
                 <div className="space-y-4 py-8">
                   {[1, 2, 3].map(i => (
                     <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                      <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-12 w-48"></div>
+                      <div className="animate-pulse bg-[var(--surface-elevated)] rounded-lg h-12 w-48"></div>
                     </div>
                   ))}
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No messages in this conversation</p>
+                  <p className="text-sm text-[var(--text-secondary)]">No messages in this conversation</p>
                 </div>
               ) : (
                 messages.map((msg) => (
@@ -394,7 +394,7 @@ export default function ConversationsPage() {
                     <div className={`max-w-[75%] rounded-lg px-4 py-2.5 ${
                       msg.direction === 'outbound'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100'
+                        : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)]'
                     }`}>
                       <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
                       <div className={`flex items-center gap-1.5 mt-1 text-xs ${
@@ -414,7 +414,7 @@ export default function ConversationsPage() {
             </div>
 
             {/* Compose */}
-            <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+            <div className="bg-[var(--surface)] border-t border-[var(--border)] px-4 py-3">
               <div className="flex items-center gap-2">
                 {/* Channel toggle */}
                 <button
@@ -438,7 +438,7 @@ export default function ConversationsPage() {
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                   placeholder={`Type a message via ${sendChannel}...`}
                   disabled={sending}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-[var(--surface-elevated)] text-[var(--text-primary)] disabled:opacity-50"
                 />
                 {/* Send button */}
                 <button
@@ -461,9 +461,9 @@ export default function ConversationsPage() {
 
       {/* Panel 3: Context Sidebar */}
       {selectedConvo && showContext && (
-        <div className="hidden lg:flex flex-col w-80 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Lead Details</h3>
+        <div className="hidden lg:flex flex-col w-80 border-l border-[var(--border)] bg-[var(--surface)] flex-shrink-0 overflow-y-auto">
+          <div className="p-4 border-b border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Lead Details</h3>
           </div>
           <div className="p-4 space-y-4">
             {/* Avatar + Name */}
@@ -471,7 +471,7 @@ export default function ConversationsPage() {
               <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-semibold mx-auto mb-2">
                 {(selectedConvo.owner_name || '?').charAt(0).toUpperCase()}
               </div>
-              <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedConvo.owner_name || 'Unknown'}</p>
+              <p className="font-semibold text-[var(--text-primary)]">{selectedConvo.owner_name || 'Unknown'}</p>
               <div className="mt-1">
                 <ScoreBadge score={0} category={selectedConvo.score_category} />
               </div>
@@ -480,14 +480,14 @@ export default function ConversationsPage() {
             {/* Contact */}
             <div className="space-y-2 text-sm">
               {selectedConvo.phone && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <i className="fas fa-phone w-4 text-center text-gray-400"></i>
+                <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                  <i className="fas fa-phone w-4 text-center text-[var(--text-secondary)]"></i>
                   {selectedConvo.phone}
                 </div>
               )}
               {selectedConvo.email && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <i className="fas fa-envelope w-4 text-center text-gray-400"></i>
+                <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                  <i className="fas fa-envelope w-4 text-center text-[var(--text-secondary)]"></i>
                   {selectedConvo.email}
                 </div>
               )}
@@ -495,21 +495,21 @@ export default function ConversationsPage() {
 
             {/* Status */}
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
+              <p className="text-xs text-[var(--text-secondary)] mb-1">Status</p>
               <StatusBadge status={selectedConvo.status} />
             </div>
 
             {/* Property Info */}
             {selectedConvo.property_interest && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Property Interest</p>
-                <p className="text-sm text-gray-900 dark:text-gray-100">{selectedConvo.property_interest}</p>
+                <p className="text-xs text-[var(--text-secondary)] mb-1">Property Interest</p>
+                <p className="text-sm text-[var(--text-primary)]">{selectedConvo.property_interest}</p>
               </div>
             )}
             {(selectedConvo.budget_min || selectedConvo.budget_max) && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Budget</p>
-                <p className="text-sm text-gray-900 dark:text-gray-100">
+                <p className="text-xs text-[var(--text-secondary)] mb-1">Budget</p>
+                <p className="text-sm text-[var(--text-primary)]">
                   {selectedConvo.budget_min ? `$${selectedConvo.budget_min.toLocaleString()}` : '?'}
                   {' — '}
                   {selectedConvo.budget_max ? `$${selectedConvo.budget_max.toLocaleString()}` : '?'}
@@ -518,7 +518,7 @@ export default function ConversationsPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2">
+            <div className="pt-2 border-t border-[var(--border)] space-y-2">
               <button
                 onClick={() => window.location.href = `/leads`}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"

@@ -84,18 +84,18 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-3 bg-white dark:bg-gray-800 border-l-4 ${TOAST_COLORS[toast.type]} shadow-lg rounded-lg px-4 py-3 min-w-[280px] max-w-[400px] transition-all duration-300 ${
+      className={`pointer-events-auto flex items-center gap-3 bg-[var(--surface)] border-l-4 ${TOAST_COLORS[toast.type]} shadow-lg rounded-lg px-4 py-3 min-w-[280px] max-w-[400px] transition-all duration-300 ${
         visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
     >
       <i className={`fas ${TOAST_ICONS[toast.type]} ${TOAST_ICON_COLORS[toast.type]} text-lg flex-shrink-0`}></i>
-      <p className="text-sm text-gray-800 dark:text-gray-200 flex-1">{toast.message}</p>
+      <p className="text-sm text-[var(--text-primary)] flex-1">{toast.message}</p>
       <button
         onClick={() => {
           setVisible(false);
           setTimeout(() => onRemove(toast.id), 300);
         }}
-        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex-shrink-0"
       >
         <i className="fas fa-times text-xs"></i>
       </button>

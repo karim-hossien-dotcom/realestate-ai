@@ -101,10 +101,10 @@ export default function MobileNav({ navItems, isOpen, onClose, profile, onSignOu
                 onClose();
                 onSignOut();
               }}
-              className="flex items-center w-full px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors"
+              className="flex items-center w-full px-4 py-2.5 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors border-l-[3px] border-transparent gap-3"
             >
-              <i className="fas fa-sign-out-alt w-5 mr-3"></i>
-              Sign Out
+              <i className="fas fa-sign-out-alt w-5"></i>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>

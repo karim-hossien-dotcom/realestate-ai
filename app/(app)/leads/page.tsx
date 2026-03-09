@@ -272,7 +272,7 @@ export default function LeadsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Leads</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{totalLeads} total leads</p>
+          <p className="text-sm text-[var(--text-secondary)]">{totalLeads} total leads</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -450,14 +450,14 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
     red: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',
   };
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
           <i className={`fas ${icon} text-sm`}></i>
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }
@@ -476,10 +476,10 @@ function TableView({
   onClickLead: (lead: Lead) => void;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+          <thead className="bg-[var(--surface-elevated)] border-b border-[var(--border)]">
             <tr>
               <th className="px-4 py-3 text-left">
                 <input
@@ -489,12 +489,12 @@ function TableView({
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Phone</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden lg:table-cell">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Score</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide hidden xl:table-cell">Last Contact</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Phone</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide hidden lg:table-cell">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Score</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide hidden xl:table-cell">Last Contact</th>
             </tr>
           </thead>
           <tbody>
@@ -510,7 +510,7 @@ function TableView({
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+      <div className="px-4 py-3 border-t border-[var(--border)] text-sm text-[var(--text-secondary)]">
         Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}
       </div>
     </div>

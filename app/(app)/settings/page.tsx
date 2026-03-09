@@ -283,11 +283,11 @@ export default function SettingsPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Settings</h1>
-        <p className="text-gray-500 dark:text-gray-400">Manage your profile, integrations, and platform configuration</p>
+        <p className="text-[var(--text-secondary)]">Manage your profile, integrations, and platform configuration</p>
       </div>
 
       {/* Horizontal Tab Bar */}
-      <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 gap-1 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+      <div className="flex overflow-x-auto border-b border-[var(--border)] gap-1 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         {settingsSections.map((section) => (
           <button
             key={section.id}

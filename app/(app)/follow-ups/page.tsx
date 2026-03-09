@@ -27,11 +27,11 @@ type Stats = {
 };
 
 const URGENCY_COLORS: Record<string, string> = {
-  green: 'bg-green-100 text-green-700',
-  yellow: 'bg-yellow-100 text-yellow-700',
-  orange: 'bg-orange-100 text-orange-700',
-  red: 'bg-red-100 text-red-700',
-  darkred: 'bg-red-200 text-red-800',
+  green: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300',
+  orange: 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300',
+  red: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+  darkred: 'bg-red-200 text-red-800 dark:bg-red-500/20 dark:text-red-300',
 };
 
 function getUrgency(days: number): { color: string; label: string } {
@@ -44,11 +44,11 @@ function getUrgency(days: number): { color: string; label: string } {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  no_response: 'bg-gray-100 text-gray-700',
-  replied: 'bg-green-100 text-green-700',
-  needs_followup: 'bg-yellow-100 text-yellow-700',
-  interested: 'bg-blue-100 text-blue-700',
-  not_interested: 'bg-red-100 text-red-700',
+  no_response: 'bg-gray-100 text-gray-700 dark:bg-gray-500/15 dark:text-gray-300',
+  replied: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  needs_followup: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300',
+  interested: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+  not_interested: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -123,15 +123,15 @@ export default function FollowUpsPage() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+        <div className="h-8 bg-[var(--surface-elevated)] rounded w-48 animate-pulse"></div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
         </div>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 animate-pulse">
+              <div className="h-4 bg-[var(--surface-elevated)] rounded w-1/3 mb-2"></div>
+              <div className="h-3 bg-[var(--surface-elevated)] rounded w-2/3"></div>
             </div>
           ))}
         </div>
@@ -142,7 +142,7 @@ export default function FollowUpsPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300">
           <i className="fas fa-exclamation-circle mr-2"></i>{error}
           <button onClick={() => { setLoading(true); fetchFollowups(); }} className="ml-4 text-sm underline">Retry</button>
         </div>
@@ -156,7 +156,7 @@ export default function FollowUpsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Follow-Ups</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Track and manage lead follow-up activities</p>
+          <p className="text-sm text-[var(--text-secondary)]">Track and manage lead follow-up activities</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -169,7 +169,7 @@ export default function FollowUpsPage() {
           </button>
           <button
             onClick={() => { setLoading(true); fetchFollowups(); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
+            className="px-3 py-2 bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-elevated)] text-sm transition-colors"
             title="Refresh"
           >
             <i className="fas fa-sync-alt"></i>
@@ -188,15 +188,15 @@ export default function FollowUpsPage() {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto">
+      <div className="flex gap-1 bg-[var(--surface-elevated)] rounded-lg p-1 overflow-x-auto">
         {filterTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setFilterStatus(tab.key)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
               filterStatus === tab.key
-                ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-[var(--surface)] shadow text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             {tab.label}
@@ -223,12 +223,12 @@ export default function FollowUpsPage() {
           {filteredFollowups.map((fu) => {
             const urgency = getUrgency(fu.daysSinceContact);
             return (
-              <div key={fu.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow">
+              <div key={fu.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3">
                   {/* Left: info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fu.ownerName || 'Unknown'}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--text-primary)]">{fu.ownerName || 'Unknown'}</h3>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[fu.responseStatus] || STATUS_STYLES.no_response}`}>
                         {STATUS_LABELS[fu.responseStatus] || fu.responseStatus}
                       </span>
@@ -237,16 +237,16 @@ export default function FollowUpsPage() {
                       </span>
                     </div>
                     {fu.phone && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400"><i className="fas fa-phone mr-1"></i>{fu.phone}</p>
+                      <p className="text-xs text-[var(--text-secondary)]"><i className="fas fa-phone mr-1"></i>{fu.phone}</p>
                     )}
                     {fu.propertyAddress && (
-                      <p className="text-xs text-gray-500 mt-0.5"><i className="fas fa-map-marker-alt mr-1"></i>{fu.propertyAddress}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5"><i className="fas fa-map-marker-alt mr-1"></i>{fu.propertyAddress}</p>
                     )}
                     <p className="text-xs text-blue-600 mt-1.5 font-medium">
                       <i className="fas fa-lightbulb mr-1"></i>{fu.suggestedAction}
                     </p>
                     {fu.originalMessage && (
-                      <p className="text-xs text-gray-400 mt-1 truncate">
+                      <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">
                         Last message: &ldquo;{fu.originalMessage.substring(0, 80)}{fu.originalMessage.length > 80 ? '...' : ''}&rdquo;
                       </p>
                     )}
@@ -261,13 +261,13 @@ export default function FollowUpsPage() {
                   <div className="flex sm:flex-col gap-2 flex-shrink-0">
                     <button
                       onClick={() => window.location.href = `/conversations?leadId=${fu.leadId}`}
-                      className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
                     >
                       <i className="fas fa-comments mr-1"></i>View
                     </button>
                     <button
                       onClick={() => window.location.href = '/campaigns'}
-                      className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-300 dark:bg-green-500/10 dark:hover:bg-green-500/20 rounded-lg transition-colors"
                     >
                       <i className="fas fa-paper-plane mr-1"></i>Send
                     </button>
@@ -284,20 +284,20 @@ export default function FollowUpsPage() {
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    red: 'bg-red-50 text-red-600',
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+    green: 'bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-300',
+    yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-300',
+    red: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300',
   };
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
           <i className={`fas ${icon} text-sm`}></i>
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }

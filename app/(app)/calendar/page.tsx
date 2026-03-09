@@ -279,11 +279,11 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+        <div className="h-8 bg-[var(--surface-elevated)] rounded w-48 animate-pulse"></div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
         </div>
-        <div className="bg-gray-200 rounded-lg h-96 animate-pulse"></div>
+        <div className="bg-[var(--surface-elevated)] rounded-lg h-96 animate-pulse"></div>
       </div>
     );
   }
@@ -321,7 +321,7 @@ export default function CalendarPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Calendar</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">View and manage meetings & follow-ups</p>
+          <p className="text-sm text-[var(--text-secondary)]">View and manage meetings & follow-ups</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -332,7 +332,7 @@ export default function CalendarPage() {
           </button>
           <button
             onClick={() => { setLoading(true); fetchEvents(); }}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
+            className="px-3 py-2 bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-elevated)] dark:hover:bg-[var(--surface-elevated)] text-sm transition-colors"
             title="Refresh"
           >
             <i className="fas fa-sync-alt"></i>
@@ -351,29 +351,29 @@ export default function CalendarPage() {
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar Grid */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="lg:col-span-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
           {/* Month nav */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <i className="fas fa-chevron-left text-gray-600"></i>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+            <button onClick={prevMonth} className="p-2 hover:bg-[var(--surface-elevated)] rounded-lg transition-colors">
+              <i className="fas fa-chevron-left text-[var(--text-secondary)]"></i>
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
               {MONTHS[month]} {year}
             </h2>
             <div className="flex items-center gap-1">
-              <button onClick={goToday} className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+              <button onClick={goToday} className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors">
                 Today
               </button>
-              <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <i className="fas fa-chevron-right text-gray-600"></i>
+              <button onClick={nextMonth} className="p-2 hover:bg-[var(--surface-elevated)] rounded-lg transition-colors">
+                <i className="fas fa-chevron-right text-[var(--text-secondary)]"></i>
               </button>
             </div>
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-gray-100">
+          <div className="grid grid-cols-7 border-b border-[var(--border)]">
             {DAYS.map(d => (
-              <div key={d} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+              <div key={d} className="px-2 py-2 text-center text-xs font-medium text-[var(--text-secondary)] uppercase">
                 {d}
               </div>
             ))}
@@ -385,12 +385,12 @@ export default function CalendarPage() {
               <button
                 key={i}
                 onClick={() => setSelectedDate(cell.isCurrentMonth ? cell.dateStr : null)}
-                className={`relative p-2 min-h-[80px] border-b border-r border-gray-100 text-left transition-colors hover:bg-gray-50 ${
-                  !cell.isCurrentMonth ? 'bg-gray-50/50' : ''
-                } ${cell.isToday ? 'bg-blue-50' : ''} ${selectedDate === cell.dateStr ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
+                className={`relative p-2 min-h-[80px] border-b border-r border-[var(--border)] text-left transition-colors hover:bg-[var(--surface-elevated)] ${
+                  !cell.isCurrentMonth ? 'bg-[var(--surface-elevated)]/50' : ''
+                } ${cell.isToday ? 'bg-blue-50 dark:bg-blue-500/10' : ''} ${selectedDate === cell.dateStr ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
               >
                 <span className={`text-sm ${
-                  !cell.isCurrentMonth ? 'text-gray-300' : cell.isToday ? 'text-blue-600 font-bold' : 'text-gray-700'
+                  !cell.isCurrentMonth ? 'text-[var(--text-secondary)] opacity-50' : cell.isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-[var(--text-primary)]'
                 }`}>
                   {cell.day}
                 </span>
@@ -400,7 +400,9 @@ export default function CalendarPage() {
                       <span
                         key={e.id}
                         className={`block w-full text-[10px] px-1 py-0.5 rounded truncate ${
-                          e.type === 'meeting' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
+                          e.type === 'meeting'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300'
                         }`}
                       >
                         {e.time && <span className="font-medium">{e.time} </span>}
@@ -408,7 +410,7 @@ export default function CalendarPage() {
                       </span>
                     ))}
                     {cell.events.length > 2 && (
-                      <span className="text-[10px] text-gray-400 px-1">+{cell.events.length - 2} more</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] px-1">+{cell.events.length - 2} more</span>
                     )}
                   </div>
                 )}
@@ -418,9 +420,9 @@ export default function CalendarPage() {
         </div>
 
         {/* Right Panel: Upcoming Events */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg">
+          <div className="px-4 py-3 border-b border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               {selectedDate ? `Events on ${formatDate(selectedDate)}` : 'Upcoming Events'}
             </h3>
             {selectedDate && (
@@ -429,45 +431,47 @@ export default function CalendarPage() {
               </button>
             )}
           </div>
-          <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
             {(selectedDate ? dayEvents : upcoming).length === 0 ? (
               <div className="p-8 text-center">
-                <i className="fas fa-calendar text-gray-300 text-3xl mb-2"></i>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <i className="fas fa-calendar text-[var(--text-secondary)] text-3xl mb-2"></i>
+                <p className="text-sm text-[var(--text-secondary)]">
                   {selectedDate ? 'No events on this day' : 'No upcoming events'}
                 </p>
               </div>
             ) : (
               (selectedDate ? dayEvents : upcoming).map(event => (
-                <div key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={event.id} className="p-4 hover:bg-[var(--surface-elevated)] transition-colors">
                   <div className="flex items-start gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      event.type === 'meeting' ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600'
+                      event.type === 'meeting'
+                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300'
+                        : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-300'
                     }`}>
                       <i className={`fas ${event.type === 'meeting' ? 'fa-handshake' : 'fa-clock'} text-sm`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <p className="text-sm font-medium text-[var(--text-primary)]">
                         {event.title || (event.type === 'meeting' ? 'Meeting' : 'Follow-up')}
                       </p>
                       {event.phone && (
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                           <i className="fas fa-phone mr-1"></i>{event.phone}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                         <i className="fas fa-calendar mr-1"></i>{formatDate(event.date, event.time)}
                       </p>
                       {event.property_address && (
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                           <i className="fas fa-map-marker-alt mr-1"></i>{event.property_address}
                         </p>
                       )}
                       {event.note && (
-                        <p className="text-xs text-gray-500 mt-1 truncate">{event.note}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">{event.note}</p>
                       )}
                       {event.source === 'ai_bot' && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 mt-1">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 mt-1">
                           <i className="fas fa-robot mr-1"></i>AI Bot
                         </span>
                       )}
@@ -477,14 +481,14 @@ export default function CalendarPage() {
                         href={getGoogleCalendarUrl(event)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="p-1.5 text-[var(--text-secondary)] hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         title="Add to Google Calendar"
                       >
                         <i className="fab fa-google text-sm"></i>
                       </a>
                       <button
                         onClick={() => downloadIcsFile(event)}
-                        className="p-1.5 text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"
+                        className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                         title="Add to Apple Calendar"
                       >
                         <i className="fab fa-apple text-sm"></i>
@@ -501,10 +505,10 @@ export default function CalendarPage() {
       {/* Create Invite Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Create Meeting Invite</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 text-gray-400 hover:text-gray-600">
+          <div className="bg-[var(--surface)] rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Create Meeting Invite</h3>
+              <button onClick={() => setShowModal(false)} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -512,8 +516,8 @@ export default function CalendarPage() {
             <div className="p-6 space-y-4">
               {/* Lead Selection Tabs */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Lead</label>
-                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Select Lead</label>
+                <div className="flex gap-1 bg-[var(--surface-elevated)] rounded-lg p-1">
                   {[
                     { key: 'manual' as const, label: 'Manual' },
                     { key: 'followups' as const, label: 'Follow-ups' },
@@ -527,7 +531,9 @@ export default function CalendarPage() {
                         if (tab.key === 'campaigns') loadCampaignLeads();
                       }}
                       className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        leadTab === tab.key ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700'
+                        leadTab === tab.key
+                          ? 'bg-[var(--surface)] shadow text-[var(--text-primary)]'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       {tab.label}
@@ -538,25 +544,25 @@ export default function CalendarPage() {
                 {/* Tab content */}
                 <div className="mt-3">
                   {leadTab === 'manual' && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Select a lead from Follow-ups or Campaigns tabs, or the lead will be matched by phone.</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Select a lead from Follow-ups or Campaigns tabs, or the lead will be matched by phone.</p>
                   )}
                   {leadTab !== 'manual' && (
-                    <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                    <div className="border border-[var(--border)] rounded-lg max-h-48 overflow-y-auto">
                       {leadsLoading ? (
-                        <div className="p-4 text-center text-sm text-gray-400">Loading...</div>
+                        <div className="p-4 text-center text-sm text-[var(--text-secondary)]">Loading...</div>
                       ) : (leadTab === 'followups' ? followUpLeads : campaignLeads).length === 0 ? (
-                        <div className="p-4 text-center text-sm text-gray-400">No leads available</div>
+                        <div className="p-4 text-center text-sm text-[var(--text-secondary)]">No leads available</div>
                       ) : (
                         (leadTab === 'followups' ? followUpLeads : campaignLeads).map(lead => (
                           <button
                             key={lead.id}
                             onClick={() => selectLead(lead)}
-                            className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors ${
-                              inviteForm.leadId === lead.id ? 'bg-blue-50' : ''
+                            className={`w-full text-left px-4 py-2.5 hover:bg-[var(--surface-elevated)] border-b border-[var(--border)] last:border-0 transition-colors ${
+                              inviteForm.leadId === lead.id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
                             }`}
                           >
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{lead.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-sm font-medium text-[var(--text-primary)]">{lead.name}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">
                               {lead.phone && <span className="mr-3"><i className="fas fa-phone mr-1"></i>{lead.phone}</span>}
                               {lead.detail && <span><i className="fas fa-map-marker-alt mr-1"></i>{lead.detail}</span>}
                             </p>
@@ -569,7 +575,7 @@ export default function CalendarPage() {
               </div>
 
               {inviteForm.leadId && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg text-sm text-blue-700">
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-sm text-blue-700 dark:text-blue-300">
                   <i className="fas fa-user-check"></i>
                   <span>Lead selected: {inviteForm.phone || inviteForm.leadId}</span>
                 </div>
@@ -578,42 +584,42 @@ export default function CalendarPage() {
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Date</label>
                   <input
                     type="date"
                     value={inviteForm.date}
                     onChange={e => setInviteForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Time</label>
                   <input
                     type="time"
                     value={inviteForm.time}
                     onChange={e => setInviteForm(prev => ({ ...prev, time: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               {/* Note */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Note (optional)</label>
                 <textarea
                   value={inviteForm.note}
                   onChange={e => setInviteForm(prev => ({ ...prev, note: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Meeting agenda or notes..."
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)]">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-elevated)] rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -634,20 +640,20 @@ export default function CalendarPage() {
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    red: 'bg-red-50 text-red-600',
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+    green: 'bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-300',
+    yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-300',
+    red: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300',
   };
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
           <i className={`fas ${icon} text-sm`}></i>
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }

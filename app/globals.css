@@ -7,13 +7,17 @@
   --foreground: #111827;
   --surface: #FFFFFF;
   --surface-elevated: #F8F9FB;
-  --border: #E5E7EB;
+  --border: #D1D5DB;
   --text-primary: #111827;
   --text-secondary: #6B7280;
   --primary: #2563EB;
   --primary-hover: #1D4ED8;
   --accent: #10B981;
   --danger: #EF4444;
+  --input-border: #D1D5DB;
+  --table-header-bg: #F3F4F6;
+  --badge-muted-bg: #F3F4F6;
+  --badge-muted-text: #6B7280;
 
   --font-heading: var(--font-dm-sans);
   --font-body: var(--font-inter);
@@ -32,6 +36,10 @@
   --primary-hover: #3A6FF0;
   --accent: #34D399;
   --danger: #F87171;
+  --input-border: #374151;
+  --table-header-bg: var(--surface-elevated);
+  --badge-muted-bg: #1F2937;
+  --badge-muted-text: #9CA3AF;
 }
 
 @theme inline {
@@ -41,6 +49,10 @@
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-border-main: var(--border);
+  --color-input-border: var(--input-border);
+  --color-table-header-bg: var(--table-header-bg);
+  --color-badge-muted-bg: var(--badge-muted-bg);
+  --color-badge-muted-text: var(--badge-muted-text);
   --font-sans: var(--font-body);
   --font-mono: var(--font-mono);
 }
@@ -150,19 +162,21 @@ input:focus, select:focus, textarea:focus {
   50% { opacity: 0.25; transform: scale(1.05); }
 }
 
-.animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
-.animate-fade-in { animation: fade-in 0.5s ease-out both; }
-.animate-slide-in-right { animation: slide-in-right 0.5s ease-out both; }
-.animate-float { animation: float 6s ease-in-out infinite; }
-.animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+@layer utilities {
+  .animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
+  .animate-fade-in { animation: fade-in 0.5s ease-out both; }
+  .animate-slide-in-right { animation: slide-in-right 0.5s ease-out both; }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
 
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-600 { animation-delay: 600ms; }
-.delay-700 { animation-delay: 700ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
