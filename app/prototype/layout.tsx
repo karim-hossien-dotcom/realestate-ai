@@ -76,7 +76,7 @@ export default function PrototypeLayout({
   return (
     <ThemeProvider>
     <ToastProvider>
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-[var(--background)]">
       {/* Mobile Nav */}
       <MobileNav
         navItems={navItems}
@@ -88,45 +88,45 @@ export default function PrototypeLayout({
 
       {/* Desktop Sidebar - collapsible on hover */}
       <aside
-        className={`hidden md:flex bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex-col transition-all duration-300 ${
+        className={`hidden md:flex bg-[var(--surface)] dark:bg-[#141827] border-r border-[var(--border)] flex-shrink-0 flex-col transition-all duration-300 ${
           sidebarExpanded ? 'w-64' : 'w-16'
         }`}
         onMouseEnter={() => setSidebarExpanded(true)}
         onMouseLeave={() => setSidebarExpanded(false)}
       >
-        <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${sidebarExpanded ? 'px-6' : 'px-3'}`}>
+        <div className={`p-4 border-b border-[var(--border)] ${sidebarExpanded ? 'px-6' : 'px-3'}`}>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-[#4F7BF7] dark:to-[#2563EB] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-[0_0_12px_rgba(79,123,247,0.2)]">
               <i className="fas fa-home text-white text-lg"></i>
             </div>
             {sidebarExpanded && (
               <div className="overflow-hidden">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">Estate AI</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Agent Assistant</p>
+                <h1 className="text-xl font-heading font-bold text-[var(--text-primary)] whitespace-nowrap">Estate AI</h1>
+                <p className="text-sm text-[var(--text-secondary)] whitespace-nowrap">Agent Assistant</p>
               </div>
             )}
           </div>
         </div>
 
         <nav className={`mt-6 flex-1 overflow-y-auto ${sidebarExpanded ? 'px-4' : 'px-2'}`}>
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center py-3 rounded-lg transition-colors ${
+                    className={`flex items-center py-2.5 rounded-lg transition-colors relative ${
                       sidebarExpanded ? 'px-4' : 'px-3 justify-center'
                     } ${
                       isActive
-                        ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ? 'text-[var(--primary)] bg-[var(--primary)]/8 dark:bg-[var(--primary)]/10 border-l-3 border-[var(--primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]'
                     }`}
                     title={!sidebarExpanded ? item.label : undefined}
                   >
                     <i className={`fas ${item.icon} ${sidebarExpanded ? 'w-5 mr-3' : 'text-lg'}`}></i>
-                    {sidebarExpanded && <span className="whitespace-nowrap">{item.label}</span>}
+                    {sidebarExpanded && <span className="whitespace-nowrap text-sm">{item.label}</span>}
                   </Link>
                 </li>
               );
@@ -135,17 +135,17 @@ export default function PrototypeLayout({
         </nav>
 
         {/* User Profile, Theme Toggle & Sign out */}
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="border-t border-[var(--border)] bg-[var(--surface)] dark:bg-[#141827]">
           {/* User Profile */}
-          <div className={`p-3 border-b border-gray-100 dark:border-gray-700 ${sidebarExpanded ? 'px-4' : ''}`}>
+          <div className={`p-3 border-b border-[var(--border)] ${sidebarExpanded ? 'px-4' : ''}`}>
             <div className={`flex items-center ${sidebarExpanded ? 'space-x-3' : 'justify-center'}`}>
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-[#4F7BF7] dark:to-[#2563EB] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {initial}
               </div>
               {sidebarExpanded && (
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{displayCompany}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] truncate">{displayName}</p>
+                  <p className="text-xs text-[var(--text-secondary)] truncate">{displayCompany}</p>
                 </div>
               )}
             </div>
@@ -155,7 +155,7 @@ export default function PrototypeLayout({
             <ThemeToggleButton expanded={sidebarExpanded} />
             <button
               onClick={handleSignOut}
-              className={`flex items-center w-full py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm ${
+              className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
                 sidebarExpanded ? 'px-4' : 'justify-center px-2'
               }`}
               title={!sidebarExpanded ? 'Sign Out' : undefined}
@@ -170,26 +170,26 @@ export default function PrototypeLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with hamburger menu on mobile */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:hidden">
+        <header className="bg-[var(--surface)] dark:bg-[#141827] border-b border-[var(--border)] px-4 md:px-6 py-3 md:hidden">
           <div className="flex items-center justify-between">
             {/* Hamburger menu */}
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               <i className="fas fa-bars text-xl"></i>
             </button>
 
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] rounded-lg flex items-center justify-center">
                 <i className="fas fa-home text-white text-sm"></i>
               </div>
-              <span className="font-bold text-gray-900 dark:text-gray-100">Estate AI</span>
+              <span className="font-heading font-bold text-[var(--text-primary)]">Estate AI</span>
             </div>
 
             {/* User profile - mobile */}
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+            <div className="w-8 h-8 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] rounded-full flex items-center justify-center text-white text-sm font-semibold">
               {initial}
             </div>
           </div>
@@ -209,7 +209,7 @@ function ThemeToggleButton({ expanded }: { expanded: boolean }) {
   return (
     <button
       onClick={toggleTheme}
-      className={`flex items-center w-full py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm ${
+      className={`flex items-center w-full py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] rounded-lg text-sm transition-colors ${
         expanded ? 'px-4' : 'justify-center px-2'
       }`}
       title={!expanded ? (theme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}

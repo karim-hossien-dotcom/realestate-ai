@@ -103,28 +103,34 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen flex bg-[var(--background)] transition-colors">
       {/* LEFT PANEL (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 dark:from-blue-800 dark:via-blue-900 dark:to-gray-900" />
+        {/* Richer gradient: primary → deep navy */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB] via-[#1E40AF] to-[#0C1A3D] dark:from-[#1E3A8A] dark:via-[#162557] dark:to-[#0C0F1A]" />
+        {/* Mesh grid overlay */}
+        <div className="absolute inset-0 mesh-grid" />
+        {/* Subtle radial glow */}
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
+
         <div className="relative z-10 flex flex-col justify-center px-12 py-16">
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                <i className="fas fa-home text-blue-600 text-xl" />
+              <div className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+                <i className="fas fa-home text-white text-xl" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Estate AI</h1>
-                <p className="text-blue-200">Agent Assistant</p>
+                <h1 className="text-2xl font-heading font-bold text-white">Estate AI</h1>
+                <p className="text-blue-200/80 text-sm">Agent Assistant</p>
               </div>
             </div>
           </div>
 
           <div className="max-w-md">
-            <h2 className="text-4xl font-bold text-white mb-6">
+            <h2 className="text-4xl font-heading font-extrabold text-white mb-6 leading-tight">
               Streamline Your Real Estate Business
             </h2>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-lg text-blue-100/90 mb-8 leading-relaxed">
               Automate lead management, multi-channel outreach, and appointment scheduling with our
               AI-driven platform.
             </p>
@@ -137,27 +143,28 @@ export default function AuthPage() {
                 'Calendar integration & appointment scheduling',
               ].map((text) => (
                 <div key={text} className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-blue-400/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-check text-white text-xs" />
+                  <div className="w-6 h-6 bg-emerald-400/20 rounded-full flex items-center justify-center flex-shrink-0 border border-emerald-400/30">
+                    <i className="fas fa-check text-emerald-300 text-xs" />
                   </div>
-                  <span className="text-blue-100">{text}</span>
+                  <span className="text-blue-100/90 text-sm">{text}</span>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Frosted glass testimonial */}
           <div className="absolute bottom-8 left-12 right-12">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-blue-400/30 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400/40 to-blue-600/40 rounded-full flex items-center justify-center text-white font-bold text-lg border border-white/20">
                   N
                 </div>
                 <div>
-                  <p className="text-white font-medium">Nadine Khalil</p>
-                  <p className="text-blue-200 text-sm">KW Commercial</p>
+                  <p className="text-white font-semibold">Nadine Khalil</p>
+                  <p className="text-blue-200/70 text-sm">KW Commercial</p>
                 </div>
               </div>
-              <p className="text-blue-100 italic">
+              <p className="text-blue-100/80 italic leading-relaxed">
                 &quot;Estate AI transformed my outreach. I&apos;ve increased my lead conversion
                 by 40% and saved 15 hours per week on follow-ups.&quot;
               </p>
@@ -172,12 +179,12 @@ export default function AuthPage() {
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-[var(--primary)] rounded-lg flex items-center justify-center">
                 <i className="fas fa-home text-white text-lg" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Estate AI</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Agent Assistant</p>
+                <h1 className="text-xl font-heading font-bold text-[var(--text-primary)]">Estate AI</h1>
+                <p className="text-sm text-[var(--text-secondary)]">Agent Assistant</p>
               </div>
             </div>
           </div>
@@ -186,7 +193,7 @@ export default function AuthPage() {
           <div className="flex justify-end mb-4">
             <button
               onClick={toggleDark}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] transition-colors"
               title={dark ? 'Light Mode' : 'Dark Mode'}
             >
               <i className={`fas ${dark ? 'fa-sun' : 'fa-moon'} text-lg`} />
@@ -195,18 +202,18 @@ export default function AuthPage() {
 
           {/* Error message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8">
+          <div className="flex border-b border-[var(--border)] mb-8">
             <button
               className={`flex-1 py-3 px-1 text-center border-b-2 font-medium transition-colors ${
                 activeTab === 'signin'
-                  ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               onClick={() => { setActiveTab('signin'); setError(null); }}
             >
@@ -215,8 +222,8 @@ export default function AuthPage() {
             <button
               className={`flex-1 py-3 px-1 text-center border-b-2 font-medium transition-colors ${
                 activeTab === 'signup'
-                  ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               onClick={() => { setActiveTab('signup'); setError(null); }}
             >
@@ -228,18 +235,18 @@ export default function AuthPage() {
           {activeTab === 'signin' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h2>
-                <p className="text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
+                <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] mb-2">Welcome back</h2>
+                <p className="text-[var(--text-secondary)]">Sign in to your account to continue</p>
               </div>
 
               <form className="space-y-6" onSubmit={handleSignIn}>
                 <div>
-                  <label htmlFor="signin-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="signin-email" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Email address
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <i className="fas fa-envelope text-gray-400 dark:text-gray-500" />
+                      <i className="fas fa-envelope text-[var(--text-secondary)]" />
                     </div>
                     <input
                       id="signin-email"
@@ -247,19 +254,19 @@ export default function AuthPage() {
                       type="email"
                       required
                       disabled={isPending}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full pl-10 pr-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="Enter your email"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="signin-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="signin-password" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <i className="fas fa-lock text-gray-400 dark:text-gray-500" />
+                      <i className="fas fa-lock text-[var(--text-secondary)]" />
                     </div>
                     <input
                       id="signin-password"
@@ -267,7 +274,7 @@ export default function AuthPage() {
                       type={showSigninPassword ? 'text' : 'password'}
                       required
                       disabled={isPending}
-                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full pl-10 pr-10 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="Enter your password"
                     />
                     <button
@@ -275,7 +282,7 @@ export default function AuthPage() {
                       className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       onClick={() => setShowSigninPassword((prev) => !prev)}
                     >
-                      <i className={`fas ${showSigninPassword ? 'fa-eye-slash' : 'fa-eye'} text-gray-400 hover:text-gray-600 dark:hover:text-gray-300`} />
+                      <i className={`fas ${showSigninPassword ? 'fa-eye-slash' : 'fa-eye'} text-[var(--text-secondary)] hover:text-[var(--text-primary)]`} />
                     </button>
                   </div>
                 </div>
@@ -285,16 +292,16 @@ export default function AuthPage() {
                     <input
                       id="remember-me"
                       type="checkbox"
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-[var(--primary)] border-[var(--border)] rounded"
                     />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-[var(--text-secondary)]">
                       Remember me
                     </label>
                   </div>
                   <button
                     type="button"
                     onClick={() => { setShowForgotPassword(true); setError(null); setForgotSent(false); }}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
+                    className="text-sm text-[var(--primary)] hover:opacity-80 transition-opacity"
                   >
                     Forgot password?
                   </button>
@@ -302,30 +309,30 @@ export default function AuthPage() {
 
                 {/* Forgot Password Inline Form */}
                 {showForgotPassword && (
-                  <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                  <div className="bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg p-4 space-y-3">
                     {forgotSent ? (
                       <div className="text-center">
-                        <i className="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
-                        <p className="text-sm text-gray-700 dark:text-gray-200 font-medium">Reset link sent!</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Check your email for a password reset link.</p>
+                        <i className="fas fa-check-circle text-[var(--accent)] text-2xl mb-2"></i>
+                        <p className="text-sm text-[var(--text-primary)] font-medium">Reset link sent!</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">Check your email for a password reset link.</p>
                         <button
                           type="button"
                           onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(''); }}
-                          className="text-sm text-blue-600 dark:text-blue-400 mt-3 hover:text-blue-500"
+                          className="text-sm text-[var(--primary)] mt-3 hover:opacity-80"
                         >
                           Back to sign in
                         </button>
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Enter your email to receive a reset link.</p>
+                        <p className="text-sm text-[var(--text-secondary)]">Enter your email to receive a reset link.</p>
                         <div className="flex gap-2">
                           <input
                             type="email"
                             value={forgotEmail}
                             onChange={(e) => setForgotEmail(e.target.value)}
                             placeholder="your@email.com"
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                            className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
                           />
                           <button
                             type="button"
@@ -349,7 +356,7 @@ export default function AuthPage() {
                                 setForgotLoading(false);
                               }
                             }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
+                            className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
                           >
                             {forgotLoading ? 'Sending...' : 'Send'}
                           </button>
@@ -357,7 +364,7 @@ export default function AuthPage() {
                         <button
                           type="button"
                           onClick={() => { setShowForgotPassword(false); setForgotEmail(''); }}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                          className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         >
                           Cancel
                         </button>
@@ -369,7 +376,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -381,16 +388,16 @@ export default function AuthPage() {
           {activeTab === 'signup' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] mb-2">
                   Create your account
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">Start your 14-day free trial today</p>
+                <p className="text-[var(--text-secondary)]">Start your 14-day free trial today</p>
               </div>
 
               <form className="space-y-6" onSubmit={handleSignUp}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="first-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="first-name" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       First name
                     </label>
                     <input
@@ -399,12 +406,12 @@ export default function AuthPage() {
                       type="text"
                       required
                       disabled={isPending}
-                      className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full px-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="John"
                     />
                   </div>
                   <div>
-                    <label htmlFor="last-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="last-name" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                       Last name
                     </label>
                     <input
@@ -413,19 +420,19 @@ export default function AuthPage() {
                       type="text"
                       required
                       disabled={isPending}
-                      className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full px-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="Smith"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="signup-email" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Email address
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <i className="fas fa-envelope text-gray-400 dark:text-gray-500" />
+                      <i className="fas fa-envelope text-[var(--text-secondary)]" />
                     </div>
                     <input
                       id="signup-email"
@@ -433,14 +440,14 @@ export default function AuthPage() {
                       type="email"
                       required
                       disabled={isPending}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full pl-10 pr-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="john@example.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="company" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Company/Agency
                   </label>
                   <input
@@ -448,18 +455,18 @@ export default function AuthPage() {
                     name="company"
                     type="text"
                     disabled={isPending}
-                    className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                    className="block w-full px-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                     placeholder="Real Estate Company"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="signup-password" className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <i className="fas fa-lock text-gray-400 dark:text-gray-500" />
+                      <i className="fas fa-lock text-[var(--text-secondary)]" />
                     </div>
                     <input
                       id="signup-password"
@@ -468,11 +475,11 @@ export default function AuthPage() {
                       required
                       minLength={8}
                       disabled={isPending}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-900 dark:text-white bg-white dark:bg-gray-800 transition-colors"
+                      className="block w-full pl-10 pr-3 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] disabled:opacity-50 transition-colors"
                       placeholder="Create a password"
                     />
                   </div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     Must be at least 8 characters with numbers and letters
                   </p>
                 </div>
@@ -482,15 +489,15 @@ export default function AuthPage() {
                     id="terms"
                     type="checkbox"
                     required
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded mt-1"
+                    className="h-4 w-4 text-[var(--primary)] border-[var(--border)] rounded mt-1"
                   />
-                  <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="terms" className="ml-2 block text-sm text-[var(--text-secondary)]">
                     I agree to the{' '}
-                    <Link href="/terms" className="text-blue-600 dark:text-blue-400 hover:text-blue-500">
+                    <Link href="/terms" className="text-[var(--primary)] hover:opacity-80">
                       Terms of Service
                     </Link>{' '}
                     and{' '}
-                    <Link href="/privacy-policy" className="text-blue-600 dark:text-blue-400 hover:text-blue-500">
+                    <Link href="/privacy-policy" className="text-[var(--primary)] hover:opacity-80">
                       Privacy Policy
                     </Link>
                   </label>
@@ -499,7 +506,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[var(--primary)] text-white py-3 px-4 rounded-lg font-heading font-semibold hover:bg-[var(--primary-hover)] transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? 'Creating account...' : 'Create Account'}
                 </button>
@@ -508,40 +515,40 @@ export default function AuthPage() {
           )}
 
           {/* Features strip */}
-          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="mt-8 pt-8 border-t border-[var(--border)]">
+            <h3 className="text-lg font-heading font-semibold text-[var(--text-primary)] mb-4">
               Why choose Estate AI?
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-500/10 rounded-lg flex items-center justify-center">
                   <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">AI-Powered Automation</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-[var(--text-primary)]">AI-Powered Automation</p>
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Smart lead scoring and automated follow-ups
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-shield-alt text-green-600 dark:text-green-400 text-sm" />
+                <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-shield-alt text-emerald-600 dark:text-emerald-400 text-sm" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Compliance Ready</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-[var(--text-primary)]">Compliance Ready</p>
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Built-in A2P registration and monitoring
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-500/10 rounded-lg flex items-center justify-center">
                   <i className="fas fa-chart-line text-purple-600 dark:text-purple-400 text-sm" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Performance Analytics</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-[var(--text-primary)]">Performance Analytics</p>
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Track campaigns and optimize conversion rates
                   </p>
                 </div>

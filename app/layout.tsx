@@ -1,7 +1,29 @@
 import type { Metadata, Viewport } from 'next';
+import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
 import { CookieConsent } from './components/CookieConsent';
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Estate AI',
@@ -31,18 +53,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
-        {/* Google Font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         {/* PWA / Apple Touch Icons */}
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       </head>
-      <body className="bg-gray-50 dark:bg-gray-900 transition-colors" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <body className="bg-[var(--background)] text-[var(--foreground)] transition-colors">
         {/* Font Awesome JS */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
