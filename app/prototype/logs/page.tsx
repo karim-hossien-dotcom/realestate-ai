@@ -188,7 +188,7 @@ export default function LogsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Activity Logs</h1>
+          <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Activity Logs</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Monitor system events and message activity</p>
         </div>
         {stats && stats.errorsToday > 0 && (

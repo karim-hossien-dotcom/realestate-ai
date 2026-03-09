@@ -295,25 +295,25 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 onClick={() => handleAction('schedule_meeting')}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
               >
-                <i className="fas fa-calendar-plus"></i>Schedule Meeting
+                <i className="fas fa-calendar-plus w-4"></i>Schedule Meeting
               </button>
               <button
                 onClick={() => handleAction('add_followup')}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
               >
-                <i className="fas fa-clock"></i>Add Follow-Up
+                <i className="fas fa-clock w-4"></i>Add Follow-Up
               </button>
               <button
                 onClick={() => window.location.href = `/prototype/conversations?leadId=${lead.id}`}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
               >
-                <i className="fas fa-comments"></i>View Messages
+                <i className="fas fa-comments w-4"></i>View Messages
               </button>
               <button
                 onClick={() => handleAction('add_to_dnc')}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
               >
-                <i className="fas fa-ban"></i>Add to DNC
+                <i className="fas fa-ban w-4"></i>Add to DNC
               </button>
             </div>
           </div>

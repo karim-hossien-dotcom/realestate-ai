@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/app/lib/auth'
-import { createServiceClient } from '@/app/lib/supabase/server'
+import { createClient, createServiceClient } from '@/app/lib/supabase/server'
 
 // GET /api/leads/[id] - Get a single lead
 export async function GET(
@@ -11,7 +11,7 @@ export async function GET(
   if (!auth.ok) return auth.response
 
   const { id } = await params
-  const supabase = createServiceClient()
+  const supabase = await createClient()
 
   const { data: lead, error } = await supabase
     .from('leads')

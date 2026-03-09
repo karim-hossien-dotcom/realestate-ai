@@ -38,11 +38,13 @@ export async function GET(request: NextRequest) {
   const { count: totalLeads } = await supabase
     .from('leads')
     .select('*', { count: 'exact', head: true })
+    .eq('user_id', auth.user.id)
 
   // Get leads by score category
   const { data: scoreCategories } = await supabase
     .from('leads')
     .select('score_category')
+    .eq('user_id', auth.user.id)
 
   const scoreCounts = {
     Hot: 0,
@@ -61,6 +63,7 @@ export async function GET(request: NextRequest) {
   const { data: campaigns } = await supabase
     .from('campaigns')
     .select('sent_count, failed_count, response_count, created_at')
+    .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
     .limit(10)
 
@@ -75,11 +78,13 @@ export async function GET(request: NextRequest) {
   const { count: dncCount } = await supabase
     .from('dnc_list')
     .select('*', { count: 'exact', head: true })
+    .eq('user_id', auth.user.id)
 
   // Get pending follow-ups count
   const { count: pendingFollowUps } = await supabase
     .from('follow_ups')
     .select('*', { count: 'exact', head: true })
+    .eq('user_id', auth.user.id)
     .eq('status', 'pending')
     .lte('scheduled_at', new Date().toISOString())
 

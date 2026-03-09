@@ -282,7 +282,7 @@ export default function SettingsPage() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Settings</h1>
         <p className="text-gray-500 dark:text-gray-400">Manage your profile, integrations, and platform configuration</p>
       </div>
 

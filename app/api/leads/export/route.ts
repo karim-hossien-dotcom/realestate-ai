@@ -11,6 +11,7 @@ export async function GET() {
   const { data: leads, error } = await supabase
     .from('leads')
     .select('*')
+    .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
 
   if (error) {

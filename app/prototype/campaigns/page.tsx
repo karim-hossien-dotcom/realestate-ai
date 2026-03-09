@@ -164,7 +164,7 @@ export default function CampaignsPage() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Campaigns</h1>
+        <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Campaigns</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Send outreach messages to your leads via WhatsApp, SMS, or Email</p>
       </div>
 

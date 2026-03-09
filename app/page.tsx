@@ -114,7 +114,7 @@ export default function AuthPage() {
         {/* Subtle radial glow */}
         <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
 
-        <div className="relative z-10 flex flex-col justify-center px-12 py-16">
+        <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full">
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
@@ -154,7 +154,7 @@ export default function AuthPage() {
           </div>
 
           {/* Frosted glass testimonial */}
-          <div className="absolute bottom-8 left-12 right-12">
+          <div className="mt-auto pt-8">
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400/40 to-blue-600/40 rounded-full flex items-center justify-center text-white font-bold text-lg border border-white/20">

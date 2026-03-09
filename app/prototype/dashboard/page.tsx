@@ -133,7 +133,7 @@ export default function DashboardPage() {
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Analytics Dashboard</h1>
+          <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Analytics Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400">Overview of your lead management and outreach performance</p>
         </div>
         <div className="flex items-center gap-3">
