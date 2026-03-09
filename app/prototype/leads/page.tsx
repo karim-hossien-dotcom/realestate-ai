@@ -36,14 +36,20 @@ export default function LeadsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchLeads = useCallback(async () => {
+  const fetchLeads = useCallback(async (p?: number) => {
     try {
-      const res = await fetch('/api/leads');
+      const currentPage = p ?? page;
+      const res = await fetch(`/api/leads?page=${currentPage}&limit=50`);
       const data = await res.json();
       if (data.ok) {
         setLeads(data.leads);
+        setTotalPages(data.totalPages || 1);
+        setTotalLeads(data.total || 0);
         setError(null);
       } else {
         setError(data.error || 'Failed to load leads');
@@ -53,7 +59,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     fetchLeads();
@@ -74,8 +80,7 @@ export default function LeadsPage() {
     return true;
   });
 
-  // Stats
-  const totalLeads = leads.length;
+  // Stats (totalLeads comes from API pagination metadata)
   const withMessages = leads.filter(l => l.sms_text || l.email_text).length;
   const withPhone = leads.filter(l => l.phone).length;
   const hotLeads = leads.filter(l => l.score_category === 'Hot').length;
@@ -149,15 +154,21 @@ export default function LeadsPage() {
   // Bulk delete
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedIds.size} leads?`)) return;
-    let deleted = 0;
-    for (const id of selectedIds) {
-      try {
-        const res = await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.ok) deleted++;
-      } catch { /* continue */ }
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`Deleted ${data.deleted} leads`, 'success');
+      } else {
+        showToast(data.error || 'Delete failed', 'error');
+      }
+    } catch {
+      showToast('Network error', 'error');
     }
-    showToast(`Deleted ${deleted} leads`, 'success');
     setSelectedIds(new Set());
     fetchLeads();
   };
@@ -389,6 +400,31 @@ export default function LeadsPage() {
         />
       ) : (
         <KanbanView leads={filteredLeads} onClickLead={setSelectedLead} onStatusChange={handleStatusChange} />
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
+          <p className="text-sm text-[var(--text-secondary)]">
+            Page {page} of {totalPages} ({totalLeads} leads)
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { const p = page - 1; setPage(p); fetchLeads(p); }}
+              disabled={page <= 1}
+              className="px-3 py-1.5 text-sm border border-[var(--border)] rounded-lg hover:bg-[var(--surface-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => { const p = page + 1; setPage(p); fetchLeads(p); }}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-sm border border-[var(--border)] rounded-lg hover:bg-[var(--surface-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Detail Panel */}

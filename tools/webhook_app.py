@@ -37,6 +37,28 @@ except ImportError:
 
 app = Flask(__name__)
 
+# ---------- Rate Limiting ----------
+# Simple IP-based rate limiter — no external dependency needed
+_RATE_LIMIT_STORE: dict[str, list[float]] = {}
+_RATE_LIMIT_MAX = 60          # max requests per window
+_RATE_LIMIT_WINDOW = 60.0     # window in seconds (1 minute)
+
+
+def _is_rate_limited(ip: str) -> bool:
+    """Returns True if this IP has exceeded the rate limit."""
+    import time
+    now = time.time()
+    hits = _RATE_LIMIT_STORE.get(ip, [])
+    # Remove timestamps outside the window
+    hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
+    if len(hits) >= _RATE_LIMIT_MAX:
+        _RATE_LIMIT_STORE[ip] = hits
+        return True
+    hits.append(now)
+    _RATE_LIMIT_STORE[ip] = hits
+    return False
+
+
 # Message deduplication: track processed message IDs (in-memory LRU cache)
 # Meta retries webhook delivery, which can cause duplicate processing
 _PROCESSED_MSG_IDS: dict[str, float] = {}
@@ -324,6 +346,11 @@ def webhook_verify():
 
 @app.route("/webhook", methods=["POST"], strict_slashes=False)
 def webhook_inbound():
+    # Rate limiting
+    client_ip = request.remote_addr or "unknown"
+    if _is_rate_limited(client_ip):
+        return Response("Rate limit exceeded", status=429)
+
     payload = request.get_json(silent=True) or {}
     messages = _extract_messages(payload)
 
@@ -771,6 +798,11 @@ def _log_sms_to_supabase(
 @app.route("/sms", methods=["POST"], strict_slashes=False)
 def sms_inbound():
     """Handle inbound SMS from Twilio webhook."""
+    # Rate limiting
+    client_ip = request.remote_addr or "unknown"
+    if _is_rate_limited(client_ip):
+        return Response("Rate limit exceeded", status=429)
+
     # Twilio sends form-encoded data
     from_number = request.form.get("From", "").lstrip("+")
     body = request.form.get("Body", "").strip()

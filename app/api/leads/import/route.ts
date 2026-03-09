@@ -14,6 +14,12 @@ type CsvLead = {
   notes?: string
 }
 
+// Strip leading characters that trigger formula execution in spreadsheet apps
+function sanitizeCsvValue(val: string | null | undefined): string | null {
+  if (!val) return null
+  return val.replace(/^[=+\-@\t\r]+/, '')
+}
+
 export async function POST(req: NextRequest) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
@@ -57,16 +63,16 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    // Prepare leads for insert
+    // Prepare leads for insert (sanitize to prevent formula injection)
     const allLeads = records.map(record => ({
       user_id: auth.user.id,
-      property_address: record.property_address || null,
-      owner_name: record.owner_name || null,
-      phone: record.phone || null,
+      property_address: sanitizeCsvValue(record.property_address),
+      owner_name: sanitizeCsvValue(record.owner_name),
+      phone: record.phone?.replace(/[^0-9+\-() ]/g, '') || null,
       email: record.email || null,
       contact_preference: record.contact_preference || 'sms',
       status: record.status || 'new',
-      notes: record.notes || null,
+      notes: sanitizeCsvValue(record.notes),
       tags: [],
       score: 50,
       score_category: 'Warm',

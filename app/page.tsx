@@ -157,12 +157,12 @@ export default function AuthPage() {
           <div className="mt-auto pt-8">
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400/40 to-blue-600/40 rounded-full flex items-center justify-center text-white font-bold text-lg border border-white/20">
-                  N
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400/40 to-blue-600/40 rounded-full flex items-center justify-center border border-white/20">
+                  <i className="fas fa-quote-left text-white/80 text-lg" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Nadine Khalil</p>
-                  <p className="text-blue-200/70 text-sm">KW Commercial</p>
+                  <p className="text-white font-semibold">Trusted by Agents</p>
+                  <p className="text-blue-200/70 text-sm">Nationwide</p>
                 </div>
               </div>
               <p className="text-blue-100/80 italic leading-relaxed">
@@ -288,17 +288,7 @@ export default function AuthPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      id="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 text-[var(--primary)] border-[var(--border)] rounded"
-                    />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-[var(--text-secondary)]">
-                      Remember me
-                    </label>
-                  </div>
+                <div className="flex items-center justify-end">
                   <button
                     type="button"
                     onClick={() => { setShowForgotPassword(true); setError(null); setForgotSent(false); }}

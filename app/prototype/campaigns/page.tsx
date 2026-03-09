@@ -26,6 +26,18 @@ type SendResult = {
   error?: string;
 };
 
+type CampaignRecord = {
+  id: string;
+  name: string;
+  status: string;
+  total_leads: number;
+  sent_count: number | null;
+  failed_count: number | null;
+  response_count: number | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
 export default function CampaignsPage() {
   const { showToast } = useToast();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -40,6 +52,7 @@ export default function CampaignsPage() {
   const [sendResults, setSendResults] = useState<SendResult[]>([]);
   const [sendStats, setSendStats] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -58,9 +71,18 @@ export default function CampaignsPage() {
     }
   }, []);
 
+  const fetchCampaignHistory = useCallback(async () => {
+    try {
+      const res = await fetch('/api/campaigns');
+      const data = await res.json();
+      if (data.ok) setCampaignHistory(data.campaigns || []);
+    } catch { /* silent */ }
+  }, []);
+
   useEffect(() => {
     fetchLeads();
-  }, [fetchLeads]);
+    fetchCampaignHistory();
+  }, [fetchLeads, fetchCampaignHistory]);
 
   const filteredLeads = leads.filter((lead) => {
     if (!searchQuery) return true;
@@ -132,6 +154,7 @@ export default function CampaignsPage() {
     setSendResults(allResults);
     setSendStats({ sent: totalSent, failed: totalFailed, skipped: totalSkipped });
     setSending(false);
+    fetchCampaignHistory();
 
     if (totalSent > 0) {
       showToast(`Campaign sent: ${totalSent} delivered`, 'success');
@@ -500,6 +523,49 @@ export default function CampaignsPage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Campaign History */}
+      {campaignHistory.length > 0 && (
+        <div className="mt-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border)]">
+            <h2 className="text-lg font-heading font-semibold text-[var(--text-primary)]">Campaign History</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[var(--surface-elevated)]">
+                <tr>
+                  <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Name</th>
+                  <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Status</th>
+                  <th className="text-right px-4 py-3 text-[var(--text-secondary)] font-medium">Sent</th>
+                  <th className="text-right px-4 py-3 text-[var(--text-secondary)] font-medium">Failed</th>
+                  <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {campaignHistory.map((c) => (
+                  <tr key={c.id} className="hover:bg-[var(--surface-elevated)] transition-colors">
+                    <td className="px-4 py-3 text-[var(--text-primary)]">{c.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        c.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                        c.status === 'sending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-[var(--text-primary)]">{c.sent_count ?? 0}</td>
+                    <td className="px-4 py-3 text-right text-red-600 dark:text-red-400">{c.failed_count ?? 0}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
+                      {new Date(c.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

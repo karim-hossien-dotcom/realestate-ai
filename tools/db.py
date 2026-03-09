@@ -368,9 +368,15 @@ def remove_from_dnc_list(user_id: str, phone: str) -> bool:
 
 def get_default_user_id() -> Optional[str]:
     """
-    Get the first user ID from profiles table (for single-user setups)
-    In production, you'd want to map phone numbers to specific users
+    DEPRECATED: Returns first user from profiles table. Only valid for single-user setups.
+    Use find_user_by_lead_phone() or _resolve_user_context() for multi-tenant routing.
     """
+    import warnings
+    warnings.warn(
+        "get_default_user_id() is deprecated — use find_user_by_lead_phone() for multi-tenant routing",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     client = get_supabase_client()
     if not client:
         return None

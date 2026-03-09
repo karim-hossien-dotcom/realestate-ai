@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
       <p>
         Estate AI is a real estate communication platform operated by EYWA Consulting Services Inc.
         We provide SMS and WhatsApp messaging services on behalf of licensed real estate agents
-        at Keller Williams Commercial to connect with property owners regarding potential real
+        using our platform to connect with property owners regarding potential real
         estate opportunities. This Privacy Policy describes how we collect, use, and protect
         your personal information.
       </p>
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
       </p>
       <ul>
         <li>Submitting a property inquiry form on our website or a partner website.</li>
-        <li>Providing your phone number directly to a Keller Williams Commercial agent.</li>
+        <li>Providing your phone number directly to a licensed real estate agent using Estate AI.</li>
         <li>Responding to a direct mail piece that includes SMS opt-in language.</li>
         <li>Verbally consenting during a phone call or in-person meeting with an agent.</li>
       </ul>
@@ -65,7 +65,7 @@ export default function PrivacyPolicyPage() {
         marketing purposes. Your information may be shared only with:
       </p>
       <ul>
-        <li>The Keller Williams Commercial agent assigned to your inquiry.</li>
+        <li>The licensed real estate agent assigned to your inquiry.</li>
         <li>Service providers necessary to deliver messages (e.g., Twilio, Meta/WhatsApp).</li>
         <li>Law enforcement or regulatory bodies when required by law.</li>
       </ul>

@@ -63,6 +63,7 @@ export default function RootLayout({
         {/* Font Awesome JS */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
+          integrity="sha384-Y7LSKwoY+C2iyfu/oupNnkGEN3EgA6skmJeVg5AyQk7ttcjX0XsLREmmuJW/SdbU"
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />
