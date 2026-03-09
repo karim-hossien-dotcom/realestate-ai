@@ -103,7 +103,8 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[var(--background)] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[var(--background)] transition-colors">
+      <div className="flex-1 flex">
       {/* LEFT PANEL (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Richer gradient: primary → deep navy */}
@@ -556,6 +557,7 @@ export default function AuthPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
       <Footer />
     </div>
