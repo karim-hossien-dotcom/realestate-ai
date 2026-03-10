@@ -3,16 +3,7 @@ import { parse } from 'csv-parse/sync'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { checkPhonesTaken } from '@/app/lib/api'
-
-type CsvLead = {
-  property_address?: string
-  owner_name?: string
-  phone?: string
-  email?: string
-  contact_preference?: string
-  status?: string
-  notes?: string
-}
+import { applyMapping } from '@/app/lib/csv-mapper'
 
 // Strip leading characters that trigger formula execution in spreadsheet apps
 function sanitizeCsvValue(val: string | null | undefined): string | null {
@@ -27,6 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
+    const mappingJson = formData.get('mapping') as string | null
 
     if (!file) {
       return NextResponse.json(
@@ -52,7 +44,7 @@ export async function POST(req: NextRequest) {
       trim: true,
       relax_quotes: true,
       relax_column_count: true,
-    }) as CsvLead[]
+    }) as Record<string, string>[]
 
     if (records.length === 0) {
       return NextResponse.json(
@@ -63,20 +55,54 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    // Prepare leads for insert (sanitize to prevent formula injection)
-    const allLeads = records.map(record => ({
-      user_id: auth.user.id,
-      property_address: sanitizeCsvValue(record.property_address),
-      owner_name: sanitizeCsvValue(record.owner_name),
-      phone: record.phone?.replace(/[^0-9+\-() ]/g, '') || null,
-      email: record.email || null,
-      contact_preference: record.contact_preference || 'sms',
-      status: record.status || 'new',
-      notes: sanitizeCsvValue(record.notes),
-      tags: [],
-      score: 50,
-      score_category: 'Warm',
-    }))
+    // Parse column mapping if provided
+    let columnMapping: Record<string, string> | null = null
+    if (mappingJson) {
+      try {
+        columnMapping = JSON.parse(mappingJson)
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid mapping JSON.' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Build leads using either the smart mapping or legacy exact-header behavior
+    const allLeads = records.map(record => {
+      if (columnMapping) {
+        // Smart mapping path
+        const mapped = applyMapping(record, columnMapping)
+        return {
+          user_id: auth.user.id,
+          property_address: sanitizeCsvValue(mapped.property_address),
+          owner_name: sanitizeCsvValue(mapped.owner_name),
+          phone: mapped.phone?.replace(/[^0-9+\-() ]/g, '') || null,
+          email: mapped.email || null,
+          contact_preference: mapped.contact_preference || 'sms',
+          status: mapped.status || 'new',
+          notes: sanitizeCsvValue(mapped.notes),
+          tags: mapped.tags || [],
+          score: 50,
+          score_category: 'Warm',
+        }
+      }
+
+      // Legacy path — exact header match (backwards compatible)
+      return {
+        user_id: auth.user.id,
+        property_address: sanitizeCsvValue(record.property_address),
+        owner_name: sanitizeCsvValue(record.owner_name),
+        phone: record.phone?.replace(/[^0-9+\-() ]/g, '') || null,
+        email: record.email || null,
+        contact_preference: record.contact_preference || 'sms',
+        status: record.status || 'new',
+        notes: sanitizeCsvValue(record.notes),
+        tags: [],
+        score: 50,
+        score_category: 'Warm',
+      }
+    })
 
     // Check for cross-user phone duplicates
     const phonesToCheck = allLeads.map(l => l.phone).filter(Boolean) as string[]

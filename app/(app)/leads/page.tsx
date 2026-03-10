@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Lead } from '@/app/lib/supabase/types';
 import { DndContext, DragOverlay, closestCorners, useDroppable, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import LeadCard, { LeadRow, DraggableLeadCard } from '@/app/components/LeadCard';
 import LeadDetailPanel from '@/app/components/LeadDetailPanel';
+import ImportModal from '@/app/components/ImportModal';
 import EmptyState from '@/app/components/EmptyState';
 import { SkeletonTable, SkeletonCard } from '@/app/components/Skeleton';
 import { useToast } from '@/app/components/ToastProvider';
@@ -34,12 +35,11 @@ export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [importing, setImporting] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLeads = useCallback(async (p?: number) => {
     try {
@@ -84,30 +84,6 @@ export default function LeadsPage() {
   const withMessages = leads.filter(l => l.sms_text || l.email_text).length;
   const withPhone = leads.filter(l => l.phone).length;
   const hotLeads = leads.filter(l => l.score_category === 'Hot').length;
-
-  // Import CSV
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/leads/import', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.ok) {
-        showToast(`Imported ${data.stats?.inserted || 0} leads`, 'success');
-        fetchLeads();
-      } else {
-        showToast(data.error || 'Import failed', 'error');
-      }
-    } catch {
-      showToast('Import failed', 'error');
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
 
   // Generate Messages
   const handleGenerateMessages = async () => {
@@ -259,13 +235,11 @@ export default function LeadsPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,.json"
-        onChange={handleImport}
-        className="hidden"
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImportComplete={() => fetchLeads()}
       />
 
       {/* Header */}
@@ -276,12 +250,11 @@ export default function LeadsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 transition-colors"
+            onClick={() => setImportModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
           >
             <i className="fas fa-file-import mr-2"></i>
-            {importing ? 'Importing...' : 'Import CSV'}
+            Import CSV
           </button>
           {leads.filter(l => !l.sms_text).length > 0 && (
             <button
@@ -388,7 +361,7 @@ export default function LeadsPage() {
               : 'Try adjusting your search or filter criteria.'
           }
           actionLabel={leads.length === 0 ? 'Import Leads' : undefined}
-          onAction={leads.length === 0 ? () => fileInputRef.current?.click() : undefined}
+          onAction={leads.length === 0 ? () => setImportModalOpen(true) : undefined}
         />
       ) : viewMode === 'table' ? (
         <TableView
