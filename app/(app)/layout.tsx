@@ -8,12 +8,15 @@ import ToastProvider from '@/app/components/ToastProvider';
 import ThemeProvider, { useTheme } from '@/app/components/ThemeProvider';
 
 type Profile = {
+  id?: string;
   full_name: string | null;
   email: string;
   company: string | null;
 };
 
-const navItems = [
+const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a';
+
+const baseNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'fa-chart-line' },
   { href: '/leads', label: 'Leads', icon: 'fa-users' },
   { href: '/campaigns', label: 'Campaigns', icon: 'fa-bullhorn' },
@@ -24,6 +27,8 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: 'fa-cog' },
   { href: '/test-playbook', label: 'Test Playbook', icon: 'fa-flask' },
 ];
+
+const adminNavItem = { href: '/admin', label: 'Command Center', icon: 'fa-terminal' };
 
 // All pages are now React components (no more iframes)
 const iframePages: string[] = [];
@@ -70,6 +75,8 @@ export default function AppLayout({
   const displayName = profile?.full_name || profile?.email || 'Loading...';
   const displayCompany = profile?.company || 'Real Estate Agent';
   const initial = displayName.charAt(0).toUpperCase();
+
+  const navItems = profile?.id === ADMIN_USER_ID ? [...baseNavItems, adminNavItem] : baseNavItems;
 
   const profileData = { displayName, displayCompany, initial };
 

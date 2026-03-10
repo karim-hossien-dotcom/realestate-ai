@@ -4,6 +4,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { checkPhonesTaken } from '@/app/lib/api'
 import { applyMapping } from '@/app/lib/csv-mapper'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
 
 // Strip leading characters that trigger formula execution in spreadsheet apps
 function sanitizeCsvValue(val: string | null | undefined): string | null {
@@ -109,12 +110,24 @@ export async function POST(req: NextRequest) {
     const takenPhones = await checkPhonesTaken(phonesToCheck, auth.user.id)
 
     // Filter out leads whose phone belongs to another agent
-    const leadsToInsert = allLeads.filter(lead => {
+    let leadsToInsert = allLeads.filter(lead => {
       if (!lead.phone) return true
       const normalized = lead.phone.replace(/^\+/, '')
       return !takenPhones.has(normalized)
     })
     const duplicates = allLeads.length - leadsToInsert.length
+
+    // Check lead count against plan limits
+    const usage = await checkUsageLimits(auth.user.id, 'leads')
+    let truncated = 0
+    if (!usage.allowed) {
+      return NextResponse.json(limitExceededPayload(usage, 'leads'), { status: 402 })
+    }
+    // Cap import to remaining lead capacity
+    if (isUsageLimitResult(usage) && usage.remaining !== Infinity && leadsToInsert.length > usage.remaining) {
+      truncated = leadsToInsert.length - usage.remaining
+      leadsToInsert = leadsToInsert.slice(0, usage.remaining)
+    }
 
     // Insert leads in batches of 100
     const BATCH_SIZE = 100
@@ -127,6 +140,10 @@ export async function POST(req: NextRequest) {
         .slice(0, 10)
         .join(', ')
       errors.push(`${duplicates} leads skipped — phone already assigned to another agent: ${dupList}`)
+    }
+
+    if (truncated > 0 && isUsageLimitResult(usage)) {
+      errors.push(`${truncated} leads skipped — ${usage.planName} plan limit of ${usage.limit} leads reached (${usage.remaining} slots were available). Upgrade for more capacity.`)
     }
 
     for (let i = 0; i < leadsToInsert.length; i += BATCH_SIZE) {
@@ -183,6 +200,7 @@ export async function POST(req: NextRequest) {
         total: records.length,
         inserted,
         duplicates,
+        truncated,
         errors: errors.length,
       },
       errors: errors.length > 0 ? errors : undefined,

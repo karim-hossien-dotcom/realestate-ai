@@ -3,6 +3,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 import { parseBody, checkPhoneTaken } from '@/app/lib/api'
 import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
+import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
 
 export async function GET(request: Request) {
   const auth = await withAuth()
@@ -47,6 +48,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
+
+  // Check lead count against plan limits
+  const usage = await checkUsageLimits(auth.user.id, 'leads')
+  if (!usage.allowed) {
+    return NextResponse.json(limitExceededPayload(usage, 'leads'), { status: 402 })
+  }
 
   const parsed = await parseBody(request, createLeadSchema)
   if (!parsed.ok) return parsed.response

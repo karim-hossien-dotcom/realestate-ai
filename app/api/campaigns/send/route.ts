@@ -7,6 +7,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody } from '@/app/lib/api'
 import { campaignSendSchema } from '@/app/lib/schemas'
+import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
 
 type SendResult = {
   phone: string
@@ -29,6 +30,13 @@ export async function POST(request: Request) {
   const { leads, channel, templateName, languageCode, campaignName: rawName } = parsed.data
   const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
   const campaignName = rawName || `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
+
+  // Check message quota against plan limits
+  const msgResource = channel as 'sms' | 'email' | 'whatsapp'
+  const usage = await checkUsageLimits(auth.user.id, msgResource)
+  if (!usage.allowed) {
+    return NextResponse.json(limitExceededPayload(usage, msgResource), { status: 402 })
+  }
 
   // Get user profile for agent info (used in emails)
   const { data: profile } = await supabase
