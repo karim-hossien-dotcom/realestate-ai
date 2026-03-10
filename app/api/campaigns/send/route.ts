@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { sendWhatsAppTemplate, sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
+import { isOnNationalDnc } from '@/app/lib/dnc-registry'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody } from '@/app/lib/api'
@@ -106,6 +107,16 @@ export async function POST(request: Request) {
       continue
     }
 
+    // Check National DNC Registry for SMS/voice campaigns
+    if (channel === 'sms') {
+      const onNationalDnc = await isOnNationalDnc(contact)
+      if (onNationalDnc) {
+        results.push({ phone: contact, leadId: lead.id, ok: false, skipped: 'On National DNC Registry' })
+        skipped++
+        continue
+      }
+    }
+
     // Check rate limit
     const { data: rateCheck } = await supabase.rpc('increment_rate_limit', {
       p_user_id: auth.user.id,
@@ -165,6 +176,7 @@ export async function POST(request: Request) {
         agentPhone,
         agentEmail,
         customMessage: lead.email_text,
+        userId: auth.user.id,
       })
 
       sendResult = await sendEmail({

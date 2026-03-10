@@ -3,6 +3,7 @@ import { createServiceClient } from '@/app/lib/supabase/server'
 import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
 import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendSms } from '@/app/lib/sms'
+import { isOnNationalDnc } from '@/app/lib/dnc-registry'
 
 const MAX_RETRIES = 3
 const BATCH_SIZE = 10 // Process max 10 follow-ups per run
@@ -130,6 +131,24 @@ export async function POST(request: NextRequest) {
             .eq('id', followUp.id)
           results.skipped++
           continue
+        }
+
+        // Check National DNC Registry for SMS follow-ups
+        const fChannel = followUp.channel || 'both'
+        if ((fChannel === 'sms' || fChannel === 'both') && lead.phone) {
+          const onNationalDnc = await isOnNationalDnc(lead.phone)
+          if (onNationalDnc) {
+            console.log(`[Cron] Lead ${lead.id} is on National DNC Registry, skipping SMS`)
+            // If SMS-only follow-up, cancel entirely; if 'both', let email still send
+            if (fChannel === 'sms') {
+              await supabase
+                .from('follow_ups')
+                .update({ status: 'cancelled', error_message: 'On National DNC Registry' })
+                .eq('id', followUp.id)
+              results.skipped++
+              continue
+            }
+          }
         }
 
         // Determine channel - default to 'both' if not specified
@@ -330,6 +349,7 @@ async function sendFollowUpEmail(
     agentPhone,
     agentEmail,
     followUpNumber: followUp.follow_up_number || 1,
+    userId: followUp.user_id,
   })
 
   const result = await sendEmail({

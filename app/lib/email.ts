@@ -78,6 +78,14 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
 /**
  * Generate HTML email from template
  */
+const COMPANY_ADDRESS = '700 1st St, Hoboken, NJ 07030';
+const COMPANY_NAME = 'EYWA Consulting Services Inc';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://realestate-ai.app';
+
+function unsubscribeUrl(email: string, userId: string): string {
+  return `${APP_URL}/api/email/unsubscribe?email=${encodeURIComponent(email)}&uid=${encodeURIComponent(userId)}`;
+}
+
 export function generateOutreachEmail(params: {
   recipientName: string;
   propertyAddress: string;
@@ -85,6 +93,7 @@ export function generateOutreachEmail(params: {
   agentPhone: string;
   agentEmail: string;
   customMessage?: string;
+  userId?: string;
 }): { subject: string; html: string; text: string } {
   const subject = `Regarding your property at ${params.propertyAddress}`;
 
@@ -92,6 +101,10 @@ export function generateOutreachEmail(params: {
 
   // Escape HTML entities to prevent XSS
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const unsubLink = params.userId
+    ? unsubscribeUrl(params.agentEmail, params.userId)
+    : '#';
 
   const html = `
 <!DOCTYPE html>
@@ -117,8 +130,9 @@ export function generateOutreachEmail(params: {
 
   <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
 
-  <p style="font-size: 12px; color: #666;">
-    If you no longer wish to receive emails from us, please reply with "UNSUBSCRIBE" and we'll remove you from our list.
+  <p style="font-size: 11px; color: #999; line-height: 1.5;">
+    ${esc(COMPANY_NAME)} &bull; ${esc(COMPANY_ADDRESS)}<br>
+    <a href="${unsubLink}" style="color: #999;">Unsubscribe</a> from future emails.
   </p>
 </body>
 </html>
@@ -136,7 +150,8 @@ ${params.agentPhone}
 ${params.agentEmail}
 
 ---
-If you no longer wish to receive emails from us, please reply with "UNSUBSCRIBE" and we'll remove you from our list.
+${COMPANY_NAME} | ${COMPANY_ADDRESS}
+Unsubscribe: ${unsubLink}
 `;
 
   return { subject, html, text };
@@ -152,6 +167,7 @@ export function generateFollowUpEmail(params: {
   agentPhone: string;
   agentEmail: string;
   followUpNumber: number;
+  userId?: string;
 }): { subject: string; html: string; text: string } {
   const subjects = [
     `Following up - ${params.propertyAddress}`,
@@ -170,6 +186,10 @@ export function generateFollowUpEmail(params: {
   const message = messages[idx];
 
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const unsubLink = params.userId
+    ? unsubscribeUrl(params.agentEmail, params.userId)
+    : '#';
 
   const html = `
 <!DOCTYPE html>
@@ -195,8 +215,9 @@ export function generateFollowUpEmail(params: {
 
   <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
 
-  <p style="font-size: 12px; color: #666;">
-    Reply "UNSUBSCRIBE" to stop receiving emails.
+  <p style="font-size: 11px; color: #999; line-height: 1.5;">
+    ${esc(COMPANY_NAME)} &bull; ${esc(COMPANY_ADDRESS)}<br>
+    <a href="${unsubLink}" style="color: #999;">Unsubscribe</a> from future emails.
   </p>
 </body>
 </html>
@@ -214,7 +235,8 @@ ${params.agentPhone}
 ${params.agentEmail}
 
 ---
-Reply "UNSUBSCRIBE" to stop receiving emails.
+${COMPANY_NAME} | ${COMPANY_ADDRESS}
+Unsubscribe: ${unsubLink}
 `;
 
   return { subject, html, text };

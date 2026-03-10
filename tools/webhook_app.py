@@ -329,7 +329,50 @@ def _log_to_supabase(
 
 @app.route("/health", methods=["GET"])
 def health():
-    return Response("ok", status=200, mimetype="text/plain")
+    checks = {}
+    overall = "healthy"
+
+    # Check Supabase connectivity
+    try:
+        from tools.db import get_supabase_client
+        client = get_supabase_client()
+        if client:
+            result = client.table("profiles").select("id").limit(1).execute()
+            checks["database"] = {"status": "healthy"}
+        else:
+            checks["database"] = {"status": "unhealthy", "error": "Supabase not configured"}
+            overall = "degraded"
+    except Exception as e:
+        checks["database"] = {"status": "unhealthy", "error": str(e)}
+        overall = "degraded"
+
+    # Check OpenAI API key presence
+    openai_key = os.getenv("OPENAI_API_KEY")
+    checks["openai"] = (
+        {"status": "healthy"}
+        if openai_key
+        else {"status": "degraded", "error": "OPENAI_API_KEY not set"}
+    )
+    if not openai_key:
+        overall = "degraded"
+
+    # Check WhatsApp token presence
+    wa_token = os.getenv("WHATSAPP_TOKEN")
+    checks["whatsapp"] = (
+        {"status": "healthy"}
+        if wa_token
+        else {"status": "degraded", "error": "WHATSAPP_TOKEN not set"}
+    )
+    if not wa_token:
+        overall = "degraded"
+
+    status_code = 200 if overall == "healthy" else 503
+    return jsonify({
+        "status": overall,
+        "service": "estate-ai-python-webhook",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }), status_code
 
 
 @app.route("/webhook", methods=["GET"], strict_slashes=False)

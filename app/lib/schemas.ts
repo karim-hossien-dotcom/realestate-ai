@@ -71,3 +71,48 @@ export const campaignSendSchema = z.object({
   languageCode: z.string().max(10).optional(),
   campaignName: z.string().max(200).optional(),
 })
+
+// ===== PROJECT TASKS =====
+
+export const createProjectTaskSchema = z.object({
+  department: z.enum(['legal', 'engineering', 'marketing', 'finance']),
+  priority: z.enum(['P0', 'P1', 'P2', 'P3']).default('P1'),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked', 'skipped']).default('pending'),
+  title: z.string().min(1, 'Title is required').max(500),
+  description: z.string().max(2000).optional(),
+  channel: z.string().max(50).optional(),
+  is_blocker: z.boolean().default(false),
+  is_automatable: z.boolean().default(false),
+  week_label: z.string().max(20).optional(),
+  due_date: z.string().optional(),
+  metric_threshold: z.string().max(100).optional(),
+  metric_current: z.string().max(100).optional(),
+  alert_status: z.enum(['ok', 'watch', 'alert']).optional(),
+  vendor_name: z.string().max(100).optional(),
+  vendor_service: z.string().max(200).optional(),
+  vendor_plan: z.string().max(200).optional(),
+  vendor_action: z.string().max(500).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const updateProjectTaskSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked', 'skipped']).optional(),
+  priority: z.enum(['P0', 'P1', 'P2', 'P3']).optional(),
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(2000).optional(),
+  is_blocker: z.boolean().optional(),
+  is_automatable: z.boolean().optional(),
+  metric_current: z.string().max(100).optional(),
+  alert_status: z.enum(['ok', 'watch', 'alert']).optional(),
+  completion_note: z.string().max(1000).optional(),
+  completed_by: z.enum(['user', 'claude_code', 'scheduled_task']).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const batchUpdateTasksSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(50),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked', 'skipped']),
+  completed_by: z.enum(['user', 'claude_code', 'scheduled_task']).optional(),
+  completion_note: z.string().max(1000).optional(),
+})

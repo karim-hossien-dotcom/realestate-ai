@@ -83,6 +83,7 @@ export async function POST(request: Request) {
         agentPhone,
         agentEmail,
         customMessage: lead.email_text || customMessage,
+        userId: auth.user.id,
       })
 
       const result = await sendEmail({
