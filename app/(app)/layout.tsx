@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import MobileNav from '@/app/components/MobileNav';
 import ToastProvider from '@/app/components/ToastProvider';
 import ThemeProvider, { useTheme } from '@/app/components/ThemeProvider';
+import NpsWidget from '@/app/components/NpsWidget';
 
 type Profile = {
   id?: string;
@@ -204,6 +205,7 @@ export default function AppLayout({
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
+        <NpsWidget />
       </div>
     </div>
     </ToastProvider>

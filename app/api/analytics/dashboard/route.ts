@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
-import { withAuth } from '@/app/lib/auth'
+import { withAuth, logActivity } from '@/app/lib/auth'
 
 export async function GET(request: NextRequest) {
   const auth = await withAuth()
@@ -89,6 +89,8 @@ export async function GET(request: NextRequest) {
     .lte('scheduled_at', new Date().toISOString())
 
   const stats = messageStats?.[0] || { total_sent: 0, total_received: 0, total_failed: 0 }
+
+  await logActivity(auth.user.id, 'dashboard.view', 'Viewed analytics dashboard', 'success')
 
   return NextResponse.json({
     ok: true,

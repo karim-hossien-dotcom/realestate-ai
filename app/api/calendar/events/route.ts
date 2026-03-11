@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
-import { withAuth } from '@/app/lib/auth'
+import { withAuth, logActivity } from '@/app/lib/auth'
 
 export async function GET() {
   const auth = await withAuth()
@@ -95,6 +95,8 @@ export async function GET() {
     const dateB = b.date + (b.time || '99:99')
     return dateA.localeCompare(dateB)
   })
+
+  await logActivity(auth.user.id, 'calendar.view', `Loaded ${events.length} calendar events`, 'success')
 
   return NextResponse.json({ ok: true, events })
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
-import { withAuth } from '@/app/lib/auth'
+import { withAuth, logActivity } from '@/app/lib/auth'
 
 type FollowUp = {
   id: string
@@ -44,6 +44,7 @@ export async function GET() {
     .order('last_contacted', { ascending: false })
 
   if (leadsError) {
+    await logActivity(auth.user.id, 'followup.view', `Failed to fetch follow-ups: ${leadsError.message}`, 'failed')
     return NextResponse.json(
       { ok: false, error: leadsError.message },
       { status: 500 }

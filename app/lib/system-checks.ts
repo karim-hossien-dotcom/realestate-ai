@@ -384,7 +384,7 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
     .from('activity_logs')
     .select('*', { count: 'exact', head: true })
     .gte('created_at', last24h)
-    .or('action.ilike.%error%,action.ilike.%fail%,action.ilike.%500%')
+    .or('status.eq.failed,description.ilike.%error%,description.ilike.%500%')
 
   const errors = errorCount || 0
   alerts.push({
@@ -397,6 +397,27 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
       : `${errors} error${errors > 1 ? 's' : ''} in the last 24 hours.`,
     metricValue: String(errors),
     threshold: '<5',
+  })
+
+  // 13. API failures in the last hour
+  const lastHour = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: hourlyFailures } = await supabase
+    .from('activity_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'failed')
+    .gte('created_at', lastHour)
+
+  const hourFails = hourlyFailures || 0
+  alerts.push({
+    key: 'api_failures_1h',
+    category: 'engineering',
+    severity: hourFails > 10 ? 'critical' : hourFails > 3 ? 'warning' : 'ok',
+    title: 'API Failures (1h)',
+    message: hourFails === 0
+      ? 'No API failures in the last hour.'
+      : `${hourFails} API failure${hourFails > 1 ? 's' : ''} in the last hour.`,
+    metricValue: String(hourFails),
+    threshold: '<3',
   })
 
   // 12. Codebase health warnings (known large files)

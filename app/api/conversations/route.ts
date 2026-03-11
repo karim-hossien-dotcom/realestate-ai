@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching messages:', error)
+      await logActivity(auth.user.id, 'conversation.view', `Failed to fetch messages for lead ${leadId}: ${error.message}`, 'failed')
       return NextResponse.json({ ok: false, error: 'Failed to fetch messages' }, { status: 500 })
     }
 
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
 
   if (leadsError) {
     console.error('Error fetching leads:', leadsError)
+    await logActivity(auth.user.id, 'conversation.view', `Failed to fetch conversations: ${leadsError.message}`, 'failed')
     return NextResponse.json({ ok: false, error: 'Failed to fetch conversations' }, { status: 500 })
   }
 

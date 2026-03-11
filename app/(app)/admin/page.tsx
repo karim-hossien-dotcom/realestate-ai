@@ -11,6 +11,9 @@ import {
   AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
+import FeatureUsagePanel from '@/app/components/admin/FeatureUsagePanel'
+import NpsResultsPanel from '@/app/components/admin/NpsResultsPanel'
+import AiAuditPanel from '@/app/components/admin/AiAuditPanel'
 
 // Owner user ID — only this account can access /admin
 const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
@@ -449,6 +452,12 @@ function OverviewTab({ tasks, onToggle, summary, alerts }: { tasks: Task[]; onTo
       {/* System Health inline */}
       <AlertsPanel alerts={alerts} loading={false} />
 
+      {/* Feature Usage Analytics */}
+      <FeatureUsagePanel />
+
+      {/* NPS Survey Results */}
+      <NpsResultsPanel />
+
       {/* Charts */}
       <div className="grid grid-cols-2 gap-4">
         <Card title="Revenue Projection (12-month)" accent="var(--primary)">
@@ -649,6 +658,9 @@ function EngineeringTab({ tasks, onToggle, alerts, alertsLoading }: {
           </div>
         </Card>
       </div>
+      {/* AI Conversation Quality Audit */}
+      <AiAuditPanel />
+
       <DeptTab department="engineering" tasks={tasks} onToggle={onToggle} filters={['P0', 'P1', 'P2', 'P3', 'auto']} />
     </div>
   )

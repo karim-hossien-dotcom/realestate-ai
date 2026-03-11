@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
-import { withAuth } from '@/app/lib/auth'
+import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody, checkPhoneTaken } from '@/app/lib/api'
 import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
 import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
@@ -81,9 +81,11 @@ export async function POST(request: Request) {
     .single()
 
   if (dbError) {
+    await logActivity(auth.user.id, 'lead.create', `Failed to create lead: ${dbError.message}`, 'failed')
     return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
+  await logActivity(auth.user.id, 'lead.create', `Created lead ${lead.owner_name || lead.id}`, 'success')
   return NextResponse.json({ ok: true, lead }, { status: 201 })
 }
 
@@ -107,9 +109,11 @@ export async function PATCH(request: Request) {
     .single()
 
   if (dbError) {
+    await logActivity(auth.user.id, 'lead.update', `Failed to update lead ${id}: ${dbError.message}`, 'failed')
     return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
+  await logActivity(auth.user.id, 'lead.update', `Updated lead ${id}`, 'success')
   return NextResponse.json({ ok: true, lead })
 }
 
@@ -140,9 +144,11 @@ export async function DELETE(request: Request) {
         .eq('user_id', auth.user.id)
 
       if (dbError) {
+        await logActivity(auth.user.id, 'lead.delete', `Failed batch delete: ${dbError.message}`, 'failed')
         return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
       }
 
+      await logActivity(auth.user.id, 'lead.delete', `Batch deleted ${ids.length} leads`, 'success')
       return NextResponse.json({ ok: true, deleted: ids.length })
     } catch {
       return NextResponse.json({ ok: false, error: 'Lead ID or ids[] required' }, { status: 400 })
@@ -158,8 +164,10 @@ export async function DELETE(request: Request) {
     .eq('user_id', auth.user.id)
 
   if (dbError) {
+    await logActivity(auth.user.id, 'lead.delete', `Failed to delete lead ${id}: ${dbError.message}`, 'failed')
     return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
   }
 
+  await logActivity(auth.user.id, 'lead.delete', `Deleted lead ${id}`, 'success')
   return NextResponse.json({ ok: true, deleted: true })
 }

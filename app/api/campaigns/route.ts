@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
-import { withAuth } from '@/app/lib/auth'
+import { withAuth, logActivity } from '@/app/lib/auth'
 
 export async function GET() {
   const auth = await withAuth()
@@ -16,6 +16,7 @@ export async function GET() {
     .limit(50)
 
   if (error) {
+    await logActivity(auth.user.id, 'campaign.view', `Failed to fetch campaigns: ${error.message}`, 'failed')
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
 
