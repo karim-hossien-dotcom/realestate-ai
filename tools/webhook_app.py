@@ -361,11 +361,11 @@ def health():
         overall = "degraded"
 
     # Check WhatsApp token presence
-    wa_token = os.getenv("WHATSAPP_TOKEN")
+    wa_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
     checks["whatsapp"] = (
         {"status": "healthy"}
         if wa_token
-        else {"status": "degraded", "error": "WHATSAPP_TOKEN not set"}
+        else {"status": "degraded", "error": "WHATSAPP_ACCESS_TOKEN not set"}
     )
     if not wa_token:
         overall = "degraded"
