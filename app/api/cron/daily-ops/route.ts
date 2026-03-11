@@ -5,12 +5,12 @@ import { createServiceClient } from '@/app/lib/supabase/server';
 const CRON_SECRET = process.env.CRON_SECRET || '';
 
 /**
- * POST /api/cron/daily-ops
+ * GET|POST /api/cron/daily-ops
  * Runs system checks + queries key metrics, writes results to daily_reports table.
  * Called by Render cron job (daily or on-demand via /daily-ops:run).
  * Protected by CRON_SECRET.
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   // Auth
   if (CRON_SECRET) {
     const { searchParams } = new URL(request.url);
@@ -187,3 +187,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
+
+export const GET = handler;
+export const POST = handler;
