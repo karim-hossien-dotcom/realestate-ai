@@ -169,6 +169,28 @@ def analyze_with_ai(
             parts.append(f"Location: {lead_details['location_preference']}")
         if lead_details.get("email"):
             parts.append(f"Email: {lead_details['email']}")
+        if lead_details.get("status"):
+            status_labels = {
+                "new": "New lead — not yet contacted",
+                "contacted": "Previously contacted",
+                "engaged": "Actively engaged in conversation",
+                "meeting_scheduled": "MEETING ALREADY SCHEDULED — do NOT re-ask for a meeting",
+                "qualified": "Fully qualified lead",
+                "nurture": "Long-term nurture",
+                "closed": "Closed/converted",
+                "lost": "Lost/unresponsive",
+            }
+            label = status_labels.get(lead_details["status"], lead_details["status"])
+            parts.append(f"Lead Status: {label}")
+        if lead_details.get("notes"):
+            # Extract agent brief if present, otherwise use last 300 chars of notes
+            notes = lead_details["notes"]
+            brief_marker = "--- AI QUALIFICATION BRIEF ---"
+            if brief_marker in notes:
+                brief = notes.split(brief_marker)[-1].strip()
+                parts.append(f"Previous Qualification Summary: {brief[:500]}")
+            elif len(notes) > 10:
+                parts.append(f"Notes: {notes[-300:]}")
         known_info = "\n".join(parts)
 
     today = dt.date.today().isoformat()
@@ -424,6 +446,13 @@ If the lead asks about BUYING (not selling), pivot to buyer qualification. Gathe
 6. Must-haves vs nice-to-haves (parking, outdoor space, specific features)
 7. "What does your ideal property look like?"
 Then schedule a meeting to show properties. Move forward — don't re-ask things they already answered.
+
+===== CRITICAL: DO NOT REPEAT YOURSELF =====
+- ALWAYS read the CONVERSATION HISTORY and KNOWN LEAD INFO carefully before responding.
+- NEVER re-ask a question the lead already answered in the conversation history.
+- If a meeting is already scheduled (Lead Status = "MEETING ALREADY SCHEDULED"), do NOT ask to book another one. Instead, reference the existing meeting and ask how you can help further.
+- If qualification info was already gathered (property address, type, budget, timeline), do NOT ask for it again. Build on what you know.
+- When the lead sends a follow-up message, acknowledge the context of your prior conversation and advance from where you left off.
 
 ===== TONE & RULES =====
 - Keep replies under 500 characters. Conversational, not robotic.
