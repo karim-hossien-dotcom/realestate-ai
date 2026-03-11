@@ -139,6 +139,16 @@ export default function CampaignsPage() {
           }),
         });
         const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data.error === 'no_subscription'
+            ? 'No active subscription. Please subscribe to a plan first.'
+            : data.error === 'limit_exceeded'
+              ? data.message
+              : data.message || `Failed to send ${ch} campaign`;
+          showToast(errMsg, 'error');
+          totalFailed += selectedLeads.length;
+          continue;
+        }
         if (data.results) {
           allResults.push(...data.results.map((r: SendResult) => ({ ...r, channel: ch })));
         }

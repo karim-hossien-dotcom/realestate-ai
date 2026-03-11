@@ -214,6 +214,11 @@ export default function ImportModal({ isOpen, onClose, onImportComplete }: Props
       const res = await fetch('/api/leads/import', { method: 'POST', body: formData });
       const data: ImportResult = await res.json();
 
+      if (!res.ok && (data.error === 'no_subscription' || data.error === 'limit_exceeded')) {
+        setError(data.message || 'Plan limit reached. Please upgrade your subscription.');
+        return;
+      }
+
       setImportResult(data);
       setStep('results');
 
