@@ -2,11 +2,10 @@
  * Google Maps client — Geocoding + Distance Matrix
  * Used by smart calendar for travel time awareness.
  *
- * Env: GOOGLE_MAPS_API_KEY (geocoding), GOOGLE_MAPS_DISTANCE_KEY (distance matrix)
+ * Env: GOOGLE_MAPS_API_KEY
  */
 
-const GEOCODE_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
-const DISTANCE_KEY = process.env.GOOGLE_MAPS_DISTANCE_KEY || process.env.GOOGLE_MAPS_API_KEY || '';
+const MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 
 export type GeoResult = {
   lat: number;
@@ -25,14 +24,14 @@ export type DistanceResult = {
  * Geocode an address string → lat/lng
  */
 export async function geocodeAddress(address: string): Promise<GeoResult | null> {
-  if (!GEOCODE_KEY) {
+  if (!MAPS_API_KEY) {
     console.warn('GOOGLE_MAPS_API_KEY not set — skipping geocode');
     return null;
   }
 
   const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');
   url.searchParams.set('address', address);
-  url.searchParams.set('key', GEOCODE_KEY);
+  url.searchParams.set('key', MAPS_API_KEY);
 
   const res = await fetch(url.toString(), { next: { revalidate: 86400 } });
   const data = await res.json();
@@ -58,8 +57,8 @@ export async function getDrivingDistance(
   origin: string,
   destination: string,
 ): Promise<DistanceResult | null> {
-  if (!DISTANCE_KEY) {
-    console.warn('GOOGLE_MAPS_DISTANCE_KEY not set — skipping distance calc');
+  if (!MAPS_API_KEY) {
+    console.warn('GOOGLE_MAPS_MAPS_API_KEY not set — skipping distance calc');
     return null;
   }
 
@@ -67,7 +66,7 @@ export async function getDrivingDistance(
   url.searchParams.set('origins', origin);
   url.searchParams.set('destinations', destination);
   url.searchParams.set('mode', 'driving');
-  url.searchParams.set('key', DISTANCE_KEY);
+  url.searchParams.set('key', MAPS_API_KEY);
 
   const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
   const data = await res.json();
