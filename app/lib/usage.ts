@@ -1,5 +1,7 @@
 import { createClient } from '@/app/lib/supabase/server'
 
+const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+
 type ResourceType = 'leads' | 'sms' | 'email' | 'whatsapp'
 
 interface UsageLimitResult {
@@ -40,6 +42,19 @@ export async function checkUsageLimits(
   userId: string,
   resource: ResourceType,
 ): Promise<CheckResult> {
+  // Admin bypass — owner always has unlimited access
+  if (userId === ADMIN_USER_ID) {
+    return {
+      allowed: true,
+      current: 0,
+      limit: -1,
+      remaining: Infinity,
+      planName: 'Admin',
+      planSlug: 'agency',
+      upgradeSlug: null,
+    }
+  }
+
   const supabase = await createClient()
 
   // 1. Get active subscription + plan info
