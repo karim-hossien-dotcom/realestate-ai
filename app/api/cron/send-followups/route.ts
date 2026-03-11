@@ -15,9 +15,9 @@ type FollowUp = {
   message_text: string
   scheduled_at: string
   status: string
-  channel: string | null
-  retry_count: number
-  follow_up_number: number | null
+  channel?: string | null
+  retry_count?: number
+  follow_up_number?: number | null
 }
 
 type Lead = {
@@ -74,16 +74,15 @@ async function handler(request: NextRequest) {
     const now = new Date().toISOString()
     const { data: followUps, error: fetchError } = await supabase
       .from('follow_ups')
-      .select('id, user_id, lead_id, message_text, scheduled_at, status, channel, retry_count, follow_up_number')
+      .select('*')
       .eq('status', 'pending')
       .lte('scheduled_at', now)
-      .lt('retry_count', MAX_RETRIES)
       .order('scheduled_at', { ascending: true })
       .limit(BATCH_SIZE)
 
     if (fetchError) {
       console.error('[Cron] Error fetching follow-ups:', fetchError)
-      return NextResponse.json({ ok: false, error: 'Failed to fetch follow-ups' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: `Failed to fetch follow-ups: ${fetchError.message}` }, { status: 500 })
     }
 
     if (!followUps || followUps.length === 0) {
@@ -107,7 +106,7 @@ async function handler(request: NextRequest) {
 
         if (leadError || !lead) {
           console.error(`[Cron] Lead not found for follow-up ${followUp.id}`)
-          await markFollowUpFailed(supabase, followUp.id, followUp.retry_count, 'Lead not found')
+          await markFollowUpFailed(supabase, followUp.id, (followUp.retry_count ?? 0), 'Lead not found')
           results.failed++
           continue
         }
@@ -121,16 +120,19 @@ async function handler(request: NextRequest) {
 
         if (profileError || !profile) {
           console.error(`[Cron] Profile not found for user ${followUp.user_id}`)
-          await markFollowUpFailed(supabase, followUp.id, followUp.retry_count, 'Profile not found')
+          await markFollowUpFailed(supabase, followUp.id, (followUp.retry_count ?? 0), 'Profile not found')
           results.failed++
           continue
         }
 
-        // Check DNC list
-        const { data: dncCheck } = await supabase
-          .rpc('check_dnc', { p_user_id: followUp.user_id, p_phone: lead.phone || '' })
+        // Check DNC list (direct query — service role bypasses RLS)
+        const { count: dncCount } = await supabase
+          .from('dnc_list')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', followUp.user_id)
+          .eq('phone', lead.phone || '')
 
-        if (dncCheck) {
+        if (dncCount && dncCount > 0) {
           console.log(`[Cron] Lead ${lead.id} is on DNC list, skipping`)
           await supabase
             .from('follow_ups')
@@ -231,7 +233,7 @@ async function handler(request: NextRequest) {
             status: newStatus,
             sent_at: emailSent || whatsappSent ? new Date().toISOString() : null,
             error_message: errors.length > 0 ? errors.join('; ') : null,
-            retry_count: newStatus === 'failed' ? followUp.retry_count + 1 : followUp.retry_count,
+            retry_count: newStatus === 'failed' ? (followUp.retry_count ?? 0) + 1 : (followUp.retry_count ?? 0),
           })
           .eq('id', followUp.id)
 
@@ -293,7 +295,7 @@ async function handler(request: NextRequest) {
         await markFollowUpFailed(
           supabase,
           followUp.id,
-          followUp.retry_count,
+          (followUp.retry_count ?? 0),
           err instanceof Error ? err.message : 'Unknown error'
         )
         results.failed++
