@@ -37,16 +37,23 @@ type Profile = {
 }
 
 /**
- * POST /api/cron/send-followups
+ * GET|POST /api/cron/send-followups
  * Cron endpoint to send pending follow-ups
  * Should be called every 5 minutes by external cron service
+ * Auth: Bearer token header OR ?secret= query param
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   // Verify cron secret (required — reject if not configured or mismatch)
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
+  const { searchParams } = new URL(request.url)
+  const querySecret = searchParams.get('secret')
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  const authorized = cronSecret && (
+    authHeader === `Bearer ${cronSecret}` || querySecret === cronSecret
+  )
+
+  if (!authorized) {
     console.error('[Cron] Unauthorized cron request')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
@@ -306,7 +313,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET removed — cron must use POST with Bearer token auth
+export const GET = handler
+export const POST = handler
 
 async function markFollowUpFailed(
   supabase: ReturnType<typeof createServiceClient>,
