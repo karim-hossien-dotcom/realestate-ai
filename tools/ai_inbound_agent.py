@@ -119,6 +119,7 @@ def analyze_with_ai(
     lead_details: Optional[dict] = None,
     agent_name: Optional[str] = None,
     agent_brokerage: Optional[str] = None,
+    ai_config: Optional[dict] = None,
 ) -> dict:
     """
     Call OpenAI to classify intent and generate a reply.
@@ -195,6 +196,67 @@ def analyze_with_ai(
 
     today = dt.date.today().isoformat()
     current_year = dt.date.today().year
+
+    # Build per-user AI config modifier
+    config_modifier = ""
+    if ai_config and ai_config.get("active", True):
+        config_parts = []
+        tone_map = {
+            "professional": "Maintain a professional, knowledgeable tone. Be direct and efficient while still being warm.",
+            "casual": "Use a relaxed, conversational tone. Be like a friend who happens to be great at real estate.",
+            "friendly": "Be warm, enthusiastic, and approachable. Show genuine excitement about helping them.",
+            "formal": "Use formal, polished language. Address them respectfully.",
+            "luxury": "Use refined, sophisticated language. Emphasize exclusivity, privacy, and premium service.",
+        }
+        closing_map = {
+            "direct": "Close conversations with clear next steps and direct calls to action.",
+            "soft": "End with gentle suggestions rather than hard asks.",
+            "consultative": "Wrap up by summarizing what you learned and proposing a consultative next step.",
+            "urgent": "Create appropriate urgency by highlighting market timing or opportunity windows.",
+        }
+        focus_map = {
+            "residential": "You specialize in residential properties.",
+            "commercial": "You specialize in commercial real estate — focus on ROI, cap rates, and business objectives.",
+            "luxury": "You specialize in luxury properties. Emphasize privacy, discretion, unique features.",
+            "industrial": "You specialize in industrial properties — warehouses, manufacturing, distribution.",
+            "general": "You handle all property types.",
+        }
+
+        tone = ai_config.get("tone", "professional")
+        if tone in tone_map:
+            config_parts.append(f"COMMUNICATION STYLE: {tone_map[tone]}")
+
+        lang = ai_config.get("language", "english")
+        if lang and lang != "english":
+            config_parts.append(f"LANGUAGE PREFERENCE: Respond primarily in {lang}.")
+
+        focus = ai_config.get("property_focus", "general")
+        if focus in focus_map:
+            config_parts.append(f"SPECIALIZATION: {focus_map[focus]}")
+
+        intro = ai_config.get("introduction_template")
+        if intro:
+            config_parts.append(f'INTRODUCTION TEMPLATE: Use this as your opening style: "{intro}"')
+
+        custom_qs = ai_config.get("qualification_questions") or []
+        if custom_qs:
+            qs = "\n".join(f"  {i+1}. {q}" for i, q in enumerate(custom_qs))
+            config_parts.append(f"ADDITIONAL QUALIFICATION QUESTIONS:\n{qs}")
+
+        esc_msg = ai_config.get("escalation_message")
+        if esc_msg:
+            config_parts.append(f'CUSTOM ESCALATION MESSAGE: "{esc_msg}"')
+
+        closing = ai_config.get("closing_style", "direct")
+        if closing in closing_map:
+            config_parts.append(f"CLOSING STYLE: {closing_map[closing]}")
+
+        custom = ai_config.get("custom_instructions")
+        if custom:
+            config_parts.append(f"ADDITIONAL INSTRUCTIONS FROM AGENT:\n{custom}")
+
+        if config_parts:
+            config_modifier = "\n\n===== AGENT CUSTOMIZATION =====\n" + "\n\n".join(config_parts)
 
     system_prompt = f"""You are {resolved_name}, a top-performing commercial and residential real estate agent at {resolved_brokerage}. You're known for being sharp, personable, and genuinely helpful — not salesy. You handle inbound WhatsApp conversations to qualify leads and book meetings.
 
@@ -506,7 +568,7 @@ MEETING RULES:
 - Only set "date_suggestion" when ready_to_book is true.
 - If they gave a date but no time, ask for time. Do NOT invent a time.
 - If they gave a time but no date, ask for date.
-"""
+{config_modifier}"""
 
     # Build messages list with conversation history
     messages = [{"role": "system", "content": system_prompt}]

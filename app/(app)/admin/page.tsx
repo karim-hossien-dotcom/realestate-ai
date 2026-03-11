@@ -43,7 +43,7 @@ interface Summary {
   completed: number
   blockers: number
   automatable: number
-  byDepartment: { legal: number; engineering: number; marketing: number; finance: number }
+  byDepartment: { legal: number; engineering: number; marketing: number; finance: number; market_research: number }
 }
 
 interface SystemAlert {
@@ -54,6 +54,20 @@ interface SystemAlert {
   message: string
   metricValue: string
   threshold: string
+}
+
+interface ResearchFinding {
+  id: string
+  source: string
+  finding_type: string
+  competitor_name?: string
+  summary: string
+  details: Record<string, unknown>
+  recommended_action?: string
+  priority: string
+  status: string
+  engineering_task_id?: string
+  created_at: string
 }
 
 // ── API helpers ──
@@ -241,17 +255,173 @@ const revenueData = Array.from({ length: 12 }, (_, i) => ({
   cost: Math.floor(14 + i * 40 + Math.random() * 50),
 }))
 
-const DEPT_COLORS = { legal: '#FF4444', engineering: '#22C55E', marketing: '#4488FF', finance: '#FFB800' }
-const TABS = ['Overview', 'Legal', 'Engineering', 'Marketing', 'Finance'] as const
+const DEPT_COLORS: Record<string, string> = { legal: '#FF4444', engineering: '#22C55E', marketing: '#4488FF', finance: '#FFB800', market_research: '#AA66FF' }
+const TABS = ['Overview', 'Market Research', 'Legal', 'Engineering', 'Marketing', 'Finance'] as const
+
+// ── Daily Digest types ──
+interface DailyDigest {
+  date: string
+  overall_health: string
+  department_health: Record<string, string>
+  reports_filed: number
+  reports_missing: number
+  metrics: Record<string, string | number>
+  findings: string[]
+  actions_taken: string[]
+  actions_proposed: string[]
+  blockers: string[]
+}
+
+const HEALTH_DOT: Record<string, { color: string; label: string }> = {
+  green: { color: '#22C55E', label: 'Healthy' },
+  yellow: { color: '#FFB800', label: 'Warning' },
+  red: { color: '#FF4444', label: 'Critical' },
+  gray: { color: '#6B7280', label: 'No Report' },
+}
 
 // ── Overview tab ──
-function OverviewTab({ tasks, onToggle, summary }: { tasks: Task[]; onToggle: (id: string, s: string) => void; summary: Summary }) {
+function OverviewTab({ tasks, onToggle, summary, alerts }: { tasks: Task[]; onToggle: (id: string, s: string) => void; summary: Summary; alerts: SystemAlert[] }) {
+  const [digest, setDigest] = useState<DailyDigest | null>(null)
+  const [digestLoading, setDigestLoading] = useState(true)
+  const [digestDate, setDigestDate] = useState(new Date().toISOString().split('T')[0])
+
+  useEffect(() => {
+    setDigestLoading(true)
+    fetch(`/api/admin/daily-digest?date=${digestDate}`)
+      .then(r => r.json())
+      .then(data => { if (data.ok) setDigest(data) })
+      .catch(() => {})
+      .finally(() => setDigestLoading(false))
+  }, [digestDate])
+
   const p0Tasks = tasks.filter(t => t.priority === 'P0' && t.status !== 'completed')
   const pct = summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0
   const watchCount = tasks.filter(t => t.department === 'finance' && t.alert_status === 'watch').length
 
   return (
     <div className="space-y-6">
+      {/* Daily Digest Summary */}
+      <Card accent={digest?.overall_health === 'red' ? '#FF4444' : digest?.overall_health === 'yellow' ? '#FFB800' : '#22C55E'}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Daily Operations Digest</span>
+            {digest && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full" style={{
+                background: `${HEALTH_DOT[digest.overall_health]?.color || '#6B7280'}20`,
+                color: HEALTH_DOT[digest.overall_health]?.color || '#6B7280',
+              }}>
+                {HEALTH_DOT[digest.overall_health]?.label || 'Unknown'}
+              </span>
+            )}
+          </div>
+          <input
+            type="date"
+            value={digestDate}
+            onChange={e => setDigestDate(e.target.value)}
+            className="px-2.5 py-1 rounded-lg text-xs bg-[var(--surface-elevated)] border border-[var(--border)] text-[var(--text-primary)]"
+          />
+        </div>
+
+        {digestLoading ? (
+          <div className="flex items-center gap-2 py-3 justify-center text-[var(--text-secondary)] text-sm">
+            <span className="animate-spin">↻</span> Loading digest...
+          </div>
+        ) : !digest ? (
+          <div className="py-3 text-center text-[var(--text-secondary)] text-sm">
+            No daily report for this date. Run <code className="text-[var(--primary)]">/daily-ops:run</code> or trigger cron.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Department health indicators */}
+            <div className="flex gap-3">
+              {['market_research', 'finance', 'legal', 'engineering', 'marketing'].map(dept => {
+                const health = digest.department_health[dept] || 'gray'
+                const dot = HEALTH_DOT[health] || HEALTH_DOT.gray
+                const labels: Record<string, string> = { market_research: 'Research', finance: 'Finance', legal: 'Legal', engineering: 'Engineering', marketing: 'Marketing' }
+                return (
+                  <div key={dept} className="flex-1 px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 rounded-full" style={{ background: dot.color, boxShadow: `0 0 6px ${dot.color}40` }} />
+                      <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wide">{labels[dept]}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: dot.color }}>{dot.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Key metrics */}
+            {Object.keys(digest.metrics).length > 0 && (
+              <div className="grid grid-cols-4 gap-3">
+                {Object.entries(digest.metrics).map(([key, val]) => (
+                  <div key={key} className="px-3 py-2 rounded-lg border border-[var(--border)]">
+                    <div className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">{key.replace(/_/g, ' ')}</div>
+                    <div className="text-lg font-bold text-[var(--text-primary)] mt-0.5">{val}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Actions taken */}
+            {digest.actions_taken.length > 0 && (
+              <div>
+                <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide mb-2">Actions Taken ({digest.actions_taken.length})</div>
+                <div className="space-y-1">
+                  {digest.actions_taken.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-[var(--text-primary)]">
+                      <span className="text-emerald-400">✓</span> {a}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions proposed */}
+            {digest.actions_proposed.length > 0 && (
+              <div>
+                <div className="text-[11px] font-semibold text-amber-400 uppercase tracking-wide mb-2">Proposed Actions ({digest.actions_proposed.length})</div>
+                <div className="space-y-1">
+                  {digest.actions_proposed.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-[var(--text-primary)]">
+                      <span className="text-amber-400">→</span> {a}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Blockers */}
+            {digest.blockers.length > 0 && (
+              <div className="px-3 py-2.5 rounded-lg border border-red-500/20 bg-red-500/5">
+                <div className="text-[11px] font-semibold text-red-400 uppercase tracking-wide mb-2">Blockers ({digest.blockers.length})</div>
+                <div className="space-y-1">
+                  {digest.blockers.map((b, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-red-300">
+                      <span>⚠</span> {b}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Findings */}
+            {digest.findings.length > 0 && (
+              <div>
+                <div className="text-[11px] font-semibold text-[var(--primary)] uppercase tracking-wide mb-2">Findings ({digest.findings.length})</div>
+                <div className="space-y-1">
+                  {digest.findings.slice(0, 8).map((f, i) => (
+                    <div key={i} className="text-xs text-[var(--text-secondary)]">• {f}</div>
+                  ))}
+                  {digest.findings.length > 8 && (
+                    <div className="text-[11px] text-[var(--text-secondary)]">+ {digest.findings.length - 8} more</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
       {/* Launch readiness */}
       <Card accent="var(--primary)">
         <div className="flex justify-between items-center mb-2">
@@ -275,6 +445,9 @@ function OverviewTab({ tasks, onToggle, summary }: { tasks: Task[]; onToggle: (i
         <StatCard label="Finance Alerts" value={watchCount} sub="Metrics to watch" alert={watchCount > 2 ? 'amber' : undefined} />
         <StatCard label="Completed" value={summary.completed} sub={`${pct}% done`} />
       </div>
+
+      {/* System Health inline */}
+      <AlertsPanel alerts={alerts} loading={false} />
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-4">
@@ -306,11 +479,13 @@ function OverviewTab({ tasks, onToggle, summary }: { tasks: Task[]; onToggle: (i
                   { name: 'Engineering', value: summary.byDepartment.engineering },
                   { name: 'Marketing', value: summary.byDepartment.marketing },
                   { name: 'Finance', value: summary.byDepartment.finance },
+                  { name: 'Market Research', value: summary.byDepartment.market_research },
                 ]} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value" strokeWidth={0}>
                   <Cell fill={DEPT_COLORS.legal} />
                   <Cell fill={DEPT_COLORS.engineering} />
                   <Cell fill={DEPT_COLORS.marketing} />
                   <Cell fill={DEPT_COLORS.finance} />
+                  <Cell fill={DEPT_COLORS.market_research} />
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
@@ -320,6 +495,7 @@ function OverviewTab({ tasks, onToggle, summary }: { tasks: Task[]; onToggle: (i
                 { label: 'Engineering', count: summary.byDepartment.engineering, color: DEPT_COLORS.engineering },
                 { label: 'Marketing', count: summary.byDepartment.marketing, color: DEPT_COLORS.marketing },
                 { label: 'Finance', count: summary.byDepartment.finance, color: DEPT_COLORS.finance },
+                { label: 'Market Research', count: summary.byDepartment.market_research, color: DEPT_COLORS.market_research },
               ] as const).map((item, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                   <div className="flex items-center gap-2">
@@ -606,6 +782,132 @@ function FinanceTab({ tasks, onToggle }: { tasks: Task[]; onToggle: (id: string,
   )
 }
 
+// ── Market Research tab ──
+function MarketResearchTab({ tasks, onToggle }: { tasks: Task[]; onToggle: (id: string, s: string) => void }) {
+  const [findings, setFindings] = useState<ResearchFinding[]>([])
+  const [findingsLoading, setFindingsLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/research/findings?limit=50')
+      .then(r => r.json())
+      .then(data => { if (data.ok) setFindings(data.findings) })
+      .catch(() => {})
+      .finally(() => setFindingsLoading(false))
+  }, [])
+
+  const handleFindingAction = async (id: string, status: 'accepted' | 'rejected') => {
+    setFindings(prev => prev.map(f => f.id === id ? { ...f, status } : f))
+    try {
+      await fetch('/api/research/findings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      })
+    } catch { /* revert on error */ }
+  }
+
+  const newFindings = findings.filter(f => f.status === 'new')
+  const acceptedFindings = findings.filter(f => f.status === 'accepted')
+  const rejectedFindings = findings.filter(f => f.status === 'rejected')
+
+  const SOURCE_LABELS: Record<string, string> = {
+    competitor_pricing: 'Competitor',
+    product_hunt: 'Product Hunt',
+    user_feedback: 'User Feedback',
+    trend: 'Trend',
+    usage_analysis: 'Usage',
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-4">
+        <StatCard label="Total Findings" value={findings.length} sub="all time" />
+        <StatCard label="Pending Review" value={newFindings.length} sub="needs decision" alert={newFindings.length > 5 ? 'amber' : undefined} />
+        <StatCard label="Accepted" value={acceptedFindings.length} sub="→ engineering backlog" />
+        <StatCard label="Rejected" value={rejectedFindings.length} sub="not actionable" />
+      </div>
+
+      {/* New findings requiring action */}
+      <Card title={`New Findings (${newFindings.length})`} accent="#AA66FF">
+        {findingsLoading ? (
+          <div className="py-4 text-center text-[var(--text-secondary)] text-sm">Loading findings...</div>
+        ) : newFindings.length === 0 ? (
+          <div className="py-4 text-center text-[var(--text-secondary)] text-sm">No new findings. Run /market-research:competitors to generate.</div>
+        ) : (
+          <div className="space-y-2">
+            {newFindings.map(f => (
+              <div key={f.id} className="flex items-start justify-between gap-3 px-3 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-elevated)] transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge text={SOURCE_LABELS[f.source] || f.source} variant="purple" />
+                    <Badge text={f.priority} variant={f.priority === 'P0' ? 'red' : f.priority === 'P1' ? 'amber' : 'default'} />
+                    {f.competitor_name && <span className="text-[11px] text-[var(--text-secondary)]">{f.competitor_name}</span>}
+                  </div>
+                  <div className="text-[13px] text-[var(--text-primary)]">{f.summary}</div>
+                  {f.recommended_action && (
+                    <div className="text-[11px] text-[var(--primary)] mt-1">Action: {f.recommended_action}</div>
+                  )}
+                </div>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <button onClick={() => handleFindingAction(f.id, 'accepted')}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer">
+                    Accept
+                  </button>
+                  <button onClick={() => handleFindingAction(f.id, 'rejected')}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Competitor comparison matrix placeholder */}
+      <Card title="Competitor Feature Matrix" accent="#4488FF">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr>
+                {['Feature', 'Estate AI', 'FUB', 'kvCORE', 'Structurely', 'Sierra'].map(h => (
+                  <th key={h} className="text-left px-3 py-2 text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border)]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { feature: 'AI Lead Qualification', us: true, fub: false, kv: true, struct: true, sierra: false },
+                { feature: 'WhatsApp Integration', us: true, fub: false, kv: false, struct: false, sierra: false },
+                { feature: 'SMS Automation', us: true, fub: true, kv: true, struct: true, sierra: true },
+                { feature: 'Email Campaigns', us: true, fub: true, kv: true, struct: false, sierra: true },
+                { feature: 'Smart Calendar', us: false, fub: false, kv: true, struct: false, sierra: false },
+                { feature: 'Starting Price', us: '$99', fub: '$69', kv: '$499', struct: '$179', sierra: '$499' },
+              ].map((row, i) => (
+                <tr key={i} className="hover:bg-[var(--surface-elevated)] transition-colors">
+                  <td className="px-3 py-2 text-sm text-[var(--text-primary)] border-b border-[var(--border)]">{row.feature}</td>
+                  {[row.us, row.fub, row.kv, row.struct, row.sierra].map((val, j) => (
+                    <td key={j} className="px-3 py-2 text-sm border-b border-[var(--border)]">
+                      {typeof val === 'boolean' ? (
+                        <span className={val ? 'text-emerald-400' : 'text-red-400'}>{val ? '\u2713' : '\u2717'}</span>
+                      ) : (
+                        <span className={j === 0 ? 'text-[var(--primary)] font-semibold' : 'text-[var(--text-secondary)]'}>{val}</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Department tasks */}
+      <DeptTab department="market_research" tasks={tasks} onToggle={onToggle} filters={['P1', 'P2', 'auto']} />
+    </div>
+  )
+}
+
 // ── Main page ──
 export default function AdminCommandCenter() {
   const router = useRouter()
@@ -613,7 +915,7 @@ export default function AdminCommandCenter() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [summary, setSummary] = useState<Summary>({
     total: 0, completed: 0, blockers: 0, automatable: 0,
-    byDepartment: { legal: 0, engineering: 0, marketing: 0, finance: 0 },
+    byDepartment: { legal: 0, engineering: 0, marketing: 0, finance: 0, market_research: 0 },
   })
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
@@ -701,7 +1003,8 @@ export default function AdminCommandCenter() {
     )
     const props = { tasks, onToggle: handleToggle, summary }
     switch (tab) {
-      case 'Overview': return <OverviewTab {...props} />
+      case 'Overview': return <OverviewTab {...props} alerts={alerts} />
+      case 'Market Research': return <MarketResearchTab tasks={tasks} onToggle={handleToggle} />
       case 'Legal': return <DeptTab department="legal" tasks={tasks} onToggle={handleToggle} filters={['P0', 'P1', 'P2']} />
       case 'Engineering': return <EngineeringTab tasks={tasks} onToggle={handleToggle} alerts={alerts} alertsLoading={alertsLoading} />
       case 'Marketing': return <MarketingTab tasks={tasks} onToggle={handleToggle} />

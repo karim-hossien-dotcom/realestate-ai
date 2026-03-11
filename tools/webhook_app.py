@@ -22,6 +22,8 @@ try:
         find_lead_by_phone,
         find_user_by_lead_phone,
         get_user_profile,
+        get_user_ai_config,
+        check_meeting_availability,
         update_lead_last_response,
         get_default_user_id,
         create_meeting,
@@ -197,6 +199,7 @@ def _resolve_user_context(phone: str) -> dict:
         "agent_brokerage": default_brokerage,
         "agent_phone": default_phone,
         "agent_email": default_email,
+        "ai_config": None,
     }
 
     if not SUPABASE_AVAILABLE:
@@ -217,6 +220,7 @@ def _resolve_user_context(phone: str) -> dict:
         "agent_brokerage": profile.get("company") or default_brokerage,
         "agent_phone": profile.get("phone") or default_phone,
         "agent_email": profile.get("email") or default_email,
+        "ai_config": get_user_ai_config(owner_id),
     }
 
 
@@ -417,6 +421,7 @@ def webhook_inbound():
         agent_brokerage = ctx["agent_brokerage"]
         agent_phone = ctx["agent_phone"]
         agent_email = ctx["agent_email"]
+        ai_config = ctx.get("ai_config")
 
         msg_type = msg.get("type", "text")
 
@@ -538,6 +543,7 @@ def webhook_inbound():
             lead_details=lead_details,
             agent_name=agent_name,
             agent_brokerage=agent_brokerage,
+            ai_config=ai_config,
         )
 
         # If AI detects escalation need, notify the agent
@@ -616,57 +622,86 @@ def webhook_inbound():
         # Create meeting ONLY when ready_to_book (has both date and time)
         meeting_data = ai_result.get("meeting", {})
         if meeting_data.get("ready_to_book") and meeting_data.get("date_suggestion") and SUPABASE_AVAILABLE and user_id:
-            lead = find_lead_by_phone(user_id, wa_id) if user_id else None
-            create_meeting(
-                user_id=user_id,
-                title=meeting_data.get("title", f"Meeting with {wa_id}"),
-                lead_phone=wa_id,
-                lead_name=lead.get("owner_name") if lead else None,
-                lead_id=lead.get("id") if lead else None,
-                description=meeting_data.get("description"),
-                meeting_date=meeting_data.get("date_suggestion"),
-                property_address=meeting_data.get("property_address") or qualification.get("property_address"),
-                notes=ai_result.get("agent_brief") or ai_result.get("notes", ""),
-                source="ai_bot",
-            )
-            if user_id:
-                log_activity(
-                    user_id, "meeting_created",
-                    f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
-                    "success",
-                    {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
-                )
+            # Check availability before booking
+            date_suggestion = meeting_data.get("date_suggestion", "")
+            proposed_date = date_suggestion[:10] if len(date_suggestion) >= 10 else ""
+            proposed_time = date_suggestion[11:16] if len(date_suggestion) >= 16 else ""
 
-            # Auto-create day-before confirmation follow-up
-            if meeting_data.get("date_suggestion") and lead:
-                try:
-                    from datetime import timedelta
-                    meeting_dt = datetime.fromisoformat(
-                        meeting_data["date_suggestion"].replace("Z", "+00:00")
-                    )
-                    confirm_dt = meeting_dt - timedelta(days=1)
-                    lead_name = lead.get("owner_name", "there")
-                    confirm_msg = (
-                        f"Hi {lead_name}, just a reminder about our meeting tomorrow "
-                        f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
-                        f"at {meeting_data.get('property_address', 'your property')}. "
-                        f"Looking forward to speaking with you! - {agent_name}"
-                    )
-                    create_follow_up(
-                        user_id=user_id,
-                        lead_id=lead.get("id"),
-                        message_text=confirm_msg,
-                        scheduled_at=confirm_dt.isoformat(),
-                        channel="whatsapp",
-                    )
+            availability = {"available": True, "conflicts": []}
+            if proposed_date and proposed_time:
+                availability = check_meeting_availability(user_id, proposed_date, proposed_time)
+
+            if not availability["available"]:
+                conflict_info = availability["conflicts"]
+                conflict_desc = ", ".join(
+                    f"{c.get('title', 'Meeting')} at {c.get('time', '?')}" for c in conflict_info
+                )
+                conflict_reply = (
+                    f"I just checked the calendar and there's a conflict — "
+                    f"you already have: {conflict_desc}. "
+                    f"Would another time work? What about later that day or the next day?"
+                )
+                _send_whatsapp_message(wa_id, conflict_reply)
+                _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
+                                 reply_text=conflict_reply, send_status="sent")
+                log_activity(
+                    user_id, "meeting_conflict",
+                    f"AI detected scheduling conflict for {wa_id}: {conflict_desc}",
+                    "warning",
+                    {"phone": wa_id, "conflicts": conflict_info, "proposed": date_suggestion},
+                )
+            else:
+                lead = find_lead_by_phone(user_id, wa_id) if user_id else None
+                create_meeting(
+                    user_id=user_id,
+                    title=meeting_data.get("title", f"Meeting with {wa_id}"),
+                    lead_phone=wa_id,
+                    lead_name=lead.get("owner_name") if lead else None,
+                    lead_id=lead.get("id") if lead else None,
+                    description=meeting_data.get("description"),
+                    meeting_date=meeting_data.get("date_suggestion"),
+                    property_address=meeting_data.get("property_address") or qualification.get("property_address"),
+                    notes=ai_result.get("agent_brief") or ai_result.get("notes", ""),
+                    source="ai_bot",
+                )
+                if user_id:
                     log_activity(
-                        user_id, "followup",
-                        f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
+                        user_id, "meeting_created",
+                        f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
                         "success",
-                        {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
+                        {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
                     )
-                except Exception as e:
-                    print(f"Error creating confirmation follow-up: {e}")
+
+                # Auto-create day-before confirmation follow-up
+                if meeting_data.get("date_suggestion") and lead:
+                    try:
+                        from datetime import timedelta
+                        meeting_dt = datetime.fromisoformat(
+                            meeting_data["date_suggestion"].replace("Z", "+00:00")
+                        )
+                        confirm_dt = meeting_dt - timedelta(days=1)
+                        lead_name = lead.get("owner_name", "there")
+                        confirm_msg = (
+                            f"Hi {lead_name}, just a reminder about our meeting tomorrow "
+                            f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
+                            f"at {meeting_data.get('property_address', 'your property')}. "
+                            f"Looking forward to speaking with you! - {agent_name}"
+                        )
+                        create_follow_up(
+                            user_id=user_id,
+                            lead_id=lead.get("id"),
+                            message_text=confirm_msg,
+                            scheduled_at=confirm_dt.isoformat(),
+                            channel="whatsapp",
+                        )
+                        log_activity(
+                            user_id, "followup",
+                            f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
+                            "success",
+                            {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
+                        )
+                    except Exception as e:
+                        print(f"Error creating confirmation follow-up: {e}")
 
         # Auto-create follow-up when AI sets schedule_follow_up_days
         follow_up_days = ai_result.get("schedule_follow_up_days")
@@ -868,6 +903,7 @@ def sms_inbound():
     agent_brokerage = ctx["agent_brokerage"]
     agent_phone = ctx["agent_phone"]
     agent_email = ctx["agent_email"]
+    ai_config = ctx.get("ai_config")
 
     print(f"[SMS] Inbound from {from_number}: {body[:100]}")
 
@@ -940,6 +976,7 @@ def sms_inbound():
         lead_details=lead_details,
         agent_name=agent_name,
         agent_brokerage=agent_brokerage,
+        ai_config=ai_config,
     )
 
     # Handle stop intent

@@ -439,3 +439,85 @@ def get_user_profile(user_id: str) -> Optional[dict]:
     except Exception as e:
         print(f"Error getting user profile: {e}")
         return None
+
+
+def check_meeting_availability(
+    user_id: str,
+    proposed_date: str,
+    proposed_time: str,
+    duration_minutes: int = 30,
+) -> dict:
+    """
+    Check if a proposed meeting time conflicts with existing meetings on the same day.
+    Returns {"available": bool, "conflicts": [{"title", "time", "address"}]}.
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"available": True, "conflicts": []}
+
+    try:
+        day_start = f"{proposed_date}T00:00:00"
+        day_end = f"{proposed_date}T23:59:59"
+
+        result = client.table("meetings").select(
+            "id, title, meeting_date, duration_minutes, property_address, location"
+        ).eq("user_id", user_id).gte(
+            "meeting_date", day_start
+        ).lte(
+            "meeting_date", day_end
+        ).neq("status", "cancelled").execute()
+
+        meetings = result.data or []
+        if not meetings:
+            return {"available": True, "conflicts": []}
+
+        from datetime import datetime
+
+        proposed_dt = datetime.fromisoformat(f"{proposed_date}T{proposed_time}:00")
+        proposed_end = datetime.fromisoformat(
+            f"{proposed_date}T{proposed_time}:00"
+        )
+        from datetime import timedelta
+        proposed_end = proposed_dt + timedelta(minutes=duration_minutes)
+
+        conflicts = []
+        for m in meetings:
+            m_start = datetime.fromisoformat(m["meeting_date"].replace("Z", "+00:00").replace("+00:00", ""))
+            m_dur = m.get("duration_minutes") or 30
+            m_end = m_start + timedelta(minutes=m_dur)
+
+            # Check overlap (with 30 min buffer)
+            buffer = timedelta(minutes=30)
+            if proposed_dt < (m_end + buffer) and proposed_end > (m_start - buffer):
+                conflicts.append({
+                    "title": m.get("title", "Meeting"),
+                    "time": m_start.strftime("%H:%M"),
+                    "address": m.get("property_address") or m.get("location") or "",
+                })
+
+        return {"available": len(conflicts) == 0, "conflicts": conflicts}
+    except Exception as e:
+        print(f"Error checking meeting availability: {e}")
+        return {"available": True, "conflicts": []}
+
+
+def get_user_ai_config(user_id: str) -> Optional[dict]:
+    """
+    Fetch a user's AI script configuration from ai_config table.
+    Returns dict with tone, language, property_focus, etc. or None.
+    """
+    client = get_supabase_client()
+    if not client:
+        return None
+
+    try:
+        result = client.table("ai_config").select("*").eq(
+            "user_id", user_id
+        ).eq("active", True).limit(1).execute()
+
+        if result.data:
+            return result.data[0]
+        return None
+    except Exception as e:
+        print(f"Error getting user AI config: {e}")
+        return None

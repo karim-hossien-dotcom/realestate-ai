@@ -16,6 +16,17 @@ type CalendarEvent = {
   property_address?: string;
   status?: string;
   source?: string;
+  latitude?: number;
+  longitude?: number;
+  travel_buffer_minutes?: number;
+};
+
+type TravelInfo = {
+  from_id: string;
+  to_id: string;
+  travel_minutes: number | null;
+  travel_text: string;
+  has_conflict: boolean;
 };
 
 type LeadOption = {
@@ -116,6 +127,8 @@ export default function CalendarPage() {
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [inviteForm, setInviteForm] = useState({ leadId: '', phone: '', date: '', time: '14:00', note: '' });
   const [saving, setSaving] = useState(false);
+  const [travelInfos, setTravelInfos] = useState<TravelInfo[]>([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -162,6 +175,63 @@ export default function CalendarPage() {
 
   // Day events
   const dayEvents = selectedDate ? getEventsForDate(selectedDate) : [];
+
+  // Check availability for a proposed meeting
+  const checkAvailability = async (date: string, time: string, address: string) => {
+    if (!address) return;
+    setCheckingAvailability(true);
+    try {
+      const res = await fetch('/api/calendar/check-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposed_date: date,
+          proposed_time: time,
+          property_address: address,
+          duration_minutes: 30,
+          travel_buffer_minutes: 30,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && !data.available) {
+        const conflictNames = data.conflicts.map((c: { meeting_title: string; meeting_time: string; travel_time_minutes: number | null }) =>
+          `${c.meeting_title} at ${c.meeting_time}${c.travel_time_minutes ? ` (${c.travel_time_minutes}min drive)` : ''}`
+        ).join(', ');
+        showToast(`Scheduling conflict: ${conflictNames}${data.suggested_times?.length ? `. Try: ${data.suggested_times.join(', ')}` : ''}`, 'warning');
+      }
+    } catch {
+      // Silently fail — availability check is best-effort
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
+  // Compute travel info between consecutive day events
+  const computedTravelInfos = (() => {
+    if (!selectedDate) return [];
+    const sorted = [...dayEvents]
+      .filter(e => e.time && e.property_address)
+      .sort((a, b) => a.time.localeCompare(b.time));
+    const infos: TravelInfo[] = [];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const curr = sorted[i];
+      const next = sorted[i + 1];
+      if (curr.property_address && next.property_address) {
+        // Estimate gap in minutes
+        const [ch, cm] = curr.time.split(':').map(Number);
+        const [nh, nm] = next.time.split(':').map(Number);
+        const gap = (nh * 60 + nm) - (ch * 60 + cm) - 30; // subtract meeting duration
+        infos.push({
+          from_id: curr.id,
+          to_id: next.id,
+          travel_minutes: null, // Could be populated by API call
+          travel_text: gap < 30 ? 'Tight schedule' : `${gap}min gap`,
+          has_conflict: gap < 30,
+        });
+      }
+    }
+    return infos;
+  })();
 
   // Navigation
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -475,6 +545,21 @@ export default function CalendarPage() {
                           <i className="fas fa-robot mr-1"></i>AI Bot
                         </span>
                       )}
+                      {/* Travel time indicator */}
+                      {selectedDate && (() => {
+                        const travel = computedTravelInfos.find(t => t.from_id === event.id);
+                        if (!travel) return null;
+                        return (
+                          <div className={`flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] ${
+                            travel.has_conflict
+                              ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+                              : 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300'
+                          }`}>
+                            <i className={`fas ${travel.has_conflict ? 'fa-exclamation-triangle' : 'fa-car'}`}></i>
+                            <span>{travel.travel_text} to next</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex flex-col gap-1 flex-shrink-0">
                       <a
@@ -600,6 +685,36 @@ export default function CalendarPage() {
                     onChange={e => setInviteForm(prev => ({ ...prev, time: e.target.value }))}
                     className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                   />
+                </div>
+              </div>
+
+              {/* Property Address for travel check */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Property Address (optional — enables travel conflict check)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inviteForm.note.startsWith('Re: ') ? inviteForm.note.slice(4) : ''}
+                    readOnly
+                    placeholder="Auto-filled from lead selection"
+                    className="flex-1 px-3 py-2 border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] rounded-lg text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const addr = inviteForm.note.startsWith('Re: ') ? inviteForm.note.slice(4) : '';
+                      if (addr && inviteForm.date && inviteForm.time) {
+                        checkAvailability(inviteForm.date, inviteForm.time, addr);
+                      } else {
+                        showToast('Need date, time, and address to check', 'warning');
+                      }
+                    }}
+                    disabled={checkingAvailability}
+                    className="px-3 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-elevated)] transition-colors disabled:opacity-50"
+                    title="Check for travel conflicts"
+                  >
+                    {checkingAvailability ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-route"></i>}
+                  </button>
                 </div>
               </div>
 

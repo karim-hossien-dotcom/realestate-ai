@@ -260,5 +260,164 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
     })
   }
 
+  // 8. API response time sampling (5 key routes)
+  const routesToSample = [
+    '/api/health',
+    '/api/tasks?limit=1',
+    '/api/admin/alerts',
+    '/api/settings/profile',
+    '/api/analytics/dashboard',
+  ]
+  const timings: number[] = []
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('.supabase.co', '') || ''
+
+  if (baseUrl) {
+    for (const route of routesToSample) {
+      try {
+        const start = Date.now()
+        await fetch(`${baseUrl}${route}`, { signal: AbortSignal.timeout(5000) })
+        timings.push(Date.now() - start)
+      } catch {
+        timings.push(5000) // timeout = 5s
+      }
+    }
+
+    const sorted = [...timings].sort((a, b) => a - b)
+    const p95 = sorted[Math.ceil(sorted.length * 0.95) - 1] || 0
+
+    alerts.push({
+      key: 'api_response_time',
+      category: 'engineering',
+      severity: p95 > 2000 ? 'critical' : p95 > 500 ? 'warning' : 'ok',
+      title: 'API Response Time (P95)',
+      message: p95 > 2000
+        ? `P95 response time ${p95}ms — severely degraded performance.`
+        : p95 > 500
+          ? `P95 response time ${p95}ms — above target.`
+          : `P95 response time ${p95}ms — within target.`,
+      metricValue: `${p95}ms`,
+      threshold: '<500ms',
+    })
+  }
+
+  // 9. Python webhook health
+  const pythonUrl = process.env.PYTHON_WEBHOOK_URL || 'https://realestate-ai-1.onrender.com'
+  try {
+    const pyStart = Date.now()
+    const pyRes = await fetch(`${pythonUrl}/health`, { signal: AbortSignal.timeout(10000) })
+    const pyLatency = Date.now() - pyStart
+
+    if (!pyRes.ok) {
+      alerts.push({
+        key: 'python_webhook',
+        category: 'engineering',
+        severity: 'critical',
+        title: 'Python Webhook Unhealthy',
+        message: `Python service returned HTTP ${pyRes.status}. Check Render logs.`,
+        metricValue: `HTTP ${pyRes.status}`,
+        threshold: 'HTTP 200',
+      })
+    } else {
+      alerts.push({
+        key: 'python_webhook',
+        category: 'engineering',
+        severity: pyLatency > 5000 ? 'warning' : 'ok',
+        title: 'Python Webhook',
+        message: pyLatency > 5000
+          ? `Python service responded in ${pyLatency}ms — may be cold starting.`
+          : `Python service healthy (${pyLatency}ms).`,
+        metricValue: `${pyLatency}ms`,
+        threshold: '<5000ms',
+      })
+    }
+  } catch {
+    alerts.push({
+      key: 'python_webhook',
+      category: 'engineering',
+      severity: 'critical',
+      title: 'Python Webhook Unreachable',
+      message: 'Could not connect to Python webhook service. It may be down or cold starting.',
+      metricValue: 'DOWN',
+      threshold: 'Reachable',
+    })
+  }
+
+  // 10. Message delivery rate per channel
+  const channelNames = ['whatsapp', 'sms', 'email'] as const
+  for (const channel of channelNames) {
+    const { count: channelTotal } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('direction', 'outbound')
+      .eq('channel', channel)
+      .gte('created_at', monthStart)
+
+    const { count: channelFailed } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('direction', 'outbound')
+      .eq('channel', channel)
+      .eq('status', 'failed')
+      .gte('created_at', monthStart)
+
+    const chTotal = channelTotal || 0
+    const chFailed = channelFailed || 0
+    const chFailRate = chTotal > 0 ? (chFailed / chTotal) * 100 : 0
+    const chLabel = channel.charAt(0).toUpperCase() + channel.slice(1)
+
+    alerts.push({
+      key: `channel_delivery_${channel}`,
+      category: 'engineering',
+      severity: chTotal === 0 ? 'ok' : chFailRate > 15 ? 'critical' : chFailRate > 5 ? 'warning' : 'ok',
+      title: `${chLabel} Delivery`,
+      message: chTotal === 0
+        ? `No ${chLabel} messages sent this month.`
+        : `${chTotal} messages, ${chFailRate.toFixed(1)}% failure rate.`,
+      metricValue: chTotal === 0 ? 'No data' : `${(100 - chFailRate).toFixed(1)}%`,
+      threshold: '>95%',
+    })
+  }
+
+  // 11. 5xx errors in activity_logs (last 24h)
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { count: errorCount } = await supabase
+    .from('activity_logs')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', last24h)
+    .or('action.ilike.%error%,action.ilike.%fail%,action.ilike.%500%')
+
+  const errors = errorCount || 0
+  alerts.push({
+    key: 'error_count_24h',
+    category: 'engineering',
+    severity: errors > 20 ? 'critical' : errors > 5 ? 'warning' : 'ok',
+    title: 'Errors (24h)',
+    message: errors === 0
+      ? 'No errors logged in the last 24 hours.'
+      : `${errors} error${errors > 1 ? 's' : ''} in the last 24 hours.`,
+    metricValue: String(errors),
+    threshold: '<5',
+  })
+
+  // 12. Codebase health warnings (known large files)
+  const knownLargeFiles = [
+    { file: 'tools/webhook_app.py', lines: 1076 },
+    { file: 'tools/ai_inbound_agent.py', lines: 764 },
+    { file: 'app/(app)/admin/page.tsx', lines: 772 },
+  ]
+  const oversized = knownLargeFiles.filter(f => f.lines > 400)
+
+  alerts.push({
+    key: 'codebase_health',
+    category: 'engineering',
+    severity: oversized.some(f => f.lines > 800) ? 'warning' : 'ok',
+    title: 'Codebase Health',
+    message: oversized.length > 0
+      ? `${oversized.length} files exceed 400 lines: ${oversized.map(f => `${f.file} (${f.lines})`).join(', ')}`
+      : 'All files within recommended size limits.',
+    metricValue: `${oversized.length} oversized`,
+    threshold: '0 files >400 lines',
+  })
+
   return alerts
 }

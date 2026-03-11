@@ -20,11 +20,12 @@ type FUBStatus = {
   leadsFromCrm?: number;
 };
 
-type SettingsSection = 'profile' | 'integrations' | 'messaging' | 'email' | 'team' | 'auto-reply' | 'billing';
+type SettingsSection = 'profile' | 'integrations' | 'ai-personality' | 'messaging' | 'email' | 'team' | 'auto-reply' | 'billing';
 
 const settingsSections = [
   { id: 'profile' as const, label: 'Profile & Account', icon: 'fa-user', shortLabel: 'Profile' },
   { id: 'integrations' as const, label: 'Integrations', icon: 'fa-plug', shortLabel: 'CRM' },
+  { id: 'ai-personality' as const, label: 'AI Personality', icon: 'fa-brain', shortLabel: 'AI' },
   { id: 'messaging' as const, label: 'Messaging Provider', icon: 'fa-sms', comingSoon: true, shortLabel: 'Messaging' },
   { id: 'email' as const, label: 'Email Settings', icon: 'fa-envelope', comingSoon: true, shortLabel: 'Email' },
   { id: 'team' as const, label: 'Team Management', icon: 'fa-users-cog', comingSoon: true, shortLabel: 'Team' },
@@ -76,6 +77,33 @@ export default function SettingsPage() {
   const [billingError, setBillingError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
+  // AI Personality state
+  const [aiConfig, setAiConfig] = useState<{
+    tone: string;
+    language: string;
+    introduction_template: string | null;
+    qualification_questions: string[];
+    escalation_message: string | null;
+    closing_style: string;
+    property_focus: string;
+    custom_instructions: string | null;
+    active: boolean;
+  }>({
+    tone: 'professional',
+    language: 'english',
+    introduction_template: null,
+    qualification_questions: [],
+    escalation_message: null,
+    closing_style: 'direct',
+    property_focus: 'general',
+    custom_instructions: null,
+    active: true,
+  });
+  const [aiConfigLoading, setAiConfigLoading] = useState(false);
+  const [aiConfigSaving, setAiConfigSaving] = useState(false);
+  const [aiConfigError, setAiConfigError] = useState<string | null>(null);
+  const [aiConfigSuccess, setAiConfigSuccess] = useState<string | null>(null);
+
   useEffect(() => {
     fetchProfile();
     fetchFubStatus();
@@ -84,6 +112,12 @@ export default function SettingsPage() {
   useEffect(() => {
     if (activeSection === 'billing') {
       fetchBillingData();
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection === 'ai-personality') {
+      fetchAiConfig();
     }
   }, [activeSection]);
 
@@ -248,6 +282,65 @@ export default function SettingsPage() {
     } catch {
       setBillingError('Failed to open billing portal');
     }
+  };
+
+  const fetchAiConfig = async () => {
+    setAiConfigLoading(true);
+    setAiConfigError(null);
+    try {
+      const response = await fetch('/api/settings/ai-script');
+      const data = await response.json();
+      if (data.ok && data.config) {
+        setAiConfig(data.config);
+      } else {
+        setAiConfigError(data.error || 'Failed to load AI config');
+      }
+    } catch {
+      setAiConfigError('Failed to load AI config');
+    } finally {
+      setAiConfigLoading(false);
+    }
+  };
+
+  const handleSaveAiConfig = async () => {
+    setAiConfigSaving(true);
+    setAiConfigError(null);
+    setAiConfigSuccess(null);
+    try {
+      const response = await fetch('/api/settings/ai-script', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(aiConfig),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setAiConfig(data.config);
+        setAiConfigSuccess('AI personality saved successfully!');
+        setTimeout(() => setAiConfigSuccess(null), 3000);
+      } else {
+        setAiConfigError(data.error || 'Failed to save');
+      }
+    } catch {
+      setAiConfigError('Failed to save AI config');
+    } finally {
+      setAiConfigSaving(false);
+    }
+  };
+
+  const handleAddQuestion = () => {
+    if (aiConfig.qualification_questions.length < 10) {
+      setAiConfig({ ...aiConfig, qualification_questions: [...aiConfig.qualification_questions, ''] });
+    }
+  };
+
+  const handleUpdateQuestion = (index: number, value: string) => {
+    const updated = aiConfig.qualification_questions.map((q, i) => i === index ? value : q);
+    setAiConfig({ ...aiConfig, qualification_questions: updated });
+  };
+
+  const handleRemoveQuestion = (index: number) => {
+    const updated = aiConfig.qualification_questions.filter((_, i) => i !== index);
+    setAiConfig({ ...aiConfig, qualification_questions: updated });
   };
 
   const plans = [
@@ -545,6 +638,204 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* AI Personality Section */}
+          {activeSection === 'ai-personality' && (
+            <section className="space-y-6 max-w-3xl">
+              {aiConfigLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <>
+                  {aiConfigError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                      {aiConfigError}
+                    </div>
+                  )}
+                  {aiConfigSuccess && (
+                    <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                      {aiConfigSuccess}
+                    </div>
+                  )}
+
+                  {/* Active Toggle */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Personality</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Customize how the AI bot communicates with your leads</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aiConfig.active}
+                          onChange={(e) => setAiConfig({ ...aiConfig, active: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Tone & Style */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tone & Style</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tone</label>
+                        <select
+                          value={aiConfig.tone}
+                          onChange={(e) => setAiConfig({ ...aiConfig, tone: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="professional">Professional</option>
+                          <option value="casual">Casual</option>
+                          <option value="friendly">Friendly</option>
+                          <option value="formal">Formal</option>
+                          <option value="luxury">Luxury</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                        <select
+                          value={aiConfig.language}
+                          onChange={(e) => setAiConfig({ ...aiConfig, language: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="english">English</option>
+                          <option value="spanish">Spanish</option>
+                          <option value="arabic">Arabic</option>
+                          <option value="french">French</option>
+                          <option value="portuguese">Portuguese</option>
+                          <option value="mandarin">Mandarin</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Closing Style</label>
+                        <select
+                          value={aiConfig.closing_style}
+                          onChange={(e) => setAiConfig({ ...aiConfig, closing_style: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="direct">Direct</option>
+                          <option value="soft">Soft</option>
+                          <option value="consultative">Consultative</option>
+                          <option value="urgent">Urgent</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Property Focus</label>
+                        <select
+                          value={aiConfig.property_focus}
+                          onChange={(e) => setAiConfig({ ...aiConfig, property_focus: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="general">General</option>
+                          <option value="residential">Residential</option>
+                          <option value="commercial">Commercial</option>
+                          <option value="luxury">Luxury</option>
+                          <option value="industrial">Industrial</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom Messages */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Custom Messages</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Introduction Template</label>
+                        <textarea
+                          value={aiConfig.introduction_template || ''}
+                          onChange={(e) => setAiConfig({ ...aiConfig, introduction_template: e.target.value || null })}
+                          placeholder="e.g., Hey! This is [name] from [company]. I noticed your property at..."
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">How the AI should greet new leads for the first time</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escalation Message</label>
+                        <textarea
+                          value={aiConfig.escalation_message || ''}
+                          onChange={(e) => setAiConfig({ ...aiConfig, escalation_message: e.target.value || null })}
+                          placeholder="e.g., I want to make sure you get the best help possible. Let me connect you with..."
+                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Sent when the AI needs to escalate to you directly</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Qualification Questions */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Custom Qualification Questions</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Additional questions the AI will weave into conversations</p>
+                      </div>
+                      <button
+                        onClick={handleAddQuestion}
+                        disabled={aiConfig.qualification_questions.length >= 10}
+                        className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+                      >
+                        + Add Question
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {aiConfig.qualification_questions.map((q, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={q}
+                            onChange={(e) => handleUpdateQuestion(i, e.target.value)}
+                            placeholder={`Question ${i + 1}`}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          />
+                          <button
+                            onClick={() => handleRemoveQuestion(i)}
+                            className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <i className="fas fa-trash text-sm"></i>
+                          </button>
+                        </div>
+                      ))}
+                      {aiConfig.qualification_questions.length === 0 && (
+                        <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">No custom questions yet. Click &quot;Add Question&quot; to start.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Free-form Instructions */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Custom Instructions</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Free-form instructions for the AI. Be specific about what you want.</p>
+                    <textarea
+                      value={aiConfig.custom_instructions || ''}
+                      onChange={(e) => setAiConfig({ ...aiConfig, custom_instructions: e.target.value || null })}
+                      placeholder="e.g., Always mention our free home valuation service. Never discuss commission rates. If they mention foreclosure, handle with extra sensitivity..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSaveAiConfig}
+                      disabled={aiConfigSaving}
+                      className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-medium"
+                    >
+                      {aiConfigSaving ? 'Saving...' : 'Save AI Personality'}
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
