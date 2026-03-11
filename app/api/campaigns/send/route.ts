@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendWhatsAppTemplate, sendWhatsAppText } from '@/app/lib/whatsapp'
+import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient()
 
-  const { leads, channel, templateName, languageCode, campaignName: rawName } = parsed.data
+  const { leads, channel, campaignName: rawName } = parsed.data
   const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
   const campaignName = rawName || `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
 
@@ -52,8 +52,7 @@ export async function POST(request: Request) {
   // Check channel configuration
   const hasWhatsAppConfig =
     process.env.WHATSAPP_ACCESS_TOKEN &&
-    process.env.WHATSAPP_PHONE_NUMBER_ID &&
-    (templateName || process.env.WHATSAPP_TEMPLATE_NAME)
+    process.env.WHATSAPP_PHONE_NUMBER_ID
   const hasEmailConfig = !!process.env.RESEND_API_KEY
   const hasSmsConfig = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER)
 
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
       user_id: auth.user.id,
       name: campaignName,
       status: 'sending',
-      template_name: channel === 'email' ? 'outreach_email' : (templateName || process.env.WHATSAPP_TEMPLATE_NAME || null),
+      template_name: channel === 'email' ? 'outreach_email' : null,
       total_leads: leads.length,
     })
     .select()
@@ -200,29 +199,13 @@ export async function POST(request: Request) {
       const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
-      // Send WhatsApp — prefer text messages (no payment method needed),
-      // fall back to template if no personalized message available
+      // Send WhatsApp as plain text message
       const messageBody = lead.sms_text
         ? `Hello from ${profile?.company || 'our team'}:\n\n${lead.sms_text}\n\n- ${agentName}\n\nReply STOP to opt out`
-        : null
+        : `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm ${agentName} from ${profile?.company || 'our team'}. I noticed your property and wanted to reach out. Reply for more info or STOP to opt out.`
 
-      if (messageBody) {
-        // Send as text message (works without marketing template payment)
-        const textResult = await sendWhatsAppText({ to: contact, body: messageBody })
-        sendResult = { ok: textResult.ok, messageId: textResult.messageId, error: textResult.error }
-      } else {
-        // Fall back to template for leads without pre-generated messages
-        const effectiveTemplate = templateName || process.env.WHATSAPP_TEMPLATE_NAME || ''
-        const recipientName = lead.owner_name?.split(' ')[0] || 'there'
-        const bodyParams = effectiveTemplate === 'hello_world' ? [] : [recipientName]
-
-        sendResult = await sendWhatsAppTemplate({
-          to: contact,
-          templateName,
-          languageCode,
-          bodyParams,
-        })
-      }
+      const textResult = await sendWhatsAppText({ to: contact, body: messageBody })
+      sendResult = { ok: textResult.ok, messageId: textResult.messageId, error: textResult.error }
     }
 
     // Record message in DB

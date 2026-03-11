@@ -42,9 +42,7 @@ export const stripeCheckoutSchema = z.object({
 
 export const whatsappSendSchema = z.object({
   to: z.string().min(1, 'Recipient phone is required').max(20),
-  templateName: z.string().max(100).optional(),
-  languageCode: z.string().max(10).optional(),
-  bodyParams: z.array(z.string()).default([]),
+  body: z.string().min(1, 'Message body is required').max(4096),
 })
 
 // ===== EMAIL =====
@@ -67,8 +65,6 @@ export const campaignSendSchema = z.object({
     property_address: z.string().max(500).optional(),
   })).min(1, 'At least one lead is required'),
   channel: z.enum(['whatsapp', 'email', 'sms']).default('whatsapp'),
-  templateName: z.string().max(100).optional(),
-  languageCode: z.string().max(10).optional(),
   campaignName: z.string().max(200).optional(),
 })
 

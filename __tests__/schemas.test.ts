@@ -113,18 +113,17 @@ describe('whatsappSendSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('requires body field', () => {
+    const result = whatsappSendSchema.safeParse({ to: '+15551234567' })
+    expect(result.success).toBe(false)
+  })
+
   it('validates valid send request', () => {
     const result = whatsappSendSchema.safeParse({
       to: '+15551234567',
-      templateName: 'hello_world',
-      bodyParams: ['John'],
+      body: 'Hello there!',
     })
     expect(result.success).toBe(true)
-  })
-
-  it('defaults bodyParams to empty array', () => {
-    const result = whatsappSendSchema.parse({ to: '+15551234567' })
-    expect(result.bodyParams).toEqual([])
   })
 })
 

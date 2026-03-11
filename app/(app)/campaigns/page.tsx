@@ -46,7 +46,6 @@ export default function CampaignsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [channel, setChannel] = useState<'whatsapp' | 'email' | 'sms' | 'both'>('whatsapp');
-  const [templateName, setTemplateName] = useState('realestate_outreach');
   const [campaignName, setCampaignName] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResults, setSendResults] = useState<SendResult[]>([]);
@@ -134,7 +133,6 @@ export default function CampaignsPage() {
           body: JSON.stringify({
             leads: selectedLeads,
             channel: ch,
-            templateName: ch === 'whatsapp' ? templateName : undefined,
             campaignName: campaignName || `Campaign ${new Date().toLocaleDateString()}`,
           }),
         });
@@ -362,22 +360,6 @@ export default function CampaignsPage() {
               </div>
             </div>
 
-            {/* WhatsApp Template */}
-            {(channel === 'whatsapp' || channel === 'both') && (
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">WhatsApp Template</label>
-                <select
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="realestate_outreach">Real Estate Outreach</option>
-                  <option value="hello_world">Hello World (Test)</option>
-                </select>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">Template must be approved in Meta Business Manager</p>
-              </div>
-            )}
-
             {/* Message Preview */}
             {selectedLeads[0]?.sms_text && (
               <div>
@@ -421,10 +403,6 @@ export default function CampaignsPage() {
               <div>
                 <p className="text-xs text-[var(--text-secondary)] uppercase">Channel</p>
                 <p className="text-xl font-bold text-[var(--text-primary)] capitalize">{channel}</p>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--text-secondary)] uppercase">Template</p>
-                <p className="text-sm font-medium text-[var(--text-primary)]">{templateName}</p>
               </div>
               <div>
                 <p className="text-xs text-[var(--text-secondary)] uppercase">Campaign</p>

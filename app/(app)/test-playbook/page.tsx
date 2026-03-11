@@ -28,7 +28,7 @@ const USE_CASES: UseCase[] = [
     messagePreview:
       'I noticed your property at 123 Main St and wanted to reach out. The commercial market in Newark has been very active...',
     replyScript: '(No reply needed — just verify the message arrives on your phone)',
-    expectedBehavior: 'Message delivered via realestate_outreach template',
+    expectedBehavior: 'Message delivered as plain text via WhatsApp',
     verifyIn: 'Campaigns page → status "Sent" | Conversations → outbound message visible',
   },
   {
@@ -243,7 +243,7 @@ export default function TestPlaybookPage() {
           <li>Go to <strong>Campaigns</strong> page</li>
           <li>Select all 8 test leads (they have "wa-test" tag)</li>
           <li>Choose channel: <strong>WhatsApp</strong></li>
-          <li>Select template: <strong>Real Estate Outreach</strong></li>
+          <li>Messages will be sent as plain text (no template needed)</li>
           <li>Click <strong>Send Campaign Now</strong></li>
           <li>Check your phone — 8 messages should arrive</li>
         </ol>

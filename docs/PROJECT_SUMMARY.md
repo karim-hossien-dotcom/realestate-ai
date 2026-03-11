@@ -106,7 +106,7 @@ OPENAI_API_KEY=sk-proj-xxx
 WHATSAPP_ACCESS_TOKEN=EAASrN9xxx
 WHATSAPP_PHONE_NUMBER_ID=1024465757410451  # UPDATE with new number
 WHATSAPP_VERIFY_TOKEN=realestate-ai-verify-2026
-WHATSAPP_TEMPLATE_NAME=hello_world  # Change to realestate_outreach when approved
+# WHATSAPP_TEMPLATE_NAME removed — all messages sent as plain text
 ```
 
 ### Important Paths

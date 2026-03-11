@@ -1,4 +1,4 @@
-import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { withAuth } from '@/app/lib/auth'
 import { parseBody, success, error } from '@/app/lib/api'
 import { whatsappSendSchema } from '@/app/lib/schemas'
@@ -10,19 +10,14 @@ export async function POST(request: Request) {
   const parsed = await parseBody(request, whatsappSendSchema)
   if (!parsed.ok) return parsed.response
 
-  const { to, templateName, languageCode, bodyParams } = parsed.data
+  const { to, body } = parsed.data
 
   if (!process.env.WHATSAPP_ACCESS_TOKEN) {
     console.log('[DEMO MODE] WhatsApp message simulated')
-    return success({ demo: true, to, templateName, languageCode, bodyParams })
+    return success({ demo: true, to, body })
   }
 
-  const result = await sendWhatsAppTemplate({
-    to,
-    templateName,
-    languageCode,
-    bodyParams,
-  })
+  const result = await sendWhatsAppText({ to, body })
 
   if (!result.ok) {
     return error(result.error || 'WhatsApp send failed.', result.status || 500)
