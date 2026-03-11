@@ -153,6 +153,8 @@ def find_lead_by_phone(user_id: str, phone: str) -> Optional[dict]:
             "user_id", user_id
         ).or_(
             f"phone.eq.{normalized},phone.eq.+{normalized}"
+        ).order("last_response", desc=True, nulls_last=True).order(
+            "updated_at", desc=True, nulls_last=True
         ).limit(1).execute()
 
         if result.data:
@@ -404,6 +406,8 @@ def find_user_by_lead_phone(phone: str) -> Optional[dict]:
         normalized = phone.lstrip("+")
         result = client.table("leads").select("*").or_(
             f"phone.eq.{normalized},phone.eq.+{normalized}"
+        ).order("last_response", desc=True, nulls_last=True).order(
+            "updated_at", desc=True, nulls_last=True
         ).limit(1).execute()
 
         if result.data:
