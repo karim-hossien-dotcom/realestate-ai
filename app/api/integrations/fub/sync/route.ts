@@ -3,6 +3,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { fetchPeople, convertPersonToLead } from '@/app/lib/integrations/follow-up-boss'
 import { checkPhoneTaken } from '@/app/lib/api'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
 
 /**
  * POST /api/integrations/fub/sync
@@ -11,6 +12,11 @@ import { checkPhoneTaken } from '@/app/lib/api'
 export async function POST() {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
+
+  const featureAccess = await checkFeatureAccess(auth.user.id, 'crm_integration')
+  if (!featureAccess.allowed) {
+    return NextResponse.json(featureBlockedPayload(featureAccess), { status: 402 })
+  }
 
   const supabase = await createClient()
 

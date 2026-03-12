@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
 
 export async function GET(request: Request) {
   const auth = await withAuth()
@@ -59,6 +60,10 @@ export async function POST(request: Request) {
 
   switch (action) {
     case 'schedule_meeting': {
+      const featureAccess = await checkFeatureAccess(auth.user.id, 'follow_up_automation')
+      if (!featureAccess.allowed) {
+        return NextResponse.json(featureBlockedPayload(featureAccess), { status: 402 })
+      }
       const { date, time, note } = body
       if (!date || !time) {
         return NextResponse.json(
@@ -105,6 +110,10 @@ export async function POST(request: Request) {
     }
 
     case 'add_followup': {
+      const featureAccess2 = await checkFeatureAccess(auth.user.id, 'follow_up_automation')
+      if (!featureAccess2.allowed) {
+        return NextResponse.json(featureBlockedPayload(featureAccess2), { status: 402 })
+      }
       const { dueDate, note } = body
       if (!dueDate) {
         return NextResponse.json(

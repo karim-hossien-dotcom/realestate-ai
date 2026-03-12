@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { testConnection } from '@/app/lib/integrations/follow-up-boss'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
 
 /**
  * POST /api/integrations/fub/connect
@@ -10,6 +11,11 @@ import { testConnection } from '@/app/lib/integrations/follow-up-boss'
 export async function POST(request: NextRequest) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
+
+  const featureAccess = await checkFeatureAccess(auth.user.id, 'crm_integration')
+  if (!featureAccess.allowed) {
+    return NextResponse.json(featureBlockedPayload(featureAccess), { status: 402 })
+  }
 
   let body: { apiKey: string }
   try {

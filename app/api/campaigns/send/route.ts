@@ -8,6 +8,8 @@ import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody } from '@/app/lib/api'
 import { campaignSendSchema } from '@/app/lib/schemas'
 import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
+import { recordOverage } from '@/app/lib/overage'
 
 type SendResult = {
   phone: string
@@ -24,6 +26,12 @@ export async function POST(request: Request) {
 
   const parsed = await parseBody(request, campaignSendSchema)
   if (!parsed.ok) return parsed.response
+
+  // Gate: campaigns require Pro plan or above
+  const featureAccess = await checkFeatureAccess(auth.user.id, 'campaigns')
+  if (!featureAccess.allowed) {
+    return NextResponse.json(featureBlockedPayload(featureAccess), { status: 402 })
+  }
 
   const supabase = await createClient()
 
@@ -254,6 +262,11 @@ export async function POST(request: Request) {
       results.push({ phone: contact, leadId: lead.id, ok: false, error: sendResult.error })
       failed++
     }
+  }
+
+  // Record overages for messages sent beyond plan quota
+  if (isUsageLimitResult(usage) && usage.isOverage && sent > 0) {
+    await recordOverage(auth.user.id, msgResource, usage.periodStart, sent)
   }
 
   // Update campaign stats

@@ -4,7 +4,8 @@ import { createServiceClient, createClient } from '@/app/lib/supabase/server'
 import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
-import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
+import { recordOverage } from '@/app/lib/overage'
 
 // GET /api/conversations - Get list of conversations (leads with messages)
 export async function GET(request: NextRequest) {
@@ -211,6 +212,11 @@ export async function POST(request: NextRequest) {
       { ok: false, error: sendResult.error || 'Failed to send message' },
       { status: 500 }
     )
+  }
+
+  // Record overage if over quota
+  if (isUsageLimitResult(usage) && usage.isOverage) {
+    await recordOverage(auth.user.id, sendChannel, usage.periodStart)
   }
 
   // Record the message in the database

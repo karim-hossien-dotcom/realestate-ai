@@ -32,6 +32,8 @@ try:
         get_supabase_client,
         create_follow_up,
         check_messaging_quota,
+        get_user_plan_slug,
+        record_overage,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -201,6 +203,7 @@ def _resolve_user_context(phone: str) -> dict:
         "agent_phone": default_phone,
         "agent_email": default_email,
         "ai_config": None,
+        "plan_slug": None,
     }
 
     if not SUPABASE_AVAILABLE:
@@ -212,8 +215,9 @@ def _resolve_user_context(phone: str) -> dict:
 
     owner_id = match["user_id"]
     profile = get_user_profile(owner_id)
+    plan_slug = get_user_plan_slug(owner_id)
     if not profile:
-        return {**fallback, "user_id": owner_id}
+        return {**fallback, "user_id": owner_id, "plan_slug": plan_slug}
 
     return {
         "user_id": owner_id,
@@ -222,6 +226,7 @@ def _resolve_user_context(phone: str) -> dict:
         "agent_phone": profile.get("phone") or default_phone,
         "agent_email": profile.get("email") or default_email,
         "ai_config": get_user_ai_config(owner_id),
+        "plan_slug": plan_slug,
     }
 
 
@@ -530,6 +535,26 @@ def webhook_inbound():
             )
             continue
 
+        # Feature gate: AI auto-reply requires Pro plan or above
+        plan_slug = ctx.get("plan_slug")
+        if plan_slug == "starter":
+            # Starter plan — log inbound but skip AI reply
+            if SUPABASE_AVAILABLE and user_id:
+                log_activity(
+                    user_id, "feature_blocked",
+                    f"AI auto-reply skipped for {wa_id} — Starter plan. Upgrade to Pro for AI replies.",
+                    "info", {"phone": wa_id, "feature": "ai_auto_reply", "plan": "starter"},
+                )
+            # Send a simple acknowledgment instead
+            ack_text = (
+                f"Thanks for reaching out! {agent_name} will get back to you shortly. "
+                f"For faster service, upgrade to our Pro plan for instant AI-powered responses."
+            )
+            _send_whatsapp_message(wa_id, ack_text)
+            _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
+                             reply_text=ack_text, send_status="sent")
+            continue
+
         # Fetch conversation history and lead details for context
         conversation_history = []
         lead_details = None
@@ -613,18 +638,21 @@ def webhook_inbound():
             )
             continue
 
-        # Check messaging quota — soft limit (log warning but still reply to inbound)
+        # Check messaging quota — record overage if over limit
+        wa_quota = None
         if SUPABASE_AVAILABLE and user_id:
-            quota = check_messaging_quota(user_id)
-            if not quota.get("allowed"):
-                print(f"[Quota] User {user_id} exceeded message quota ({quota.get('current')}/{quota.get('limit')}), sending anyway (inbound)")
-                log_activity(
-                    user_id, "quota_exceeded",
-                    f"AI reply sent despite quota exceeded ({quota.get('current')}/{quota.get('limit')} messages). Upgrade plan for more capacity.",
-                    "warning", {"phone": wa_id, "remaining": quota.get("remaining", 0)},
-                )
+            wa_quota = check_messaging_quota(user_id)
+            if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
+                print(f"[Overage] User {user_id} over quota ({wa_quota.get('current')}/{wa_quota.get('limit')}), will record overage")
 
         send_result = _send_whatsapp_message(wa_id, reply_text)
+
+        # Record overage after successful send
+        if send_result and SUPABASE_AVAILABLE and user_id and wa_quota:
+            if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
+                from datetime import datetime as dt_util
+                period_start = wa_quota.get("period_start") or dt_util.utcnow().replace(day=1).isoformat()
+                record_overage(user_id, "whatsapp", period_start)
 
         # Update lead with qualification data extracted by AI
         qualification = ai_result.get("qualification", {})
@@ -974,6 +1002,23 @@ def sms_inbound():
         )
         return Response("", status=200, mimetype="text/plain")
 
+    # Feature gate: AI auto-reply requires Pro plan or above
+    plan_slug = ctx.get("plan_slug")
+    if plan_slug == "starter":
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "feature_blocked",
+                f"AI auto-reply skipped for SMS {from_number} — Starter plan. Upgrade to Pro.",
+                "info", {"phone": from_number, "feature": "ai_auto_reply", "plan": "starter", "channel": "sms"},
+            )
+        ack_text = (
+            f"Thanks for reaching out! {agent_name} will get back to you shortly."
+        )
+        _send_sms_message(from_number, ack_text)
+        _log_sms_to_supabase(user_id, from_number, body, "outbound",
+                             reply_text=ack_text, send_status="sent")
+        return Response("", status=200, mimetype="text/plain")
+
     # Fetch conversation history and lead details
     conversation_history = []
     lead_details = None
@@ -1048,18 +1093,21 @@ def sms_inbound():
         print(f"Blocked SMS outbound to DNC number {from_number}")
         return Response("", status=200, mimetype="text/plain")
 
-    # Check messaging quota — soft limit (log warning but still reply to inbound)
+    # Check messaging quota — record overage if over limit
+    sms_quota = None
     if SUPABASE_AVAILABLE and user_id:
-        quota = check_messaging_quota(user_id)
-        if not quota.get("allowed"):
-            print(f"[Quota] User {user_id} exceeded SMS quota ({quota.get('current')}/{quota.get('limit')}), sending anyway (inbound)")
-            log_activity(
-                user_id, "quota_exceeded",
-                f"AI SMS reply sent despite quota exceeded ({quota.get('current')}/{quota.get('limit')} messages). Upgrade plan.",
-                "warning", {"phone": from_number, "remaining": quota.get("remaining", 0), "channel": "sms"},
-            )
+        sms_quota = check_messaging_quota(user_id)
+        if sms_quota.get("current", 0) >= sms_quota.get("limit", 0) and sms_quota.get("limit", 0) > 0:
+            print(f"[Overage] User {user_id} over SMS quota ({sms_quota.get('current')}/{sms_quota.get('limit')}), will record overage")
 
     send_result = _send_sms_message(from_number, reply_text)
+
+    # Record overage after successful send
+    if send_result and SUPABASE_AVAILABLE and user_id and sms_quota:
+        if sms_quota.get("current", 0) >= sms_quota.get("limit", 0) and sms_quota.get("limit", 0) > 0:
+            from datetime import datetime as dt_util
+            period_start = sms_quota.get("period_start") or dt_util.utcnow().replace(day=1).isoformat()
+            record_overage(user_id, "sms", period_start)
 
     # Auto-create follow-up when AI sets schedule_follow_up_days
     follow_up_days = ai_result.get("schedule_follow_up_days")

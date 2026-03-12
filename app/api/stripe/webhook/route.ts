@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getStripe, PLANS } from '@/app/lib/stripe'
 import { createServiceClient } from '@/app/lib/supabase/server'
+import { addOverageLineItems } from '@/app/lib/overage'
 
 /**
  * POST /api/stripe/webhook
@@ -111,6 +112,53 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
         await handleSubscriptionChange(supabase, subscription)
+        break
+      }
+
+      case 'invoice.created': {
+        // Add overage line items to the invoice before it's finalized
+        const newInvoice = event.data.object
+        const inv = newInvoice as unknown as Record<string, unknown>
+        const invCustomerId = inv.customer as string | null
+        const invSubId = inv.subscription as string | null
+        const invoiceId = inv.id as string
+
+        if (invCustomerId && invSubId) {
+          // Find user by stripe_customer_id
+          const { data: invProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('stripe_customer_id', invCustomerId)
+            .single()
+
+          if (invProfile) {
+            // Get current period start from subscription
+            const { data: invSub } = await supabase
+              .from('subscriptions')
+              .select('current_period_start')
+              .eq('stripe_subscription_id', invSubId)
+              .single()
+
+            if (invSub?.current_period_start) {
+              const itemsAdded = await addOverageLineItems(
+                invCustomerId,
+                invoiceId,
+                invProfile.id,
+                invSub.current_period_start,
+              )
+              if (itemsAdded > 0) {
+                console.log(`[Stripe Webhook] Added ${itemsAdded} overage line items to invoice ${invoiceId}`)
+                await supabase.from('activity_logs').insert({
+                  user_id: invProfile.id,
+                  event_type: 'overage_billed',
+                  description: `${itemsAdded} overage charges added to your next invoice`,
+                  status: 'success',
+                  metadata: { invoice_id: invoiceId, items_added: itemsAdded },
+                })
+              }
+            }
+          }
+        }
         break
       }
 

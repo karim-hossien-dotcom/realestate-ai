@@ -13,6 +13,10 @@ interface UsageLimitResult {
   planSlug: string
   /** Next plan slug the user should upgrade to, or null if on highest tier */
   upgradeSlug: string | null
+  /** True when the user is over their included quota (overage charges apply) */
+  isOverage: boolean
+  /** ISO string for the start of the current billing period */
+  periodStart: string
 }
 
 interface NoSubscriptionResult {
@@ -58,6 +62,8 @@ export async function checkUsageLimits(
       planName: 'Admin',
       planSlug: 'agency',
       upgradeSlug: null,
+      isOverage: false,
+      periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
     }
   }
 
@@ -98,6 +104,10 @@ export async function checkUsageLimits(
     limit = plan.included_sms
   }
 
+  const periodStart = sub.current_period_start
+    ? new Date(sub.current_period_start).toISOString()
+    : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+
   // Unlimited (-1) — always allow
   if (limit === -1) {
     return {
@@ -108,6 +118,8 @@ export async function checkUsageLimits(
       planName: plan.name,
       planSlug: plan.slug,
       upgradeSlug: UPGRADE_PATH[plan.slug] ?? null,
+      isOverage: false,
+      periodStart,
     }
   }
 
@@ -123,10 +135,6 @@ export async function checkUsageLimits(
     current = count || 0
   } else {
     // Messages: count ALL outbound messages (shared pool across channels) for the billing period
-    const periodStart = sub.current_period_start
-      ? new Date(sub.current_period_start).toISOString()
-      : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-
     const { count } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
@@ -138,34 +146,41 @@ export async function checkUsageLimits(
   }
 
   const remaining = Math.max(limit - current, 0)
-  const allowed = current < limit
+  const isOverage = current >= limit
 
   return {
-    allowed,
+    allowed: true, // Always allow for subscribed users — overages are billed
     current,
     limit,
     remaining,
     planName: plan.name,
     planSlug: plan.slug,
     upgradeSlug: UPGRADE_PATH[plan.slug] ?? null,
+    isOverage,
+    periodStart,
   }
 }
 
 /**
  * Lightweight quota check for service/cron contexts (no cookies).
- * Returns { allowed, remaining } without the full result object.
+ * Returns { allowed, remaining, isOverage, periodStart }.
  */
 export async function checkMessageQuota(
   userId: string,
   channel: 'sms' | 'email' | 'whatsapp',
-): Promise<{ allowed: boolean; remaining: number }> {
+): Promise<{ allowed: boolean; remaining: number; isOverage: boolean; periodStart: string }> {
   const supabase = createServiceClient()
   const result = await checkUsageLimits(userId, channel, supabase)
   if (!isUsageLimitResult(result)) {
     // No subscription = not allowed
-    return { allowed: false, remaining: 0 }
+    return { allowed: false, remaining: 0, isOverage: false, periodStart: '' }
   }
-  return { allowed: result.allowed, remaining: result.remaining }
+  return {
+    allowed: result.allowed,
+    remaining: result.remaining,
+    isOverage: result.isOverage,
+    periodStart: result.periodStart,
+  }
 }
 
 /**

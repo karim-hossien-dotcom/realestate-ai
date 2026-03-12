@@ -522,6 +522,79 @@ def get_user_ai_config(user_id: str) -> Optional[dict]:
         return None
 
 
+def record_overage(user_id: str, channel: str, period_start: str, count: int = 1) -> bool:
+    """
+    Record overage usage for a given channel.
+    Upserts into usage_records, incrementing the appropriate counter.
+    """
+    column_map = {
+        "sms": "overage_sms",
+        "email": "overage_email",
+        "whatsapp": "overage_whatsapp",
+        "leads": "overage_leads",
+    }
+    column = column_map.get(channel)
+    if not column:
+        return False
+
+    client = get_supabase_client()
+    if not client:
+        return False
+
+    try:
+        # Check for existing record
+        result = client.table("usage_records").select(
+            f"id, {column}"
+        ).eq("user_id", user_id).eq(
+            "period_start", period_start
+        ).limit(1).execute()
+
+        if result.data:
+            existing = result.data[0]
+            current_val = existing.get(column, 0) or 0
+            client.table("usage_records").update(
+                {column: current_val + count}
+            ).eq("id", existing["id"]).execute()
+        else:
+            client.table("usage_records").insert({
+                "user_id": user_id,
+                "period_start": period_start,
+                column: count,
+                "overage_reported": False,
+            }).execute()
+        return True
+    except Exception as e:
+        print(f"Error recording overage: {e}")
+        return False
+
+
+def get_user_plan_slug(user_id: str) -> Optional[str]:
+    """
+    Get the plan slug for a user. Returns 'starter', 'pro', 'agency', or None.
+    """
+    client = get_supabase_client()
+    if not client:
+        return None
+
+    try:
+        result = client.table("subscriptions").select(
+            "*, plans(slug)"
+        ).eq("user_id", user_id).in_(
+            "status", ["active", "trialing"]
+        ).order("created_at", desc=True).limit(1).execute()
+
+        if not result.data:
+            return None
+
+        plans = result.data[0].get("plans")
+        if isinstance(plans, dict):
+            return plans.get("slug")
+        return None
+    except Exception as e:
+        print(f"Error getting user plan slug: {e}")
+        return None
+
+
 def check_messaging_quota(user_id: str) -> dict:
     """
     Check if a user has remaining messaging quota.
@@ -575,6 +648,7 @@ def check_messaging_quota(user_id: str) -> dict:
             "remaining": remaining,
             "limit": limit,
             "current": current,
+            "period_start": period_iso,
         }
     except Exception as e:
         print(f"Error checking messaging quota: {e}")

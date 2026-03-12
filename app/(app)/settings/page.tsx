@@ -72,6 +72,22 @@ export default function SettingsPage() {
       leads: number;
       includedSms: number;
       includedLeads: number;
+      totalMessages: number;
+      includedMessages: number;
+    };
+    overages?: {
+      sms: number;
+      email: number;
+      whatsapp: number;
+      leads: number;
+      estimatedCost: number;
+      reported: boolean;
+    };
+    overageRates?: {
+      sms: number;
+      email: number;
+      whatsapp: number;
+      leads: number;
     };
   } | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -983,6 +999,50 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Overage Charges */}
+                  {billingData?.overages && billingData.overages.estimatedCost > 0 && (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-200">Overage Charges</h3>
+                        <span className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                          ${(billingData.overages.estimatedCost / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+                        Usage beyond your plan&apos;s included quota is billed at the end of your billing cycle.
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        {billingData.overages.sms > 0 && (
+                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
+                            <span>SMS overage ({billingData.overages.sms} msgs × ${((billingData.overageRates?.sms || 5) / 100).toFixed(2)})</span>
+                            <span>${(billingData.overages.sms * (billingData.overageRates?.sms || 5) / 100).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {billingData.overages.email > 0 && (
+                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
+                            <span>Email overage ({billingData.overages.email} msgs × ${((billingData.overageRates?.email || 2) / 100).toFixed(2)})</span>
+                            <span>${(billingData.overages.email * (billingData.overageRates?.email || 2) / 100).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {billingData.overages.whatsapp > 0 && (
+                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
+                            <span>WhatsApp overage ({billingData.overages.whatsapp} msgs × ${((billingData.overageRates?.whatsapp || 8) / 100).toFixed(2)})</span>
+                            <span>${(billingData.overages.whatsapp * (billingData.overageRates?.whatsapp || 8) / 100).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {billingData.overages.leads > 0 && (
+                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
+                            <span>Lead overage ({billingData.overages.leads} leads × ${((billingData.overageRates?.leads || 15) / 100).toFixed(2)})</span>
+                            <span>${(billingData.overages.leads * (billingData.overageRates?.leads || 15) / 100).toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {billingData.overages.reported && (
+                        <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">Already included in your upcoming invoice.</p>
+                      )}
                     </div>
                   )}
 

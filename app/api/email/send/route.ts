@@ -4,6 +4,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { parseBody, success, error } from '@/app/lib/api'
 import { emailSendSchema } from '@/app/lib/schemas'
 import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
+import { recordOverage } from '@/app/lib/overage'
 
 export async function POST(request: Request) {
   const auth = await withAuth()
@@ -139,6 +140,11 @@ export async function POST(request: Request) {
         results.failed++
         results.errors.push(`${lead.email}: ${result.error}`)
       }
+    }
+
+    // Record overages for emails sent beyond plan quota
+    if (isUsageLimitResult(usage) && usage.isOverage && results.sent > 0) {
+      await recordOverage(auth.user.id, 'email', usage.periodStart, results.sent)
     }
 
     await supabase
