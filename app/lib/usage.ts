@@ -1,4 +1,4 @@
-import { createClient } from '@/app/lib/supabase/server'
+import { createClient, createServiceClient } from '@/app/lib/supabase/server'
 
 const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
 
@@ -29,18 +29,24 @@ const UPGRADE_PATH: Record<string, string | null> = {
   agency: null,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClient = any
+
 /**
  * Check whether a user has capacity for a given resource type.
  *
  * - 'leads' checks total lead count against plan's included_leads
- * - 'sms' / 'email' / 'whatsapp' checks outbound messages this billing period
+ * - 'sms' / 'email' / 'whatsapp' counts ALL outbound messages (shared pool) this billing period
  *
  * Returns an object with { allowed, current, limit, remaining, planName, upgradeSlug }.
  * If the user has no active subscription, returns { allowed: false, error: 'no_subscription' }.
+ *
+ * @param client Optional supabase client (pass createServiceClient() for cron routes without cookies)
  */
 export async function checkUsageLimits(
   userId: string,
   resource: ResourceType,
+  client?: SupabaseClient,
 ): Promise<CheckResult> {
   // Admin bypass — owner always has unlimited access
   if (userId === ADMIN_USER_ID) {
@@ -55,7 +61,7 @@ export async function checkUsageLimits(
     }
   }
 
-  const supabase = await createClient()
+  const supabase = client ?? await createClient()
 
   // 1. Get active subscription + plan info
   const { data: sub } = await supabase
@@ -88,7 +94,7 @@ export async function checkUsageLimits(
   if (resource === 'leads') {
     limit = plan.included_leads // -1 means unlimited
   } else {
-    // All messaging channels share the SMS quota
+    // All messaging channels share ONE pool (included_sms)
     limit = plan.included_sms
   }
 
@@ -116,7 +122,7 @@ export async function checkUsageLimits(
 
     current = count || 0
   } else {
-    // Messages: count outbound messages for the billing period
+    // Messages: count ALL outbound messages (shared pool across channels) for the billing period
     const periodStart = sub.current_period_start
       ? new Date(sub.current_period_start).toISOString()
       : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
@@ -126,7 +132,6 @@ export async function checkUsageLimits(
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('direction', 'outbound')
-      .eq('channel', resource)
       .gte('created_at', periodStart)
 
     current = count || 0
@@ -144,6 +149,23 @@ export async function checkUsageLimits(
     planSlug: plan.slug,
     upgradeSlug: UPGRADE_PATH[plan.slug] ?? null,
   }
+}
+
+/**
+ * Lightweight quota check for service/cron contexts (no cookies).
+ * Returns { allowed, remaining } without the full result object.
+ */
+export async function checkMessageQuota(
+  userId: string,
+  channel: 'sms' | 'email' | 'whatsapp',
+): Promise<{ allowed: boolean; remaining: number }> {
+  const supabase = createServiceClient()
+  const result = await checkUsageLimits(userId, channel, supabase)
+  if (!isUsageLimitResult(result)) {
+    // No subscription = not allowed
+    return { allowed: false, remaining: 0 }
+  }
+  return { allowed: result.allowed, remaining: result.remaining }
 }
 
 /**

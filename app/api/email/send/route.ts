@@ -3,6 +3,7 @@ import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { createClient } from '@/app/lib/supabase/server'
 import { parseBody, success, error } from '@/app/lib/api'
 import { emailSendSchema } from '@/app/lib/schemas'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
 
 export async function POST(request: Request) {
   const auth = await withAuth()
@@ -13,6 +14,14 @@ export async function POST(request: Request) {
 
   try {
     const { leadIds, customMessage } = parsed.data
+
+    // Check email quota (shared messaging pool)
+    const usage = await checkUsageLimits(auth.user.id, 'email')
+    if (!usage.allowed) {
+      const payload = limitExceededPayload(usage, 'email')
+      return error(payload.message, 402)
+    }
+
     const supabase = await createClient()
 
     const { data: profile } = await supabase
@@ -35,10 +44,15 @@ export async function POST(request: Request) {
       return error('Failed to fetch leads', 500)
     }
 
-    const leadsWithEmail = leads?.filter(l => l.email) || []
+    let leadsWithEmail = leads?.filter(l => l.email) || []
 
     if (leadsWithEmail.length === 0) {
       return error('No leads with email addresses found', 400)
+    }
+
+    // Cap batch to remaining quota
+    if (isUsageLimitResult(usage) && usage.remaining !== Infinity && leadsWithEmail.length > usage.remaining) {
+      leadsWithEmail = leadsWithEmail.slice(0, usage.remaining)
     }
 
     // Check DNC list

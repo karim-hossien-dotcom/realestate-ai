@@ -31,6 +31,7 @@ try:
         get_lead_details,
         get_supabase_client,
         create_follow_up,
+        check_messaging_quota,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -612,6 +613,17 @@ def webhook_inbound():
             )
             continue
 
+        # Check messaging quota — soft limit (log warning but still reply to inbound)
+        if SUPABASE_AVAILABLE and user_id:
+            quota = check_messaging_quota(user_id)
+            if not quota.get("allowed"):
+                print(f"[Quota] User {user_id} exceeded message quota ({quota.get('current')}/{quota.get('limit')}), sending anyway (inbound)")
+                log_activity(
+                    user_id, "quota_exceeded",
+                    f"AI reply sent despite quota exceeded ({quota.get('current')}/{quota.get('limit')} messages). Upgrade plan for more capacity.",
+                    "warning", {"phone": wa_id, "remaining": quota.get("remaining", 0)},
+                )
+
         send_result = _send_whatsapp_message(wa_id, reply_text)
 
         # Update lead with qualification data extracted by AI
@@ -1035,6 +1047,17 @@ def sms_inbound():
     if SUPABASE_AVAILABLE and user_id and is_on_dnc_list(user_id, from_number):
         print(f"Blocked SMS outbound to DNC number {from_number}")
         return Response("", status=200, mimetype="text/plain")
+
+    # Check messaging quota — soft limit (log warning but still reply to inbound)
+    if SUPABASE_AVAILABLE and user_id:
+        quota = check_messaging_quota(user_id)
+        if not quota.get("allowed"):
+            print(f"[Quota] User {user_id} exceeded SMS quota ({quota.get('current')}/{quota.get('limit')}), sending anyway (inbound)")
+            log_activity(
+                user_id, "quota_exceeded",
+                f"AI SMS reply sent despite quota exceeded ({quota.get('current')}/{quota.get('limit')} messages). Upgrade plan.",
+                "warning", {"phone": from_number, "remaining": quota.get("remaining", 0), "channel": "sms"},
+            )
 
     send_result = _send_sms_message(from_number, reply_text)
 

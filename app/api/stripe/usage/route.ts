@@ -58,6 +58,9 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', auth.user.id)
 
+    // Total outbound messages across all channels (shared quota pool)
+    const totalMessages = (smsCount || 0) + (emailCount || 0) + (whatsappCount || 0)
+
     return NextResponse.json({
       ok: true,
       subscription: sub
@@ -75,9 +78,12 @@ export async function GET() {
         sms: smsCount || 0,
         email: emailCount || 0,
         whatsapp: whatsappCount || 0,
+        totalMessages,
         leads: leadCount || 0,
-        includedSms: sub?.plans?.included_sms || 0,
+        includedMessages: sub?.plans?.included_sms || 0,
         includedLeads: sub?.plans?.included_leads || 0,
+        // Deprecated: use includedMessages (shared pool) instead
+        includedSms: sub?.plans?.included_sms || 0,
       },
     })
   } catch (err) {

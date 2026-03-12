@@ -7,7 +7,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody } from '@/app/lib/api'
 import { campaignSendSchema } from '@/app/lib/schemas'
-import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
 
 type SendResult = {
   phone: string
@@ -31,11 +31,19 @@ export async function POST(request: Request) {
   const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
   const campaignName = rawName || `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
 
-  // Check message quota against plan limits
+  // Check message quota against plan limits (shared pool across all channels)
   const msgResource = channel as 'sms' | 'email' | 'whatsapp'
   const usage = await checkUsageLimits(auth.user.id, msgResource)
   if (!usage.allowed) {
     return NextResponse.json(limitExceededPayload(usage, msgResource), { status: 402 })
+  }
+
+  // Cap batch to remaining quota — don't send more than the user has left
+  let leadsToSend = leads
+  let quotaTruncated = 0
+  if (isUsageLimitResult(usage) && usage.remaining !== Infinity && leads.length > usage.remaining) {
+    quotaTruncated = leads.length - usage.remaining
+    leadsToSend = leads.slice(0, usage.remaining)
   }
 
   // Get user profile for agent info (used in emails)
@@ -66,7 +74,7 @@ export async function POST(request: Request) {
       name: campaignName,
       status: 'sending',
       template_name: channel === 'email' ? 'outreach_email' : null,
-      total_leads: leads.length,
+      total_leads: leadsToSend.length,
     })
     .select()
     .single()
@@ -86,8 +94,8 @@ export async function POST(request: Request) {
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-  for (let i = 0; i < leads.length; i++) {
-    const lead = leads[i]
+  for (let i = 0; i < leadsToSend.length; i++) {
+    const lead = leadsToSend[i]
     // Pace sends to avoid rate limits (Resend: 2 req/sec)
     if (i > 0) await delay(600)
 
@@ -269,10 +277,11 @@ export async function POST(request: Request) {
       campaignId: campaign.id,
       campaignName,
       channel,
-      total: leads.length,
+      total: leadsToSend.length,
       sent,
       failed,
       skipped,
+      quotaTruncated,
       demo: isDemoMode,
     }
   )
@@ -285,7 +294,11 @@ export async function POST(request: Request) {
     sent,
     failed,
     skipped,
-    total: leads.length,
+    quotaTruncated,
+    total: leadsToSend.length,
     results,
+    ...(quotaTruncated > 0 && {
+      warning: `${quotaTruncated} leads were not contacted — your plan's message quota was reached. Upgrade for more capacity.`,
+    }),
   })
 }

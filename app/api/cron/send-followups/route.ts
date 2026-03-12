@@ -4,6 +4,7 @@ import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
 import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
+import { checkMessageQuota } from '@/app/lib/usage'
 
 const BATCH_SIZE = 10
 
@@ -132,6 +133,25 @@ async function handler(request: NextRequest) {
         if (dncCount && dncCount > 0) {
           console.log(`[Cron] Lead ${lead.id} is on DNC list, skipping`)
           await supabase.from('follow_ups').update({ status: 'cancelled' }).eq('id', followUp.id)
+          results.skipped++
+          continue
+        }
+
+        // Check message quota — skip if user has exhausted their plan
+        const pref = lead.contact_preference || 'whatsapp'
+        const quotaChannel = (pref === 'call' ? 'whatsapp' : pref) as 'sms' | 'email' | 'whatsapp'
+        const quota = await checkMessageQuota(followUp.user_id, quotaChannel)
+        if (!quota.allowed) {
+          console.log(`[Cron] User ${followUp.user_id} exceeded message quota, rescheduling follow-up ${followUp.id}`)
+          // Revert to pending so it can be retried next billing period
+          await supabase.from('follow_ups').update({ status: 'pending' }).eq('id', followUp.id)
+          await supabase.from('activity_logs').insert({
+            user_id: followUp.user_id,
+            event_type: 'follow_up_quota_exceeded',
+            description: `Follow-up ${followUp.id} skipped — message quota exceeded. Upgrade plan for more capacity.`,
+            status: 'failed',
+            metadata: { follow_up_id: followUp.id, lead_id: lead.id },
+          })
           results.skipped++
           continue
         }

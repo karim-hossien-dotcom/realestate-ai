@@ -520,3 +520,63 @@ def get_user_ai_config(user_id: str) -> Optional[dict]:
     except Exception as e:
         print(f"Error getting user AI config: {e}")
         return None
+
+
+def check_messaging_quota(user_id: str) -> dict:
+    """
+    Check if a user has remaining messaging quota.
+    Returns {"allowed": bool, "remaining": int, "limit": int, "current": int}.
+    If no subscription found, allows by default (don't block inbound AI responses).
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"allowed": True, "remaining": 999, "limit": -1, "current": 0}
+
+    try:
+        # Get active subscription + plan
+        result = client.table("subscriptions").select(
+            "*, plans(*)"
+        ).eq("user_id", user_id).in_(
+            "status", ["active", "trialing"]
+        ).order("created_at", desc=True).limit(1).execute()
+
+        if not result.data:
+            # No subscription — allow (don't block AI responses for unsubscribed users)
+            return {"allowed": True, "remaining": 999, "limit": -1, "current": 0}
+
+        sub = result.data[0]
+        plan = sub.get("plans", {})
+        limit = plan.get("included_sms", 0)
+
+        # Unlimited
+        if limit == -1:
+            return {"allowed": True, "remaining": 999999, "limit": -1, "current": 0}
+
+        # Count all outbound messages this billing period (shared pool)
+        from datetime import datetime
+        period_start = sub.get("current_period_start")
+        if period_start:
+            period_iso = period_start
+        else:
+            now = datetime.utcnow()
+            period_iso = datetime(now.year, now.month, 1).isoformat()
+
+        count_result = client.table("messages").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).eq(
+            "direction", "outbound"
+        ).gte("created_at", period_iso).execute()
+
+        current = count_result.count if count_result.count else 0
+        remaining = max(limit - current, 0)
+
+        return {
+            "allowed": current < limit,
+            "remaining": remaining,
+            "limit": limit,
+            "current": current,
+        }
+    except Exception as e:
+        print(f"Error checking messaging quota: {e}")
+        # On error, allow (don't block inbound responses)
+        return {"allowed": True, "remaining": 999, "limit": -1, "current": 0}

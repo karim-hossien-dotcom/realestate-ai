@@ -4,6 +4,7 @@ import { createServiceClient, createClient } from '@/app/lib/supabase/server'
 import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
+import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
 
 // GET /api/conversations - Get list of conversations (leads with messages)
 export async function GET(request: NextRequest) {
@@ -106,6 +107,13 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Check message quota before sending
+  const sendChannel = (channel || 'whatsapp') as 'sms' | 'email' | 'whatsapp'
+  const usage = await checkUsageLimits(auth.user.id, sendChannel)
+  if (!usage.allowed) {
+    return NextResponse.json(limitExceededPayload(usage, sendChannel), { status: 402 })
+  }
+
   const supabase = createServiceClient()
 
   // Get lead details
@@ -141,7 +149,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const sendChannel = channel || 'whatsapp'
   let sendResult: { ok: boolean; error?: string; messageId?: string } = { ok: false }
 
   if (sendChannel === 'whatsapp') {
