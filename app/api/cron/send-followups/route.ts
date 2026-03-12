@@ -5,8 +5,7 @@ import { sendWhatsAppText } from '@/app/lib/whatsapp'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
 
-const MAX_RETRIES = 3
-const BATCH_SIZE = 10 // Process max 10 follow-ups per run
+const BATCH_SIZE = 10
 
 type FollowUp = {
   id: string
@@ -15,9 +14,8 @@ type FollowUp = {
   message_text: string
   scheduled_at: string
   status: string
-  channel?: string | null
-  retry_count?: number
-  follow_up_number?: number | null
+  sent_at: string | null
+  created_at: string
 }
 
 type Lead = {
@@ -26,6 +24,7 @@ type Lead = {
   email: string | null
   phone: string | null
   property_address: string | null
+  contact_preference: string | null
 }
 
 type Profile = {
@@ -38,12 +37,13 @@ type Profile = {
 
 /**
  * GET|POST /api/cron/send-followups
- * Cron endpoint to send pending follow-ups
- * Should be called every 5 minutes by external cron service
- * Auth: Bearer token header OR ?secret= query param
+ * Cron endpoint to send pending follow-ups.
+ * Called every 5 minutes by Render cron.
+ *
+ * CRITICAL: Immediately marks follow-ups as 'sending' before processing
+ * to prevent duplicate sends across overlapping cron invocations.
  */
 async function handler(request: NextRequest) {
-  // Verify cron secret (required — reject if not configured or mismatch)
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
   const { searchParams } = new URL(request.url)
@@ -54,24 +54,16 @@ async function handler(request: NextRequest) {
   )
 
   if (!authorized) {
-    console.error('[Cron] Unauthorized cron request')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  console.log('[Cron] Starting follow-up send job...')
-
   const supabase = createServiceClient()
-  const results = {
-    processed: 0,
-    sent: 0,
-    failed: 0,
-    skipped: 0,
-    errors: [] as string[],
-  }
+  const results = { processed: 0, sent: 0, failed: 0, skipped: 0, errors: [] as string[] }
 
   try {
-    // Get pending follow-ups that are due
     const now = new Date().toISOString()
+
+    // Fetch pending follow-ups that are due
     const { data: followUps, error: fetchError } = await supabase
       .from('follow_ups')
       .select('*')
@@ -82,17 +74,22 @@ async function handler(request: NextRequest) {
 
     if (fetchError) {
       console.error('[Cron] Error fetching follow-ups:', fetchError)
-      return NextResponse.json({ ok: false, error: `Failed to fetch follow-ups: ${fetchError.message}` }, { status: 500 })
+      return NextResponse.json({ ok: false, error: fetchError.message }, { status: 500 })
     }
 
     if (!followUps || followUps.length === 0) {
-      console.log('[Cron] No pending follow-ups to send')
       return NextResponse.json({ ok: true, message: 'No pending follow-ups', results })
     }
 
     console.log(`[Cron] Found ${followUps.length} follow-ups to process`)
 
-    // Process each follow-up
+    // CRITICAL: Immediately mark all as 'sending' to prevent duplicate processing
+    const ids = followUps.map(f => f.id)
+    await supabase
+      .from('follow_ups')
+      .update({ status: 'sending' })
+      .in('id', ids)
+
     for (const followUp of followUps as FollowUp[]) {
       results.processed++
 
@@ -100,13 +97,13 @@ async function handler(request: NextRequest) {
         // Get lead info
         const { data: lead, error: leadError } = await supabase
           .from('leads')
-          .select('id, owner_name, email, phone, property_address')
+          .select('id, owner_name, email, phone, property_address, contact_preference')
           .eq('id', followUp.lead_id)
           .single()
 
         if (leadError || !lead) {
           console.error(`[Cron] Lead not found for follow-up ${followUp.id}`)
-          await markFollowUpFailed(supabase, followUp.id, (followUp.retry_count ?? 0), 'Lead not found')
+          await supabase.from('follow_ups').update({ status: 'failed' }).eq('id', followUp.id)
           results.failed++
           continue
         }
@@ -120,12 +117,12 @@ async function handler(request: NextRequest) {
 
         if (profileError || !profile) {
           console.error(`[Cron] Profile not found for user ${followUp.user_id}`)
-          await markFollowUpFailed(supabase, followUp.id, (followUp.retry_count ?? 0), 'Profile not found')
+          await supabase.from('follow_ups').update({ status: 'failed' }).eq('id', followUp.id)
           results.failed++
           continue
         }
 
-        // Check DNC list (direct query — service role bypasses RLS)
+        // Check DNC list
         const { count: dncCount } = await supabase
           .from('dnc_list')
           .select('*', { count: 'exact', head: true })
@@ -134,157 +131,99 @@ async function handler(request: NextRequest) {
 
         if (dncCount && dncCount > 0) {
           console.log(`[Cron] Lead ${lead.id} is on DNC list, skipping`)
-          await supabase
-            .from('follow_ups')
-            .update({ status: 'cancelled', error_message: 'Lead is on DNC list' })
-            .eq('id', followUp.id)
+          await supabase.from('follow_ups').update({ status: 'cancelled' }).eq('id', followUp.id)
           results.skipped++
           continue
         }
 
-        // Check National DNC Registry for SMS follow-ups
-        const fChannel = followUp.channel || 'both'
-        if ((fChannel === 'sms' || fChannel === 'both') && lead.phone) {
-          const onNationalDnc = await isOnNationalDnc(lead.phone)
-          if (onNationalDnc) {
-            console.log(`[Cron] Lead ${lead.id} is on National DNC Registry, skipping SMS`)
-            // If SMS-only follow-up, cancel entirely; if 'both', let email still send
-            if (fChannel === 'sms') {
-              await supabase
-                .from('follow_ups')
-                .update({ status: 'cancelled', error_message: 'On National DNC Registry' })
-                .eq('id', followUp.id)
-              results.skipped++
-              continue
-            }
-          }
-        }
-
-        // Determine channel - default to 'both' if not specified
-        const channel = followUp.channel || 'both'
-        let emailSent = false
-        let whatsappSent = false
-        let smsSent = false
+        // Determine channel from lead's contact_preference
+        const channel = lead.contact_preference || 'whatsapp'
+        let messageSent = false
         const errors: string[] = []
 
-        // Send Email
-        if ((channel === 'both' || channel === 'email') && lead.email) {
-          const emailResult = await sendFollowUpEmail(lead, profile, followUp)
-          if (emailResult.ok) {
-            emailSent = true
-            await supabase
-              .from('follow_ups')
-              .update({ email_sent_at: new Date().toISOString() })
-              .eq('id', followUp.id)
-          } else {
-            errors.push(`Email: ${emailResult.error}`)
-          }
-        } else if ((channel === 'both' || channel === 'email') && !lead.email) {
-          errors.push('Email: No email address for lead')
-        }
-
-        // Send WhatsApp
-        if ((channel === 'both' || channel === 'whatsapp') && lead.phone) {
+        // Send via preferred channel
+        if ((channel === 'whatsapp' || channel === 'call') && lead.phone) {
           const waResult = await sendFollowUpWhatsApp(lead, profile, followUp)
           if (waResult.ok) {
-            whatsappSent = true
-            await supabase
-              .from('follow_ups')
-              .update({ whatsapp_sent_at: new Date().toISOString() })
-              .eq('id', followUp.id)
+            messageSent = true
           } else {
             errors.push(`WhatsApp: ${waResult.error}`)
           }
-        } else if ((channel === 'both' || channel === 'whatsapp') && !lead.phone) {
-          errors.push('WhatsApp: No phone number for lead')
-        }
-
-        // Send SMS
-        if (channel === 'sms' && lead.phone) {
+        } else if (channel === 'sms' && lead.phone) {
+          // Check National DNC Registry for SMS
+          const onNationalDnc = await isOnNationalDnc(lead.phone)
+          if (onNationalDnc) {
+            await supabase.from('follow_ups').update({ status: 'cancelled' }).eq('id', followUp.id)
+            results.skipped++
+            continue
+          }
           const smsResult = await sendFollowUpSms(lead, profile, followUp)
           if (smsResult.ok) {
-            smsSent = true
+            messageSent = true
           } else {
             errors.push(`SMS: ${smsResult.error}`)
           }
-        } else if (channel === 'sms' && !lead.phone) {
-          errors.push('SMS: No phone number for lead')
-        }
-
-        // Determine final status
-        let newStatus: string
-        if (emailSent || whatsappSent || smsSent) {
-          if (errors.length === 0) {
-            newStatus = 'sent'
-            results.sent++
+        } else if (channel === 'email' && lead.email) {
+          const emailResult = await sendFollowUpEmail(lead, profile, followUp)
+          if (emailResult.ok) {
+            messageSent = true
           } else {
-            newStatus = 'partial'
-            results.sent++
+            errors.push(`Email: ${emailResult.error}`)
           }
         } else {
-          newStatus = 'failed'
-          results.failed++
+          // Fallback: try WhatsApp if phone exists, else email
+          if (lead.phone) {
+            const waResult = await sendFollowUpWhatsApp(lead, profile, followUp)
+            if (waResult.ok) messageSent = true
+            else errors.push(`WhatsApp: ${waResult.error}`)
+          } else if (lead.email) {
+            const emailResult = await sendFollowUpEmail(lead, profile, followUp)
+            if (emailResult.ok) messageSent = true
+            else errors.push(`Email: ${emailResult.error}`)
+          } else {
+            errors.push('No phone or email for lead')
+          }
         }
 
-        // Update follow-up status
+        // Update follow-up status — only uses columns that actually exist
+        const newStatus = messageSent ? 'sent' : 'failed'
         await supabase
           .from('follow_ups')
           .update({
             status: newStatus,
-            sent_at: emailSent || whatsappSent ? new Date().toISOString() : null,
-            error_message: errors.length > 0 ? errors.join('; ') : null,
-            retry_count: newStatus === 'failed' ? (followUp.retry_count ?? 0) + 1 : (followUp.retry_count ?? 0),
+            sent_at: messageSent ? new Date().toISOString() : null,
           })
           .eq('id', followUp.id)
+
+        if (messageSent) {
+          results.sent++
+        } else {
+          results.failed++
+        }
 
         // Log activity
         await supabase.from('activity_logs').insert({
           user_id: followUp.user_id,
           event_type: 'follow_up_sent',
-          description: `Follow-up ${newStatus}: ${[emailSent && 'Email', whatsappSent && 'WhatsApp', smsSent && 'SMS'].filter(Boolean).join(' + ') || 'None'}`,
-          status: newStatus === 'sent' ? 'success' : newStatus === 'partial' ? 'success' : 'failed',
+          description: `Follow-up ${newStatus} via ${channel}${errors.length > 0 ? ': ' + errors.join('; ') : ''}`,
+          status: messageSent ? 'success' : 'failed',
           metadata: {
             follow_up_id: followUp.id,
             lead_id: lead.id,
-            email_sent: emailSent,
-            whatsapp_sent: whatsappSent,
-            sms_sent: smsSent,
+            channel,
             errors,
           },
         })
 
-        // Log message records
-        if (emailSent) {
+        // Log message record
+        if (messageSent) {
+          const msgChannel = (channel === 'call' ? 'whatsapp' : channel) as string
           await supabase.from('messages').insert({
             user_id: followUp.user_id,
             lead_id: lead.id,
             direction: 'outbound',
-            channel: 'email',
-            to_number: lead.email,
-            body: followUp.message_text,
-            status: 'sent',
-          })
-        }
-
-        if (whatsappSent) {
-          await supabase.from('messages').insert({
-            user_id: followUp.user_id,
-            lead_id: lead.id,
-            direction: 'outbound',
-            channel: 'whatsapp',
-            to_number: lead.phone,
-            body: followUp.message_text,
-            status: 'sent',
-          })
-        }
-
-        if (smsSent) {
-          await supabase.from('messages').insert({
-            user_id: followUp.user_id,
-            lead_id: lead.id,
-            direction: 'outbound',
-            channel: 'sms',
-            to_number: lead.phone,
+            channel: msgChannel,
+            to_number: channel === 'email' ? lead.email : lead.phone,
             body: followUp.message_text,
             status: 'sent',
           })
@@ -292,14 +231,9 @@ async function handler(request: NextRequest) {
 
       } catch (err) {
         console.error(`[Cron] Error processing follow-up ${followUp.id}:`, err)
-        await markFollowUpFailed(
-          supabase,
-          followUp.id,
-          (followUp.retry_count ?? 0),
-          err instanceof Error ? err.message : 'Unknown error'
-        )
+        await supabase.from('follow_ups').update({ status: 'failed' }).eq('id', followUp.id)
         results.failed++
-        results.errors.push(`Follow-up ${followUp.id}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        results.errors.push(`${followUp.id}: ${err instanceof Error ? err.message : 'Unknown'}`)
       }
     }
 
@@ -318,60 +252,32 @@ async function handler(request: NextRequest) {
 export const GET = handler
 export const POST = handler
 
-async function markFollowUpFailed(
-  supabase: ReturnType<typeof createServiceClient>,
-  id: string,
-  currentRetryCount: number,
-  errorMessage: string
-) {
-  const newRetryCount = currentRetryCount + 1
-  const status = newRetryCount >= MAX_RETRIES ? 'failed' : 'pending'
-
-  await supabase
-    .from('follow_ups')
-    .update({
-      status,
-      retry_count: newRetryCount,
-      error_message: errorMessage,
-    })
-    .eq('id', id)
-}
-
 async function sendFollowUpEmail(
   lead: Lead,
   profile: Profile,
   followUp: FollowUp
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!lead.email) {
-    return { ok: false, error: 'No email address' }
-  }
+  if (!lead.email) return { ok: false, error: 'No email address' }
 
   const agentName = profile.full_name || 'Your Real Estate Agent'
-  const agentPhone = profile.phone || ''
-  const agentEmail = profile.email
-  const recipientName = lead.owner_name?.split(' ')[0] || 'there'
-  const propertyAddress = lead.property_address || 'your property'
-
   const { subject, html, text } = generateFollowUpEmail({
-    recipientName,
-    propertyAddress,
+    recipientName: lead.owner_name?.split(' ')[0] || 'there',
+    propertyAddress: lead.property_address || 'your property',
     agentName,
-    agentPhone,
-    agentEmail,
-    followUpNumber: followUp.follow_up_number || 1,
+    agentPhone: profile.phone || '',
+    agentEmail: profile.email,
+    followUpNumber: 1,
     userId: followUp.user_id,
   })
 
-  const result = await sendEmail({
+  return await sendEmail({
     to: lead.email,
     subject,
     html,
     text,
     fromName: agentName,
-    replyTo: agentEmail,
+    replyTo: profile.email,
   })
-
-  return result
 }
 
 async function sendFollowUpSms(
@@ -379,9 +285,7 @@ async function sendFollowUpSms(
   profile: Profile,
   followUp: FollowUp
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!lead.phone) {
-    return { ok: false, error: 'No phone number' }
-  }
+  if (!lead.phone) return { ok: false, error: 'No phone number' }
 
   const agentName = profile.full_name || 'Your Real Estate Agent'
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
@@ -395,19 +299,12 @@ async function sendFollowUpWhatsApp(
   profile: Profile,
   followUp: FollowUp
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!lead.phone) {
-    return { ok: false, error: 'No phone number' }
-  }
+  if (!lead.phone) return { ok: false, error: 'No phone number' }
 
   const agentName = profile.full_name || 'Your Real Estate Agent'
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
   const body = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out! - ${agentName}\n\nReply STOP to opt out`
 
   const result = await sendWhatsAppText({ to: lead.phone, body })
-
-  if (!result.ok) {
-    return { ok: false, error: result.error }
-  }
-
-  return { ok: true }
+  return { ok: result.ok, error: result.error }
 }

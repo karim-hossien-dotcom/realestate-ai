@@ -440,5 +440,28 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
     threshold: '0 files >400 lines',
   })
 
+  // 14. Message volume anomaly (detects runaway cron/loops)
+  const lastHour2 = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: hourlyOutbound } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('direction', 'outbound')
+    .gte('created_at', lastHour2)
+
+  const hourlyCount = hourlyOutbound || 0
+  alerts.push({
+    key: 'message_volume_anomaly',
+    category: 'engineering',
+    severity: hourlyCount > 50 ? 'critical' : hourlyCount > 20 ? 'warning' : 'ok',
+    title: 'Message Volume (1h)',
+    message: hourlyCount > 50
+      ? `ANOMALY: ${hourlyCount} outbound messages in the last hour — possible runaway cron or loop!`
+      : hourlyCount > 20
+        ? `High volume: ${hourlyCount} outbound messages in the last hour.`
+        : `Normal: ${hourlyCount} outbound messages in the last hour.`,
+    metricValue: `${hourlyCount} msgs`,
+    threshold: '<20 normal, >50 critical',
+  })
+
   return alerts
 }
