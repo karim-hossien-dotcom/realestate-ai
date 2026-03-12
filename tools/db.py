@@ -285,28 +285,67 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
     """
     Fetch recent conversation messages for a phone number.
     Returns list of {direction, body, created_at} dicts, oldest first.
+    Searches by lead_id first, then falls back to phone number matching
+    (handles messages that were stored with lead_id=null).
     """
     client = get_supabase_client()
     if not client:
         return []
 
     try:
-        # Find lead by phone to get lead_id
         lead = find_lead_by_phone(user_id, phone)
-        if not lead:
-            return []
 
-        result = (
-            client.table("messages")
-            .select("direction, body, channel, created_at")
-            .eq("user_id", user_id)
-            .eq("lead_id", lead["id"])
-            .order("created_at", desc=False)
-            .limit(limit)
-            .execute()
-        )
+        # Strategy 1: query by lead_id (most reliable when lead_id is set)
+        lead_messages = []
+        if lead:
+            result = (
+                client.table("messages")
+                .select("direction, body, channel, created_at, from_number, to_number")
+                .eq("user_id", user_id)
+                .eq("lead_id", lead["id"])
+                .order("created_at", desc=False)
+                .limit(limit)
+                .execute()
+            )
+            lead_messages = result.data if result.data else []
 
-        return result.data if result.data else []
+        # Strategy 2: also find messages by phone number (catches null lead_id rows)
+        digits = "".join(c for c in phone if c.isdigit())
+        phone_messages = []
+        if digits:
+            # Match inbound (from_number) and outbound (to_number) by phone digits
+            result_in = (
+                client.table("messages")
+                .select("direction, body, channel, created_at, from_number, to_number")
+                .eq("user_id", user_id)
+                .like("from_number", f"%{digits}")
+                .order("created_at", desc=False)
+                .limit(limit)
+                .execute()
+            )
+            result_out = (
+                client.table("messages")
+                .select("direction, body, channel, created_at, from_number, to_number")
+                .eq("user_id", user_id)
+                .like("to_number", f"%{digits}")
+                .order("created_at", desc=False)
+                .limit(limit)
+                .execute()
+            )
+            phone_messages = (result_in.data or []) + (result_out.data or [])
+
+        # Merge and deduplicate by created_at + direction
+        seen = set()
+        merged = []
+        for msg in lead_messages + phone_messages:
+            key = (msg["created_at"], msg["direction"])
+            if key not in seen:
+                seen.add(key)
+                merged.append(msg)
+
+        # Sort by time, oldest first, return last N
+        merged.sort(key=lambda m: m["created_at"])
+        return merged[-limit:]
     except Exception as e:
         print(f"Error fetching conversation history: {e}")
         return []

@@ -1,6 +1,8 @@
 import os
 import csv
 import json
+import threading
+import time
 from datetime import datetime, timezone
 from typing import Iterable, Optional
 
@@ -92,6 +94,72 @@ def _is_duplicate_message(msg_id: str) -> bool:
 
     _PROCESSED_MSG_IDS[msg_id] = now
     return False
+
+# ---------- Message Batching (Multi-texter Debounce) ----------
+# When someone sends multiple short messages in rapid succession (e.g. "Hi" [enter]
+# "I want to sell" [enter] "123 Main St"), we buffer them and process as one.
+_MSG_BUFFER: dict[str, list[dict]] = {}   # phone -> [buffered messages]
+_MSG_TIMERS: dict[str, threading.Timer] = {}  # phone -> pending timer
+_MSG_BUFFER_LOCK = threading.Lock()
+_DEBOUNCE_SECONDS = 8  # wait this long after last message before processing
+
+
+def _flush_message_buffer(wa_id: str) -> None:
+    """Called by timer — combines buffered messages and processes them."""
+    with _MSG_BUFFER_LOCK:
+        buffered = _MSG_BUFFER.pop(wa_id, [])
+        _MSG_TIMERS.pop(wa_id, None)
+
+    if not buffered:
+        return
+
+    # Combine all message bodies into one
+    combined_body = "\n".join(m["body"] for m in buffered if m["body"])
+    # Use the first message's metadata for logging
+    first_msg = buffered[0]
+
+    print(f"[Debounce] Flushing {len(buffered)} messages from {wa_id}: {combined_body[:100]}")
+
+    # Process the combined message through the normal pipeline
+    _process_whatsapp_message(
+        wa_id=wa_id,
+        body=combined_body,
+        msg_id=first_msg["message_id"],
+        ts=first_msg["timestamp"],
+        msg_type="text",
+        now=first_msg["now"],
+    )
+
+
+def _buffer_or_process(wa_id: str, msg: dict, now_iso: str) -> None:
+    """
+    Buffer a text message for debouncing. If no more messages arrive within
+    _DEBOUNCE_SECONDS, the buffer is flushed and processed.
+    """
+    entry = {
+        "body": msg["body"],
+        "message_id": msg["message_id"],
+        "timestamp": msg["timestamp"],
+        "now": now_iso,
+    }
+
+    with _MSG_BUFFER_LOCK:
+        # Cancel any existing timer for this sender
+        existing_timer = _MSG_TIMERS.get(wa_id)
+        if existing_timer:
+            existing_timer.cancel()
+
+        # Add to buffer
+        if wa_id not in _MSG_BUFFER:
+            _MSG_BUFFER[wa_id] = []
+        _MSG_BUFFER[wa_id].append(entry)
+
+        # Start new timer
+        timer = threading.Timer(_DEBOUNCE_SECONDS, _flush_message_buffer, args=[wa_id])
+        timer.daemon = True
+        timer.start()
+        _MSG_TIMERS[wa_id] = timer
+
 
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "")
 WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN", "")
@@ -397,6 +465,353 @@ def webhook_verify():
     return Response("Forbidden", status=403, mimetype="text/plain")
 
 
+def _process_whatsapp_message(
+    wa_id: str,
+    body: str,
+    msg_id: str,
+    ts: str,
+    msg_type: str,
+    now: str,
+) -> None:
+    """
+    Process a WhatsApp text message through the AI pipeline.
+    Called either directly (single message) or after debounce (combined messages).
+    Runs the full pipeline: context → AI analysis → reply → post-processing.
+    """
+    # Resolve which agent owns this lead (multi-tenant routing)
+    ctx = _resolve_user_context(wa_id)
+    user_id = ctx["user_id"]
+    agent_name = ctx["agent_name"]
+    agent_brokerage = ctx["agent_brokerage"]
+    agent_phone = ctx["agent_phone"]
+    ai_config = ctx.get("ai_config")
+
+    # Feature gate: AI auto-reply requires Pro plan or above
+    plan_slug = ctx.get("plan_slug")
+    if plan_slug == "starter":
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "feature_blocked",
+                f"AI auto-reply skipped for {wa_id} — Starter plan. Upgrade to Pro for AI replies.",
+                "info", {"phone": wa_id, "feature": "ai_auto_reply", "plan": "starter"},
+            )
+        ack_text = (
+            f"Thanks for reaching out! {agent_name} will get back to you shortly. "
+            f"For faster service, upgrade to our Pro plan for instant AI-powered responses."
+        )
+        _send_whatsapp_message(wa_id, ack_text)
+        _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
+                         reply_text=ack_text, send_status="sent")
+        return
+
+    # Fetch conversation history and lead details for context
+    conversation_history = []
+    lead_details = None
+    if SUPABASE_AVAILABLE and user_id:
+        conversation_history = get_conversation_history(user_id, wa_id)
+        lead_details = get_lead_details(user_id, wa_id)
+
+    # Generate AI reply with full analysis + conversation context
+    ai_result = analyze_with_ai(
+        body, wa_id, WHATSAPP_PHONE_NUMBER_ID,
+        conversation_history=conversation_history,
+        lead_details=lead_details,
+        agent_name=agent_name,
+        agent_brokerage=agent_brokerage,
+        ai_config=ai_config,
+    )
+
+    # If AI detects escalation need, notify the agent
+    if ai_result.get("intent") == "escalate":
+        escalation_reply = ai_result.get(
+            "reply",
+            "I hear you, and I want to make sure this is handled properly. "
+            "Let me review the details and get back to you directly."
+        )
+        _send_whatsapp_message(wa_id, escalation_reply)
+
+        if agent_phone:
+            agent_msg = (
+                f"ESCALATION NEEDED\n"
+                f"Lead: {wa_id}\n"
+                f"Message: {body[:200]}\n"
+                f"AI Notes: {ai_result.get('notes', 'N/A')}\n"
+                f"Please follow up directly."
+            )
+            _send_whatsapp_message(agent_phone, agent_msg)
+
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "escalation",
+                f"Lead {wa_id} escalated to agent: {body[:100]}",
+                "pending",
+                {"phone": wa_id, "message": body, "notes": ai_result.get("notes")},
+            )
+
+        _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
+                         reply_text=escalation_reply, send_status="sent")
+        return
+
+    # If AI detects stop intent, treat as opt-out
+    if ai_result.get("intent") == "stop":
+        if SUPABASE_AVAILABLE and user_id:
+            add_to_dnc_list(user_id, wa_id, "AI-detected stop intent")
+            log_activity(
+                user_id, "opt_out",
+                f"User {wa_id} opted out (AI-detected intent)",
+                "success",
+                {"phone": wa_id, "message": body},
+            )
+        _send_whatsapp_message(
+            wa_id,
+            "You're unsubscribed. You won't receive any further messages. "
+            "Thank you for letting us know.",
+        )
+        return
+
+    reply_text = ai_result.get("reply", "Thanks for your message! I'll follow up shortly.")
+
+    # DNC send-side check: never send to numbers on the DNC list
+    if SUPABASE_AVAILABLE and user_id and is_on_dnc_list(user_id, wa_id):
+        print(f"Blocked outbound to DNC number {wa_id}")
+        log_activity(
+            user_id, "dnc_blocked",
+            f"Blocked outbound message to DNC number {wa_id}",
+            "blocked",
+            {"phone": wa_id, "reason": "on_dnc_list"},
+        )
+        return
+
+    # Check messaging quota — record overage if over limit
+    wa_quota = None
+    if SUPABASE_AVAILABLE and user_id:
+        wa_quota = check_messaging_quota(user_id)
+        if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
+            print(f"[Overage] User {user_id} over quota ({wa_quota.get('current')}/{wa_quota.get('limit')}), will record overage")
+
+    send_result = _send_whatsapp_message(wa_id, reply_text)
+
+    # Record overage after successful send
+    if send_result and SUPABASE_AVAILABLE and user_id and wa_quota:
+        if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
+            from datetime import datetime as dt_util
+            period_start = wa_quota.get("period_start") or dt_util.utcnow().replace(day=1).isoformat()
+            record_overage(user_id, "whatsapp", period_start)
+
+    # Update lead with qualification data extracted by AI
+    qualification = ai_result.get("qualification", {})
+    if qualification and SUPABASE_AVAILABLE and user_id:
+        _update_lead_from_qualification(user_id, wa_id, qualification, ai_result)
+
+    # Create meeting ONLY when ready_to_book (has both date and time)
+    meeting_data = ai_result.get("meeting", {})
+    if meeting_data.get("ready_to_book") and meeting_data.get("date_suggestion") and SUPABASE_AVAILABLE and user_id:
+        _handle_meeting_booking(user_id, wa_id, body, msg_id, agent_name,
+                                meeting_data, qualification, ai_result)
+
+    # Auto-create follow-up when AI sets schedule_follow_up_days
+    follow_up_days = ai_result.get("schedule_follow_up_days")
+    if follow_up_days and isinstance(follow_up_days, (int, float)) and follow_up_days > 0 and SUPABASE_AVAILABLE and user_id:
+        _handle_auto_follow_up(user_id, wa_id, agent_name, agent_brokerage,
+                               follow_up_days, ai_result)
+
+    # Log agent brief when lead is fully qualified
+    agent_brief = ai_result.get("agent_brief")
+    if agent_brief and SUPABASE_AVAILABLE and user_id:
+        log_activity(
+            user_id, "lead_qualified",
+            f"Lead {wa_id} fully qualified by AI bot",
+            "success",
+            {"phone": wa_id, "agent_brief": agent_brief, "qualification": qualification},
+        )
+
+    # Log outbound to CSV
+    _write_csv_row(
+        OUTBOUND_LOG,
+        ["timestamp_utc", "wa_id", "message_id", "reply", "send_status", "send_body"],
+        {
+            "timestamp_utc": now,
+            "wa_id": wa_id,
+            "message_id": msg_id,
+            "reply": reply_text,
+            "send_status": send_result.get("status")
+            or ("demo" if send_result.get("demo") else ""),
+            "send_body": send_result.get("body") or "",
+        },
+    )
+
+    # Log outbound to Supabase
+    send_status = "sent" if send_result.get("ok") else "failed"
+    _log_to_supabase(
+        user_id, wa_id, body, msg_id, "outbound",
+        reply_text=reply_text, send_status=send_status
+    )
+
+    # Log AI bot reply to activity_logs
+    if SUPABASE_AVAILABLE and user_id:
+        intent = ai_result.get("intent", "other")
+        log_activity(
+            user_id,
+            "message_reply",
+            f"AI bot replied to {wa_id} (intent: {intent}): {reply_text[:100]}",
+            send_status,
+            {
+                "phone": wa_id,
+                "reply": reply_text,
+                "intent": intent,
+                "direction": "outbound",
+                "follow_up_days": ai_result.get("schedule_follow_up_days"),
+            },
+        )
+
+
+def _handle_meeting_booking(
+    user_id: str, wa_id: str, body: str, msg_id: str,
+    agent_name: str, meeting_data: dict, qualification: dict, ai_result: dict,
+) -> None:
+    """Handle meeting creation when AI determines ready_to_book."""
+    date_suggestion = meeting_data.get("date_suggestion", "")
+    proposed_date = date_suggestion[:10] if len(date_suggestion) >= 10 else ""
+    proposed_time = date_suggestion[11:16] if len(date_suggestion) >= 16 else ""
+
+    availability = {"available": True, "conflicts": []}
+    if proposed_date and proposed_time:
+        availability = check_meeting_availability(user_id, proposed_date, proposed_time)
+
+    if not availability["available"]:
+        conflict_info = availability["conflicts"]
+        conflict_desc = ", ".join(
+            f"{c.get('title', 'Meeting')} at {c.get('time', '?')}" for c in conflict_info
+        )
+        conflict_reply = (
+            f"I just checked the calendar and there's a conflict — "
+            f"you already have: {conflict_desc}. "
+            f"Would another time work? What about later that day or the next day?"
+        )
+        _send_whatsapp_message(wa_id, conflict_reply)
+        _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
+                         reply_text=conflict_reply, send_status="sent")
+        log_activity(
+            user_id, "meeting_conflict",
+            f"AI detected scheduling conflict for {wa_id}: {conflict_desc}",
+            "warning",
+            {"phone": wa_id, "conflicts": conflict_info, "proposed": date_suggestion},
+        )
+        return
+
+    lead = find_lead_by_phone(user_id, wa_id) if user_id else None
+    create_meeting(
+        user_id=user_id,
+        title=meeting_data.get("title", f"Meeting with {wa_id}"),
+        lead_phone=wa_id,
+        lead_name=lead.get("owner_name") if lead else None,
+        lead_id=lead.get("id") if lead else None,
+        description=meeting_data.get("description"),
+        meeting_date=meeting_data.get("date_suggestion"),
+        property_address=meeting_data.get("property_address") or qualification.get("property_address"),
+        notes=ai_result.get("agent_brief") or ai_result.get("notes", ""),
+        source="ai_bot",
+    )
+    if user_id:
+        log_activity(
+            user_id, "meeting_created",
+            f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
+            "success",
+            {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
+        )
+
+    # Auto-create day-before confirmation follow-up
+    if meeting_data.get("date_suggestion") and lead:
+        try:
+            from datetime import timedelta
+            meeting_dt = datetime.fromisoformat(
+                meeting_data["date_suggestion"].replace("Z", "+00:00")
+            )
+            confirm_dt = meeting_dt - timedelta(days=1)
+            lead_name = lead.get("owner_name", "there")
+            confirm_msg = (
+                f"Hi {lead_name}, just a reminder about our meeting tomorrow "
+                f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
+                f"at {meeting_data.get('property_address', 'your property')}. "
+                f"Looking forward to speaking with you! - {agent_name}"
+            )
+            create_follow_up(
+                user_id=user_id,
+                lead_id=lead.get("id"),
+                message_text=confirm_msg,
+                scheduled_at=confirm_dt.isoformat(),
+                channel="whatsapp",
+            )
+            log_activity(
+                user_id, "followup",
+                f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
+                "success",
+                {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
+            )
+        except Exception as e:
+            print(f"Error creating confirmation follow-up: {e}")
+
+
+def _handle_auto_follow_up(
+    user_id: str, wa_id: str, agent_name: str, agent_brokerage: str,
+    follow_up_days: int, ai_result: dict,
+) -> None:
+    """Auto-create follow-up when AI sets schedule_follow_up_days."""
+    try:
+        from datetime import timedelta
+        lead = find_lead_by_phone(user_id, wa_id)
+        if not lead:
+            return
+
+        follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
+        lead_name = lead.get("owner_name", "there").split(" ")[0]
+
+        ai_notes = ai_result.get("notes", "")
+        qualification = ai_result.get("qualification", {})
+        property_addr = qualification.get("property_address") or lead.get("property_address") or ""
+        owner_goal = qualification.get("owner_goal") or ""
+
+        if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
+            follow_up_msg = (
+                f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
+                f"We spoke a few months back and you mentioned you'd be ready around now. "
+                f"I've been keeping an eye on the market for you — "
+                f"I have some opportunities that might match what you're looking for. "
+                f"Would you have time for a quick call this week?"
+            )
+        elif property_addr:
+            follow_up_msg = (
+                f"Hi {lead_name}, it's {agent_name}. "
+                f"We chatted a while back about your property at {property_addr}. "
+                f"The market has had some interesting movement since then — "
+                f"happy to share an updated analysis if you're curious. "
+                f"Are you still thinking about {owner_goal or 'your options'}?"
+            )
+        else:
+            follow_up_msg = (
+                f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
+                f"We connected a few months ago and you mentioned checking back around now. "
+                f"I'd love to catch up and see if I can help. "
+                f"Would you have a few minutes this week?"
+            )
+
+        create_follow_up(
+            user_id=user_id,
+            lead_id=lead.get("id"),
+            message_text=follow_up_msg,
+            scheduled_at=follow_up_dt.isoformat(),
+            channel="whatsapp",
+        )
+        log_activity(
+            user_id, "followup",
+            f"Auto-scheduled follow-up in {follow_up_days} days for {wa_id} (notes: {ai_notes[:100]})",
+            "success",
+            {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
+        )
+    except Exception as e:
+        print(f"Error creating scheduled follow-up: {e}")
+
+
 @app.route("/webhook", methods=["POST"], strict_slashes=False)
 def webhook_inbound():
     # Rate limiting
@@ -420,18 +835,14 @@ def webhook_inbound():
             print(f"Skipping duplicate message {msg_id} from {wa_id}")
             continue
 
-        # Resolve which agent owns this lead (multi-tenant routing)
+        # Resolve which agent owns this lead (for non-text and STOP handling)
         ctx = _resolve_user_context(wa_id)
         user_id = ctx["user_id"]
         agent_name = ctx["agent_name"]
-        agent_brokerage = ctx["agent_brokerage"]
-        agent_phone = ctx["agent_phone"]
-        agent_email = ctx["agent_email"]
-        ai_config = ctx.get("ai_config")
 
         msg_type = msg.get("type", "text")
 
-        # Handle non-text messages (voice, image, video, etc.)
+        # Handle non-text messages immediately (voice, image, video, etc.)
         if msg_type != "text":
             type_labels = {
                 "image": "photo",
@@ -451,20 +862,20 @@ def webhook_inbound():
             )
             _send_whatsapp_message(wa_id, ack_reply)
 
-            # Log to Supabase
             _log_to_supabase(user_id, wa_id, f"[{msg_type} message]", msg_id, "inbound")
             _log_to_supabase(user_id, wa_id, f"[{msg_type} message]", msg_id, "outbound",
                              reply_text=ack_reply, send_status="sent")
 
             if SUPABASE_AVAILABLE and user_id:
                 log_activity(
-                    user_id,
-                    "message_reply",
+                    user_id, "message_reply",
                     f"Acknowledged {msg_type} message from {wa_id}",
                     "sent",
                     {"phone": wa_id, "type": msg_type, "direction": "inbound"},
                 )
             continue
+
+        # --- Text message: log immediately, then debounce AI processing ---
 
         # Log to CSV (always, for backup)
         _write_csv_row(
@@ -479,14 +890,13 @@ def webhook_inbound():
             },
         )
 
-        # Log to Supabase
+        # Log to Supabase immediately (each message gets its own record)
         _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
 
         # Log inbound to activity_logs
         if SUPABASE_AVAILABLE and user_id:
             log_activity(
-                user_id,
-                "message_reply",
+                user_id, "message_reply",
                 f"Inbound WhatsApp from {wa_id}: {body[:100]}",
                 "received",
                 {"phone": wa_id, "message": body, "direction": "inbound"},
@@ -496,15 +906,21 @@ def webhook_inbound():
         if SUPABASE_AVAILABLE and user_id and not is_stop_message(body) and is_on_dnc_list(user_id, wa_id):
             remove_from_dnc_list(user_id, wa_id)
             log_activity(
-                user_id,
-                "re_opt_in",
+                user_id, "re_opt_in",
                 f"User {wa_id} re-engaged after previous opt-out — removed from DNC",
                 "success",
                 {"phone": wa_id, "message": body},
             )
 
-        # Handle STOP messages
+        # Handle STOP messages immediately (no debounce)
         if is_stop_message(body):
+            # Cancel any pending debounce for this number
+            with _MSG_BUFFER_LOCK:
+                existing_timer = _MSG_TIMERS.pop(wa_id, None)
+                if existing_timer:
+                    existing_timer.cancel()
+                _MSG_BUFFER.pop(wa_id, None)
+
             _write_csv_row(
                 STOPPED_LOG,
                 ["timestamp_utc", "wa_id", "message_id", "message_ts", "body"],
@@ -517,12 +933,10 @@ def webhook_inbound():
                 },
             )
 
-            # Add to DNC list in Supabase
             if SUPABASE_AVAILABLE and user_id:
                 add_to_dnc_list(user_id, wa_id, "STOP keyword via webhook")
                 log_activity(
-                    user_id,
-                    "opt_out",
+                    user_id, "opt_out",
                     f"User {wa_id} opted out via STOP keyword",
                     "success",
                     {"phone": wa_id, "message": body},
@@ -535,323 +949,8 @@ def webhook_inbound():
             )
             continue
 
-        # Feature gate: AI auto-reply requires Pro plan or above
-        plan_slug = ctx.get("plan_slug")
-        if plan_slug == "starter":
-            # Starter plan — log inbound but skip AI reply
-            if SUPABASE_AVAILABLE and user_id:
-                log_activity(
-                    user_id, "feature_blocked",
-                    f"AI auto-reply skipped for {wa_id} — Starter plan. Upgrade to Pro for AI replies.",
-                    "info", {"phone": wa_id, "feature": "ai_auto_reply", "plan": "starter"},
-                )
-            # Send a simple acknowledgment instead
-            ack_text = (
-                f"Thanks for reaching out! {agent_name} will get back to you shortly. "
-                f"For faster service, upgrade to our Pro plan for instant AI-powered responses."
-            )
-            _send_whatsapp_message(wa_id, ack_text)
-            _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
-                             reply_text=ack_text, send_status="sent")
-            continue
-
-        # Fetch conversation history and lead details for context
-        conversation_history = []
-        lead_details = None
-        if SUPABASE_AVAILABLE and user_id:
-            conversation_history = get_conversation_history(user_id, wa_id)
-            lead_details = get_lead_details(user_id, wa_id)
-
-        # Generate AI reply with full analysis + conversation context
-        ai_result = analyze_with_ai(
-            body, wa_id, WHATSAPP_PHONE_NUMBER_ID,
-            conversation_history=conversation_history,
-            lead_details=lead_details,
-            agent_name=agent_name,
-            agent_brokerage=agent_brokerage,
-            ai_config=ai_config,
-        )
-
-        # If AI detects escalation need, notify the agent
-        if ai_result.get("intent") == "escalate":
-            escalation_reply = ai_result.get(
-                "reply",
-                "I hear you, and I want to make sure this is handled properly. "
-                "Let me review the details and get back to you directly."
-            )
-            _send_whatsapp_message(wa_id, escalation_reply)
-
-            # Notify agent via WhatsApp if agent phone is available
-            if agent_phone:
-                agent_msg = (
-                    f"ESCALATION NEEDED\n"
-                    f"Lead: {wa_id}\n"
-                    f"Message: {body[:200]}\n"
-                    f"AI Notes: {ai_result.get('notes', 'N/A')}\n"
-                    f"Please follow up directly."
-                )
-                _send_whatsapp_message(agent_phone, agent_msg)
-
-            if SUPABASE_AVAILABLE and user_id:
-                log_activity(
-                    user_id,
-                    "escalation",
-                    f"Lead {wa_id} escalated to agent: {body[:100]}",
-                    "pending",
-                    {"phone": wa_id, "message": body, "notes": ai_result.get("notes")},
-                )
-
-            # Log messages to Supabase
-            _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
-                             reply_text=escalation_reply, send_status="sent")
-            continue
-
-        # If AI detects stop intent, treat as opt-out
-        if ai_result.get("intent") == "stop":
-            if SUPABASE_AVAILABLE and user_id:
-                add_to_dnc_list(user_id, wa_id, "AI-detected stop intent")
-                log_activity(
-                    user_id,
-                    "opt_out",
-                    f"User {wa_id} opted out (AI-detected intent)",
-                    "success",
-                    {"phone": wa_id, "message": body},
-                )
-            _send_whatsapp_message(
-                wa_id,
-                "You're unsubscribed. You won't receive any further messages. "
-                "Thank you for letting us know.",
-            )
-            continue
-
-        reply_text = ai_result.get("reply", "Thanks for your message! I'll follow up shortly.")
-
-        # DNC send-side check: never send to numbers on the DNC list
-        if SUPABASE_AVAILABLE and user_id and is_on_dnc_list(user_id, wa_id):
-            print(f"Blocked outbound to DNC number {wa_id}")
-            log_activity(
-                user_id,
-                "dnc_blocked",
-                f"Blocked outbound message to DNC number {wa_id}",
-                "blocked",
-                {"phone": wa_id, "reason": "on_dnc_list"},
-            )
-            continue
-
-        # Check messaging quota — record overage if over limit
-        wa_quota = None
-        if SUPABASE_AVAILABLE and user_id:
-            wa_quota = check_messaging_quota(user_id)
-            if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
-                print(f"[Overage] User {user_id} over quota ({wa_quota.get('current')}/{wa_quota.get('limit')}), will record overage")
-
-        send_result = _send_whatsapp_message(wa_id, reply_text)
-
-        # Record overage after successful send
-        if send_result and SUPABASE_AVAILABLE and user_id and wa_quota:
-            if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
-                from datetime import datetime as dt_util
-                period_start = wa_quota.get("period_start") or dt_util.utcnow().replace(day=1).isoformat()
-                record_overage(user_id, "whatsapp", period_start)
-
-        # Update lead with qualification data extracted by AI
-        qualification = ai_result.get("qualification", {})
-        if qualification and SUPABASE_AVAILABLE and user_id:
-            _update_lead_from_qualification(user_id, wa_id, qualification, ai_result)
-
-        # Create meeting ONLY when ready_to_book (has both date and time)
-        meeting_data = ai_result.get("meeting", {})
-        if meeting_data.get("ready_to_book") and meeting_data.get("date_suggestion") and SUPABASE_AVAILABLE and user_id:
-            # Check availability before booking
-            date_suggestion = meeting_data.get("date_suggestion", "")
-            proposed_date = date_suggestion[:10] if len(date_suggestion) >= 10 else ""
-            proposed_time = date_suggestion[11:16] if len(date_suggestion) >= 16 else ""
-
-            availability = {"available": True, "conflicts": []}
-            if proposed_date and proposed_time:
-                availability = check_meeting_availability(user_id, proposed_date, proposed_time)
-
-            if not availability["available"]:
-                conflict_info = availability["conflicts"]
-                conflict_desc = ", ".join(
-                    f"{c.get('title', 'Meeting')} at {c.get('time', '?')}" for c in conflict_info
-                )
-                conflict_reply = (
-                    f"I just checked the calendar and there's a conflict — "
-                    f"you already have: {conflict_desc}. "
-                    f"Would another time work? What about later that day or the next day?"
-                )
-                _send_whatsapp_message(wa_id, conflict_reply)
-                _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",
-                                 reply_text=conflict_reply, send_status="sent")
-                log_activity(
-                    user_id, "meeting_conflict",
-                    f"AI detected scheduling conflict for {wa_id}: {conflict_desc}",
-                    "warning",
-                    {"phone": wa_id, "conflicts": conflict_info, "proposed": date_suggestion},
-                )
-            else:
-                lead = find_lead_by_phone(user_id, wa_id) if user_id else None
-                create_meeting(
-                    user_id=user_id,
-                    title=meeting_data.get("title", f"Meeting with {wa_id}"),
-                    lead_phone=wa_id,
-                    lead_name=lead.get("owner_name") if lead else None,
-                    lead_id=lead.get("id") if lead else None,
-                    description=meeting_data.get("description"),
-                    meeting_date=meeting_data.get("date_suggestion"),
-                    property_address=meeting_data.get("property_address") or qualification.get("property_address"),
-                    notes=ai_result.get("agent_brief") or ai_result.get("notes", ""),
-                    source="ai_bot",
-                )
-                if user_id:
-                    log_activity(
-                        user_id, "meeting_created",
-                        f"AI bot created meeting: {meeting_data.get('title', 'Meeting')}",
-                        "success",
-                        {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
-                    )
-
-                # Auto-create day-before confirmation follow-up
-                if meeting_data.get("date_suggestion") and lead:
-                    try:
-                        from datetime import timedelta
-                        meeting_dt = datetime.fromisoformat(
-                            meeting_data["date_suggestion"].replace("Z", "+00:00")
-                        )
-                        confirm_dt = meeting_dt - timedelta(days=1)
-                        lead_name = lead.get("owner_name", "there")
-                        confirm_msg = (
-                            f"Hi {lead_name}, just a reminder about our meeting tomorrow "
-                            f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
-                            f"at {meeting_data.get('property_address', 'your property')}. "
-                            f"Looking forward to speaking with you! - {agent_name}"
-                        )
-                        create_follow_up(
-                            user_id=user_id,
-                            lead_id=lead.get("id"),
-                            message_text=confirm_msg,
-                            scheduled_at=confirm_dt.isoformat(),
-                            channel="whatsapp",
-                        )
-                        log_activity(
-                            user_id, "followup",
-                            f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
-                            "success",
-                            {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
-                        )
-                    except Exception as e:
-                        print(f"Error creating confirmation follow-up: {e}")
-
-        # Auto-create follow-up when AI sets schedule_follow_up_days
-        follow_up_days = ai_result.get("schedule_follow_up_days")
-        if follow_up_days and isinstance(follow_up_days, (int, float)) and follow_up_days > 0 and SUPABASE_AVAILABLE and user_id:
-            try:
-                from datetime import timedelta
-                lead = find_lead_by_phone(user_id, wa_id)
-                if lead:
-                    follow_up_dt = datetime.now(timezone.utc) + timedelta(days=int(follow_up_days))
-                    lead_name = lead.get("owner_name", "there").split(" ")[0]
-
-                    # Build a context-aware follow-up using AI notes
-                    ai_notes = ai_result.get("notes", "")
-                    qualification = ai_result.get("qualification", {})
-                    property_addr = qualification.get("property_address") or lead.get("property_address") or ""
-                    owner_goal = qualification.get("owner_goal") or ""
-
-                    if ai_notes and ("interest" in ai_notes.lower() or "looking" in ai_notes.lower() or "buy" in ai_notes.lower() or "invest" in ai_notes.lower()):
-                        # AI captured future interest — use it
-                        follow_up_msg = (
-                            f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
-                            f"We spoke a few months back and you mentioned you'd be ready around now. "
-                            f"I've been keeping an eye on the market for you — "
-                            f"I have some opportunities that might match what you're looking for. "
-                            f"Would you have time for a quick call this week?"
-                        )
-                    elif property_addr:
-                        follow_up_msg = (
-                            f"Hi {lead_name}, it's {agent_name}. "
-                            f"We chatted a while back about your property at {property_addr}. "
-                            f"The market has had some interesting movement since then — "
-                            f"happy to share an updated analysis if you're curious. "
-                            f"Are you still thinking about {owner_goal or 'your options'}?"
-                        )
-                    else:
-                        follow_up_msg = (
-                            f"Hi {lead_name}, it's {agent_name} from {agent_brokerage}. "
-                            f"We connected a few months ago and you mentioned checking back around now. "
-                            f"I'd love to catch up and see if I can help. "
-                            f"Would you have a few minutes this week?"
-                        )
-
-                    create_follow_up(
-                        user_id=user_id,
-                        lead_id=lead.get("id"),
-                        message_text=follow_up_msg,
-                        scheduled_at=follow_up_dt.isoformat(),
-                        channel="whatsapp",
-                    )
-                    log_activity(
-                        user_id, "followup",
-                        f"Auto-scheduled follow-up in {follow_up_days} days for {wa_id} (notes: {ai_notes[:100]})",
-                        "success",
-                        {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
-                    )
-            except Exception as e:
-                print(f"Error creating scheduled follow-up: {e}")
-
-        # Log agent brief when lead is fully qualified
-        agent_brief = ai_result.get("agent_brief")
-        if agent_brief and SUPABASE_AVAILABLE and user_id:
-            log_activity(
-                user_id, "lead_qualified",
-                f"Lead {wa_id} fully qualified by AI bot",
-                "success",
-                {
-                    "phone": wa_id,
-                    "agent_brief": agent_brief,
-                    "qualification": qualification,
-                },
-            )
-
-        # Log outbound to CSV
-        _write_csv_row(
-            OUTBOUND_LOG,
-            ["timestamp_utc", "wa_id", "message_id", "reply", "send_status", "send_body"],
-            {
-                "timestamp_utc": now,
-                "wa_id": wa_id,
-                "message_id": msg_id,
-                "reply": reply_text,
-                "send_status": send_result.get("status")
-                or ("demo" if send_result.get("demo") else ""),
-                "send_body": send_result.get("body") or "",
-            },
-        )
-
-        # Log outbound to Supabase
-        send_status = "sent" if send_result.get("ok") else "failed"
-        _log_to_supabase(
-            user_id, wa_id, body, msg_id, "outbound",
-            reply_text=reply_text, send_status=send_status
-        )
-
-        # Log AI bot reply to activity_logs
-        if SUPABASE_AVAILABLE and user_id:
-            intent = ai_result.get("intent", "other")
-            log_activity(
-                user_id,
-                "message_reply",
-                f"AI bot replied to {wa_id} (intent: {intent}): {reply_text[:100]}",
-                send_status,
-                {
-                    "phone": wa_id,
-                    "reply": reply_text,
-                    "intent": intent,
-                    "direction": "outbound",
-                    "follow_up_days": ai_result.get("schedule_follow_up_days"),
-                },
-            )
+        # Buffer this message — AI processing fires after quiet period
+        _buffer_or_process(wa_id, msg, now)
 
     return jsonify({"ok": True})
 
