@@ -261,6 +261,7 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
   }
 
   // 8. API response time sampling (5 key routes)
+  // Uses median instead of P95 to avoid false criticals from single cold-start timeouts
   const routesToSample = [
     '/api/health',
     '/api/tasks?limit=1',
@@ -275,36 +276,51 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
     for (const route of routesToSample) {
       try {
         const start = Date.now()
-        await fetch(`${baseUrl}${route}`, { signal: AbortSignal.timeout(5000) })
+        await fetch(`${baseUrl}${route}`, { signal: AbortSignal.timeout(8000) })
         timings.push(Date.now() - start)
       } catch {
-        timings.push(5000) // timeout = 5s
+        timings.push(8000) // timeout
       }
     }
 
-    const sorted = [...timings].sort((a, b) => a - b)
-    const p95 = sorted[Math.ceil(sorted.length * 0.95) - 1] || 0
+    // Filter out timeouts for median calculation — they skew results on Render free tier
+    const successful = timings.filter(t => t < 8000)
+    const sorted = [...successful].sort((a, b) => a - b)
+    const median = sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0
+    const timeouts = timings.length - successful.length
+
+    const severity = successful.length === 0
+      ? 'critical' as const  // all routes timed out
+      : median > 2000 ? 'critical' as const
+      : median > 500 ? 'warning' as const
+      : 'ok' as const
+
+    const timeoutNote = timeouts > 0 ? ` (${timeouts}/${timings.length} routes timed out — likely cold start)` : ''
 
     alerts.push({
       key: 'api_response_time',
       category: 'engineering',
-      severity: p95 > 2000 ? 'critical' : p95 > 500 ? 'warning' : 'ok',
-      title: 'API Response Time (P95)',
-      message: p95 > 2000
-        ? `P95 response time ${p95}ms — severely degraded performance.`
-        : p95 > 500
-          ? `P95 response time ${p95}ms — above target.`
-          : `P95 response time ${p95}ms — within target.`,
-      metricValue: `${p95}ms`,
+      severity,
+      title: 'API Response Time (Median)',
+      message: successful.length === 0
+        ? `All ${timings.length} sampled routes timed out — service may be cold starting or down.`
+        : median > 2000
+          ? `Median response time ${median}ms — severely degraded performance.${timeoutNote}`
+          : median > 500
+            ? `Median response time ${median}ms — above target.${timeoutNote}`
+            : `Median response time ${median}ms — within target.${timeoutNote}`,
+      metricValue: `${median}ms`,
       threshold: '<500ms',
     })
   }
 
   // 9. Python webhook health
+  // Render free tier spins down after 15min inactivity — cold starts take 15-30s
+  // Use 30s timeout and treat timeouts as warning (cold start), not critical (down)
   const pythonUrl = process.env.PYTHON_WEBHOOK_URL || 'https://realestate-ai-1.onrender.com'
   try {
     const pyStart = Date.now()
-    const pyRes = await fetch(`${pythonUrl}/health`, { signal: AbortSignal.timeout(10000) })
+    const pyRes = await fetch(`${pythonUrl}/health`, { signal: AbortSignal.timeout(30000) })
     const pyLatency = Date.now() - pyStart
 
     if (!pyRes.ok) {
@@ -321,23 +337,23 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
       alerts.push({
         key: 'python_webhook',
         category: 'engineering',
-        severity: pyLatency > 5000 ? 'warning' : 'ok',
+        severity: pyLatency > 15000 ? 'warning' : 'ok',
         title: 'Python Webhook',
-        message: pyLatency > 5000
-          ? `Python service responded in ${pyLatency}ms — may be cold starting.`
+        message: pyLatency > 15000
+          ? `Python service responded in ${(pyLatency / 1000).toFixed(1)}s — cold start detected.`
           : `Python service healthy (${pyLatency}ms).`,
-        metricValue: `${pyLatency}ms`,
-        threshold: '<5000ms',
+        metricValue: pyLatency > 5000 ? `${(pyLatency / 1000).toFixed(1)}s` : `${pyLatency}ms`,
+        threshold: '<5s (warm)',
       })
     }
   } catch {
     alerts.push({
       key: 'python_webhook',
       category: 'engineering',
-      severity: 'critical',
-      title: 'Python Webhook Unreachable',
-      message: 'Could not connect to Python webhook service. It may be down or cold starting.',
-      metricValue: 'DOWN',
+      severity: 'warning',
+      title: 'Python Webhook Cold/Down',
+      message: 'Could not reach Python webhook within 30s. Render free tier may be sleeping — it will wake on next inbound message.',
+      metricValue: 'Timeout',
       threshold: 'Reachable',
     })
   }
