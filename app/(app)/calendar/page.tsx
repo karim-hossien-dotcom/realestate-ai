@@ -127,7 +127,6 @@ export default function CalendarPage() {
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [inviteForm, setInviteForm] = useState({ leadId: '', phone: '', date: '', time: '14:00', note: '' });
   const [saving, setSaving] = useState(false);
-  const [travelInfos, setTravelInfos] = useState<TravelInfo[]>([]);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const fetchEvents = useCallback(async () => {

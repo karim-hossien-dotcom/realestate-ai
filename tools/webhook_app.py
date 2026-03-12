@@ -8,7 +8,7 @@ import fcntl
 import requests
 from flask import Flask, request, Response, jsonify
 
-from tools.ai_inbound_agent import generate_reply, analyze_with_ai, is_stop_message
+from tools.ai_inbound_agent import analyze_with_ai, is_stop_message
 
 # Import Supabase DB functions (optional - falls back to CSV if not configured)
 try:
