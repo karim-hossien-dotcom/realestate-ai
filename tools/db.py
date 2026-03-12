@@ -243,39 +243,38 @@ def create_follow_up(
     channel: str = "both",
 ) -> bool:
     """
-    Create a follow-up reminder in the follow_ups table
+    Create a follow-up reminder in the follow_ups table.
+    Deduplicates: skips if a pending follow-up already exists for this lead at this time.
+    Table columns: id, user_id, lead_id, message_text, scheduled_at, status, sent_at, created_at
     """
     client = get_supabase_client()
     if not client:
         return False
 
     try:
+        # Check for existing pending follow-up for same lead + scheduled time
+        existing = (
+            client.table("follow_ups")
+            .select("id")
+            .eq("lead_id", lead_id)
+            .eq("scheduled_at", scheduled_at)
+            .eq("status", "pending")
+            .execute()
+        )
+        if existing.data and len(existing.data) > 0:
+            print(f"Follow-up already exists for lead {lead_id} at {scheduled_at}, skipping")
+            return True
+
         record = {
             "user_id": user_id,
             "lead_id": lead_id,
             "message_text": message_text,
             "scheduled_at": scheduled_at,
             "status": "pending",
-            "channel": channel,
         }
         client.table("follow_ups").insert(record).execute()
         return True
     except Exception as e:
-        # If channel column doesn't exist yet (migration not run), retry without it
-        if "channel" in str(e):
-            try:
-                record = {
-                    "user_id": user_id,
-                    "lead_id": lead_id,
-                    "message_text": message_text,
-                    "scheduled_at": scheduled_at,
-                    "status": "pending",
-                }
-                client.table("follow_ups").insert(record).execute()
-                return True
-            except Exception as e2:
-                print(f"Error creating follow-up (retry): {e2}")
-                return False
         print(f"Error creating follow-up: {e}")
         return False
 

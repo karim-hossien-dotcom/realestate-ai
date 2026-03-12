@@ -67,8 +67,20 @@ export async function POST(request: Request) {
         )
       }
 
-      // Create a follow-up for the meeting
+      // Create a follow-up for the meeting (dedup: skip if one already exists for this lead+time)
       const scheduledAt = new Date(`${date}T${time}:00`)
+      const { data: existing } = await supabase
+        .from('follow_ups')
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('scheduled_at', scheduledAt.toISOString())
+        .eq('status', 'pending')
+        .limit(1)
+
+      if (existing && existing.length > 0) {
+        return NextResponse.json({ ok: true, message: 'Follow-up already scheduled for this time' })
+      }
+
       const { error } = await supabase.from('follow_ups').insert({
         user_id: auth.user.id,
         lead_id: leadId,
@@ -101,11 +113,26 @@ export async function POST(request: Request) {
         )
       }
 
+      const followUpAt = new Date(dueDate).toISOString()
+
+      // Dedup: skip if pending follow-up already exists for this lead+time
+      const { data: existingFu } = await supabase
+        .from('follow_ups')
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('scheduled_at', followUpAt)
+        .eq('status', 'pending')
+        .limit(1)
+
+      if (existingFu && existingFu.length > 0) {
+        return NextResponse.json({ ok: true, message: 'Follow-up already exists for this time' })
+      }
+
       const { error } = await supabase.from('follow_ups').insert({
         user_id: auth.user.id,
         lead_id: leadId,
         message_text: note || 'Follow up with lead',
-        scheduled_at: new Date(dueDate).toISOString(),
+        scheduled_at: followUpAt,
         status: 'pending',
       })
 
