@@ -146,14 +146,16 @@ def find_lead_by_phone(user_id: str, phone: str) -> Optional[dict]:
         return None
 
     try:
-        # Normalize phone (remove + prefix)
-        normalized = phone.lstrip("+")
+        # Normalize phone — strip all non-digit chars for reliable matching
+        digits = "".join(c for c in phone if c.isdigit())
+        if not digits:
+            return None
 
         result = client.table("leads").select("*").eq(
             "user_id", user_id
-        ).or_(
-            f"phone.eq.{normalized},phone.eq.+{normalized}"
-        ).order("last_response", desc=True, nulls_last=True).order(
+        ).like("phone", f"%{digits}").order(
+            "last_response", desc=True, nulls_last=True
+        ).order(
             "updated_at", desc=True, nulls_last=True
         ).limit(1).execute()
 
@@ -289,8 +291,6 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
         return []
 
     try:
-        normalized = phone.lstrip("+")
-
         # Find lead by phone to get lead_id
         lead = find_lead_by_phone(user_id, phone)
         if not lead:
@@ -332,12 +332,13 @@ def is_on_dnc_list(user_id: str, phone: str) -> bool:
         return False
 
     try:
-        normalized = phone.lstrip("+")
+        digits = "".join(c for c in phone if c.isdigit())
+        if not digits:
+            return False
+
         result = client.table("dnc_list").select("id").eq(
             "user_id", user_id
-        ).or_(
-            f"phone.eq.{normalized},phone.eq.+{normalized}"
-        ).limit(1).execute()
+        ).like("phone", f"%{digits}").limit(1).execute()
 
         return bool(result.data)
     except Exception as e:
@@ -355,12 +356,13 @@ def remove_from_dnc_list(user_id: str, phone: str) -> bool:
         return False
 
     try:
-        normalized = phone.lstrip("+")
+        digits = "".join(c for c in phone if c.isdigit())
+        if not digits:
+            return False
+
         client.table("dnc_list").delete().eq(
             "user_id", user_id
-        ).or_(
-            f"phone.eq.{normalized},phone.eq.+{normalized}"
-        ).execute()
+        ).like("phone", f"%{digits}").execute()
         return True
     except Exception as e:
         print(f"Error removing from DNC list: {e}")
@@ -402,9 +404,13 @@ def find_user_by_lead_phone(phone: str) -> Optional[dict]:
         return None
 
     try:
-        normalized = phone.lstrip("+")
-        result = client.table("leads").select("*").or_(
-            f"phone.eq.{normalized},phone.eq.+{normalized}"
+        # Normalize phone — strip all non-digit chars for reliable matching
+        digits = "".join(c for c in phone if c.isdigit())
+        if not digits:
+            return None
+
+        result = client.table("leads").select("*").like(
+            "phone", f"%{digits}"
         ).order("last_response", desc=True, nulls_last=True).order(
             "updated_at", desc=True, nulls_last=True
         ).limit(1).execute()
