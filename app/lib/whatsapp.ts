@@ -85,9 +85,7 @@ export async function sendWhatsAppTemplate(
 ): Promise<WhatsAppSendTextResult> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const defaultTemplateName = process.env.WHATSAPP_TEMPLATE_NAME;
-
-  const templateName = params.templateName || defaultTemplateName;
+  const templateName = params.templateName || process.env.WHATSAPP_TEMPLATE_NAME || 'realestate_outreach';
 
   if (!phoneNumberId || !accessToken || !templateName) {
     return {
