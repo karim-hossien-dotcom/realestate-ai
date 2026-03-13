@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
-import { sendWhatsAppText } from '@/app/lib/whatsapp'
+import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
 import { checkMessageQuota } from '@/app/lib/usage'
@@ -320,10 +320,11 @@ async function sendFollowUpWhatsApp(
 ): Promise<{ ok: boolean; error?: string }> {
   if (!lead.phone) return { ok: false, error: 'No phone number' }
 
-  const agentName = profile.full_name || 'Your Real Estate Agent'
+  // Use template for follow-ups (likely outside 24-hour conversation window)
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
-  const body = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out! - ${agentName}\n\nReply STOP to opt out`
-
-  const result = await sendWhatsAppText({ to: lead.phone, body })
+  const result = await sendWhatsAppTemplate({
+    to: lead.phone,
+    bodyParams: [recipientName],
+  })
   return { ok: result.ok, error: result.error }
 }

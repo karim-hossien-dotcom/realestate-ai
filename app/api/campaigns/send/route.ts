@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendWhatsAppText } from '@/app/lib/whatsapp'
+import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
@@ -215,13 +215,13 @@ export async function POST(request: Request) {
       const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
-      // Send WhatsApp as plain text message
-      const messageBody = lead.sms_text
-        ? `Hello from ${profile?.company || 'our team'}:\n\n${lead.sms_text}\n\n- ${agentName}\n\nReply STOP to opt out`
-        : `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm ${agentName} from ${profile?.company || 'our team'}. I noticed your property and wanted to reach out. Reply for more info or STOP to opt out.`
-
-      const textResult = await sendWhatsAppText({ to: contact, body: messageBody })
-      sendResult = { ok: textResult.ok, messageId: textResult.messageId, error: textResult.error }
+      // Send WhatsApp via template (works outside 24-hour window for cold outreach)
+      const leadName = lead.owner_name?.split(' ')[0] || 'there'
+      const templateResult = await sendWhatsAppTemplate({
+        to: contact,
+        bodyParams: [leadName],
+      })
+      sendResult = { ok: templateResult.ok, messageId: templateResult.messageId, error: templateResult.error }
     }
 
     // Record message in DB
