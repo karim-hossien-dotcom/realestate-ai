@@ -321,10 +321,12 @@ async function sendFollowUpWhatsApp(
   if (!lead.phone) return { ok: false, error: 'No phone number' }
 
   // Use template for follow-ups (likely outside 24-hour conversation window)
+  // Template format: "Hello from KW Commercial:\n\n{{1}}\n\n- Nadine Khalil"
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
+  const followUpBody = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out!`
   const result = await sendWhatsAppTemplate({
     to: lead.phone,
-    bodyParams: [recipientName],
+    bodyParams: [followUpBody],
   })
   return { ok: result.ok, error: result.error }
 }

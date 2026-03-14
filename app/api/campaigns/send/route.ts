@@ -216,10 +216,12 @@ export async function POST(request: Request) {
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
       // Send WhatsApp via template (works outside 24-hour window for cold outreach)
-      const leadName = lead.owner_name?.split(' ')[0] || 'there'
+      // Template format: "Hello from KW Commercial:\n\n{{1}}\n\n- Nadine Khalil"
+      // {{1}} is the outreach message body
+      const outreachBody = lead.sms_text || `I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
       const templateResult = await sendWhatsAppTemplate({
         to: contact,
-        bodyParams: [leadName],
+        bodyParams: [outreachBody],
       })
       sendResult = { ok: templateResult.ok, messageId: templateResult.messageId, error: templateResult.error }
     }
