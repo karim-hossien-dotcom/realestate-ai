@@ -154,10 +154,8 @@ def find_lead_by_phone(user_id: str, phone: str) -> Optional[dict]:
         result = client.table("leads").select("*").eq(
             "user_id", user_id
         ).like("phone", f"%{digits}").order(
-            "last_response", desc=True, nulls_last=True
-        ).order(
-            "updated_at", desc=True, nulls_last=True
-        ).limit(1).execute()
+            "last_response", desc=True        ).order(
+            "updated_at", desc=True        ).limit(1).execute()
 
         if result.data:
             return result.data[0]
@@ -450,9 +448,8 @@ def find_user_by_lead_phone(phone: str) -> Optional[dict]:
 
         result = client.table("leads").select("*").like(
             "phone", f"%{digits}"
-        ).order("last_response", desc=True, nulls_last=True).order(
-            "updated_at", desc=True, nulls_last=True
-        ).limit(1).execute()
+        ).order("last_response", desc=True).order(
+            "updated_at", desc=True        ).limit(1).execute()
 
         if result.data:
             lead = result.data[0]
