@@ -313,13 +313,15 @@ def _update_lead_from_qualification(
         return
 
     updates = {}
-    if qualification.get("property_address") and not lead.get("property_address"):
+    # Always update qualification fields when AI extracts new data
+    # (leads can discuss multiple properties or change their mind)
+    if qualification.get("property_address"):
         updates["property_address"] = qualification["property_address"]
-    if qualification.get("property_type") and not lead.get("property_type"):
+    if qualification.get("property_type"):
         updates["property_type"] = qualification["property_type"]
-    if qualification.get("owner_goal") and not lead.get("property_interest"):
+    if qualification.get("owner_goal"):
         updates["property_interest"] = qualification["owner_goal"]
-    if qualification.get("price_expectation") and not lead.get("budget_max"):
+    if qualification.get("price_expectation"):
         # Try to parse a number from the price expectation (handles $300K, $1.5M, etc.)
         try:
             price_str = qualification["price_expectation"].replace("$", "").replace(",", "").strip()
@@ -485,6 +487,22 @@ def _process_whatsapp_message(
     agent_brokerage = ctx["agent_brokerage"]
     agent_phone = ctx["agent_phone"]
     ai_config = ctx.get("ai_config")
+
+    # Detect if the sender IS the agent (admin testing or agent messaging themselves)
+    sender_digits = "".join(c for c in wa_id if c.isdigit())
+    agent_digits = "".join(c for c in (agent_phone or "") if c.isdigit())
+    is_agent_sender = bool(sender_digits and agent_digits and sender_digits == agent_digits)
+
+    if is_agent_sender:
+        print(f"[Agent-self] Detected agent {agent_name} texting from {wa_id} — skipping AI reply")
+        _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "agent_self_message",
+                f"Agent texted from their own number {wa_id} — no AI reply sent",
+                "info", {"phone": wa_id, "message": body[:100]},
+            )
+        return
 
     # Feature gate: AI auto-reply requires Pro plan or above
     plan_slug = ctx.get("plan_slug")
