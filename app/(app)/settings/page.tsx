@@ -1,36 +1,49 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  type Profile,
+  type FUBStatus,
+  type SettingsSection,
+  type BillingData,
+  type AiConfig,
+  type PlanDef,
+  settingsSections,
+} from '@/app/components/settings/types';
+import ProfileTab from '@/app/components/settings/ProfileTab';
+import CrmTab from '@/app/components/settings/CrmTab';
+import AiScriptTab from '@/app/components/settings/AiScriptTab';
+import BillingTab from '@/app/components/settings/BillingTab';
+import ComingSoonTab from '@/app/components/settings/ComingSoonTab';
 
-type Profile = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  company: string | null;
-  phone: string | null;
-  created_at: string;
-  updated_at: string;
-};
+const COMING_SOON_SECTIONS: ReadonlyArray<SettingsSection> = ['messaging', 'email', 'team', 'auto-reply'];
 
-type FUBStatus = {
-  connected: boolean;
-  status?: string;
-  lastSyncAt?: string;
-  errorMessage?: string;
-  leadsFromCrm?: number;
-};
-
-type SettingsSection = 'profile' | 'integrations' | 'ai-personality' | 'messaging' | 'email' | 'team' | 'auto-reply' | 'billing';
-
-const settingsSections = [
-  { id: 'profile' as const, label: 'Profile & Account', icon: 'fa-user', shortLabel: 'Profile' },
-  { id: 'integrations' as const, label: 'Integrations', icon: 'fa-plug', shortLabel: 'CRM' },
-  { id: 'ai-personality' as const, label: 'AI Personality', icon: 'fa-brain', shortLabel: 'AI' },
-  { id: 'messaging' as const, label: 'Messaging Provider', icon: 'fa-sms', comingSoon: true, shortLabel: 'Messaging' },
-  { id: 'email' as const, label: 'Email Settings', icon: 'fa-envelope', comingSoon: true, shortLabel: 'Email' },
-  { id: 'team' as const, label: 'Team Management', icon: 'fa-users-cog', comingSoon: true, shortLabel: 'Team' },
-  { id: 'auto-reply' as const, label: 'Auto-Reply', icon: 'fa-robot', comingSoon: true, shortLabel: 'Auto-Reply' },
-  { id: 'billing' as const, label: 'Billing & Plans', icon: 'fa-credit-card', shortLabel: 'Billing' },
+const plans: PlanDef[] = [
+  {
+    slug: 'starter',
+    name: 'Starter',
+    price: '$99',
+    period: '/mo',
+    features: ['Up to 250 leads', '750 SMS/month', 'WhatsApp + Email + SMS', 'AI message generation', 'Lead scoring', 'Basic analytics', '1 user'],
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || '',
+  },
+  {
+    slug: 'pro',
+    name: 'Pro',
+    price: '$249',
+    period: '/mo',
+    popular: true,
+    features: ['Up to 1,000 leads', '3,000 SMS/month', 'Everything in Starter', 'Follow-up automation', 'CRM integration', 'Advanced analytics', 'Priority support', 'Up to 5 users'],
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
+  },
+  {
+    slug: 'agency',
+    name: 'Agency',
+    price: '$499',
+    period: '/mo',
+    features: ['Unlimited leads', '15,000 SMS/month', 'Everything in Pro', 'Team management', 'White-label reports', 'Dedicated support', 'Custom integrations', 'Up to 15 users'],
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_AGENCY_PRICE_ID || '',
+  },
 ];
 
 export default function SettingsPage() {
@@ -56,55 +69,12 @@ export default function SettingsPage() {
 
   // Billing state
   const [billingLoading, setBillingLoading] = useState(false);
-  const [billingData, setBillingData] = useState<{
-    subscription: {
-      status: string;
-      plan: string;
-      planSlug: string | null;
-      currentPeriodEnd: string;
-      trialEnd: string | null;
-      cancelAtPeriodEnd: boolean;
-    } | null;
-    usage: {
-      sms: number;
-      email: number;
-      whatsapp: number;
-      leads: number;
-      includedSms: number;
-      includedLeads: number;
-      totalMessages: number;
-      includedMessages: number;
-    };
-    overages?: {
-      sms: number;
-      email: number;
-      whatsapp: number;
-      leads: number;
-      estimatedCost: number;
-      reported: boolean;
-    };
-    overageRates?: {
-      sms: number;
-      email: number;
-      whatsapp: number;
-      leads: number;
-    };
-  } | null>(null);
+  const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   // AI Personality state
-  const [aiConfig, setAiConfig] = useState<{
-    tone: string;
-    language: string;
-    introduction_template: string | null;
-    qualification_questions: string[];
-    escalation_message: string | null;
-    closing_style: string;
-    property_focus: string;
-    custom_instructions: string | null;
-    active: boolean;
-  }>({
+  const [aiConfig, setAiConfig] = useState<AiConfig>({
     tone: 'professional',
     language: 'english',
     introduction_template: null,
@@ -137,6 +107,8 @@ export default function SettingsPage() {
     }
   }, [activeSection]);
 
+  /* --- Data fetchers --- */
+
   const fetchProfile = async () => {
     try {
       const response = await fetch('/api/settings/profile');
@@ -155,6 +127,52 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
+  const fetchFubStatus = async () => {
+    try {
+      const response = await fetch('/api/integrations/fub/status');
+      const data = await response.json();
+      if (data.ok) setFubStatus(data);
+    } catch { /* ignore */ }
+  };
+
+  const fetchBillingData = async () => {
+    setBillingLoading(true);
+    setBillingError(null);
+    try {
+      const response = await fetch('/api/stripe/usage');
+      const data = await response.json();
+      if (data.ok) {
+        setBillingData(data);
+      } else {
+        setBillingError(data.error || 'Failed to load billing data');
+      }
+    } catch {
+      setBillingError('Failed to load billing data');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const fetchAiConfig = async () => {
+    setAiConfigLoading(true);
+    setAiConfigError(null);
+    try {
+      const response = await fetch('/api/settings/ai-script');
+      const data = await response.json();
+      if (data.ok && data.config) {
+        setAiConfig(data.config);
+      } else {
+        setAiConfigError(data.error || 'Failed to load AI config');
+      }
+    } catch {
+      setAiConfigError('Failed to load AI config');
+    } finally {
+      setAiConfigLoading(false);
+    }
+  };
+
+  /* --- Profile handlers --- */
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -186,13 +204,7 @@ export default function SettingsPage() {
     company !== (profile?.company || '') ||
     phone !== (profile?.phone || '');
 
-  const fetchFubStatus = async () => {
-    try {
-      const response = await fetch('/api/integrations/fub/status');
-      const data = await response.json();
-      if (data.ok) setFubStatus(data);
-    } catch { /* ignore */ }
-  };
+  /* --- FUB handlers --- */
 
   const handleFubConnect = async () => {
     if (!fubApiKey.trim()) { setFubError('Please enter your API key'); return; }
@@ -245,23 +257,7 @@ export default function SettingsPage() {
     finally { setFubSyncing(false); }
   };
 
-  const fetchBillingData = async () => {
-    setBillingLoading(true);
-    setBillingError(null);
-    try {
-      const response = await fetch('/api/stripe/usage');
-      const data = await response.json();
-      if (data.ok) {
-        setBillingData(data);
-      } else {
-        setBillingError(data.error || 'Failed to load billing data');
-      }
-    } catch {
-      setBillingError('Failed to load billing data');
-    } finally {
-      setBillingLoading(false);
-    }
-  };
+  /* --- Billing handlers --- */
 
   const handleCheckout = async (priceId: string) => {
     setCheckoutLoading(priceId);
@@ -300,23 +296,7 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchAiConfig = async () => {
-    setAiConfigLoading(true);
-    setAiConfigError(null);
-    try {
-      const response = await fetch('/api/settings/ai-script');
-      const data = await response.json();
-      if (data.ok && data.config) {
-        setAiConfig(data.config);
-      } else {
-        setAiConfigError(data.error || 'Failed to load AI config');
-      }
-    } catch {
-      setAiConfigError('Failed to load AI config');
-    } finally {
-      setAiConfigLoading(false);
-    }
-  };
+  /* --- AI config handlers --- */
 
   const handleSaveAiConfig = async () => {
     setAiConfigSaving(true);
@@ -359,33 +339,9 @@ export default function SettingsPage() {
     setAiConfig({ ...aiConfig, qualification_questions: updated });
   };
 
-  const plans = [
-    {
-      slug: 'starter',
-      name: 'Starter',
-      price: '$99',
-      period: '/mo',
-      features: ['Up to 250 leads', '750 SMS/month', 'WhatsApp + Email + SMS', 'AI message generation', 'Lead scoring', 'Basic analytics', '1 user'],
-      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || '',
-    },
-    {
-      slug: 'pro',
-      name: 'Pro',
-      price: '$249',
-      period: '/mo',
-      popular: true,
-      features: ['Up to 1,000 leads', '3,000 SMS/month', 'Everything in Starter', 'Follow-up automation', 'CRM integration', 'Advanced analytics', 'Priority support', 'Up to 5 users'],
-      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '',
-    },
-    {
-      slug: 'agency',
-      name: 'Agency',
-      price: '$499',
-      period: '/mo',
-      features: ['Unlimited leads', '15,000 SMS/month', 'Everything in Pro', 'Team management', 'White-label reports', 'Dedicated support', 'Custom integrations', 'Up to 15 users'],
-      stripePriceId: process.env.NEXT_PUBLIC_STRIPE_AGENCY_PRICE_ID || '',
-    },
-  ];
+  /* --- Render --- */
+
+  const isComingSoon = COMING_SOON_SECTIONS.includes(activeSection);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -424,726 +380,66 @@ export default function SettingsPage() {
         </div>
       ) : (
         <>
-          {/* Profile Section */}
           {activeSection === 'profile' && (
-            <section className="space-y-6 max-w-3xl">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile Information</h3>
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={saving || !hasChanges}
-                    className={`text-sm px-4 py-2 rounded-lg transition-colors ${
-                      hasChanges && !saving
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {saving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-
-                {error && (
-                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                    {success}
-                  </div>
-                )}
-
-                <div className="flex items-center space-x-6 mb-6">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-semibold flex-shrink-0">
-                    {fullName ? fullName.charAt(0).toUpperCase() : profile?.email?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{fullName || 'Your Name'}</h4>
-                    <p className="text-gray-500 dark:text-gray-400">{profile?.email}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Enter your full name"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={profile?.email || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400"
-                    />
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Email cannot be changed</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Company</label>
-                    <input
-                      type="text"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
-                      placeholder="Your real estate company"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Info */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account Information</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Member since</span>
-                    <span className="text-gray-900 dark:text-gray-100">
-                      {profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                        : '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Last updated</span>
-                    <span className="text-gray-900 dark:text-gray-100">
-                      {profile?.updated_at
-                        ? new Date(profile.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                        : '-'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <ProfileTab
+              profile={profile}
+              fullName={fullName}
+              company={company}
+              phone={phone}
+              saving={saving}
+              error={error}
+              success={success}
+              hasChanges={hasChanges}
+              onFullNameChange={setFullName}
+              onCompanyChange={setCompany}
+              onPhoneChange={setPhone}
+              onSave={handleSaveProfile}
+            />
           )}
 
-          {/* Integrations Section */}
           {activeSection === 'integrations' && (
-            <section className="space-y-6 max-w-3xl">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">CRM Integrations</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Connect your CRM to sync leads automatically.</p>
-
-                {fubError && (
-                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                    {fubError}
-                  </div>
-                )}
-                {fubSuccess && (
-                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                    {fubSuccess}
-                  </div>
-                )}
-
-                {/* Follow Up Boss */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-user-tie text-orange-600 dark:text-orange-400 text-xl"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Follow Up Boss</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Sync leads and activities</p>
-                      </div>
-                    </div>
-                    {fubStatus?.connected ? (
-                      <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm flex items-center">
-                        <i className="fas fa-check-circle mr-1"></i>
-                        Connected
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-sm">
-                        Not Connected
-                      </span>
-                    )}
-                  </div>
-
-                  {fubStatus?.connected ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Leads from CRM:</span>
-                          <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{fubStatus.leadsFromCrm || 0}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Last sync:</span>
-                          <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                            {fubStatus.lastSyncAt ? new Date(fubStatus.lastSyncAt).toLocaleString() : 'Never'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                          onClick={handleFubSync}
-                          disabled={fubSyncing}
-                          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 text-center"
-                        >
-                          {fubSyncing ? (
-                            <><i className="fas fa-spinner fa-spin mr-2"></i>Syncing...</>
-                          ) : (
-                            <><i className="fas fa-sync mr-2"></i>Sync Now</>
-                          )}
-                        </button>
-                        <button
-                          onClick={handleFubDisconnect}
-                          disabled={fubConnecting}
-                          className="px-4 py-2 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          Disconnect
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                        <input
-                          type="password"
-                          value={fubApiKey}
-                          onChange={(e) => setFubApiKey(e.target.value)}
-                          placeholder="Enter your Follow Up Boss API key"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Find your API key in Follow Up Boss under Admin &gt; API
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleFubConnect}
-                        disabled={fubConnecting || !fubApiKey.trim()}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-                      >
-                        {fubConnecting ? <><i className="fas fa-spinner fa-spin mr-2"></i>Connecting...</> : 'Connect'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* HubSpot */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-database text-orange-500 dark:text-orange-400 text-xl"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">HubSpot</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Enterprise CRM integration</p>
-                      </div>
-                    </div>
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-sm">
-                      Coming Soon
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <CrmTab
+              fubStatus={fubStatus}
+              fubApiKey={fubApiKey}
+              fubConnecting={fubConnecting}
+              fubSyncing={fubSyncing}
+              fubError={fubError}
+              fubSuccess={fubSuccess}
+              onApiKeyChange={setFubApiKey}
+              onConnect={handleFubConnect}
+              onDisconnect={handleFubDisconnect}
+              onSync={handleFubSync}
+            />
           )}
 
-          {/* AI Personality Section */}
           {activeSection === 'ai-personality' && (
-            <section className="space-y-6 max-w-3xl">
-              {aiConfigLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <>
-                  {aiConfigError && (
-                    <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                      {aiConfigError}
-                    </div>
-                  )}
-                  {aiConfigSuccess && (
-                    <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                      {aiConfigSuccess}
-                    </div>
-                  )}
-
-                  {/* Active Toggle */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Personality</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Customize how the AI bot communicates with your leads</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={aiConfig.active}
-                          onChange={(e) => setAiConfig({ ...aiConfig, active: e.target.checked })}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-blue-600"></div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Tone & Style */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tone & Style</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tone</label>
-                        <select
-                          value={aiConfig.tone}
-                          onChange={(e) => setAiConfig({ ...aiConfig, tone: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="professional">Professional</option>
-                          <option value="casual">Casual</option>
-                          <option value="friendly">Friendly</option>
-                          <option value="formal">Formal</option>
-                          <option value="luxury">Luxury</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
-                        <select
-                          value={aiConfig.language}
-                          onChange={(e) => setAiConfig({ ...aiConfig, language: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="english">English</option>
-                          <option value="spanish">Spanish</option>
-                          <option value="arabic">Arabic</option>
-                          <option value="french">French</option>
-                          <option value="portuguese">Portuguese</option>
-                          <option value="mandarin">Mandarin</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Closing Style</label>
-                        <select
-                          value={aiConfig.closing_style}
-                          onChange={(e) => setAiConfig({ ...aiConfig, closing_style: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="direct">Direct</option>
-                          <option value="soft">Soft</option>
-                          <option value="consultative">Consultative</option>
-                          <option value="urgent">Urgent</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Property Focus</label>
-                        <select
-                          value={aiConfig.property_focus}
-                          onChange={(e) => setAiConfig({ ...aiConfig, property_focus: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="general">General</option>
-                          <option value="residential">Residential</option>
-                          <option value="commercial">Commercial</option>
-                          <option value="luxury">Luxury</option>
-                          <option value="industrial">Industrial</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Custom Messages */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Custom Messages</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Introduction Template</label>
-                        <textarea
-                          value={aiConfig.introduction_template || ''}
-                          onChange={(e) => setAiConfig({ ...aiConfig, introduction_template: e.target.value || null })}
-                          placeholder="e.g., Hey! This is [name] from [company]. I noticed your property at..."
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">How the AI should greet new leads for the first time</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escalation Message</label>
-                        <textarea
-                          value={aiConfig.escalation_message || ''}
-                          onChange={(e) => setAiConfig({ ...aiConfig, escalation_message: e.target.value || null })}
-                          placeholder="e.g., I want to make sure you get the best help possible. Let me connect you with..."
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Sent when the AI needs to escalate to you directly</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Qualification Questions */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Custom Qualification Questions</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Additional questions the AI will weave into conversations</p>
-                      </div>
-                      <button
-                        onClick={handleAddQuestion}
-                        disabled={aiConfig.qualification_questions.length >= 10}
-                        className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-                      >
-                        + Add Question
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {aiConfig.qualification_questions.map((q, i) => (
-                        <div key={i} className="flex gap-2">
-                          <input
-                            type="text"
-                            value={q}
-                            onChange={(e) => handleUpdateQuestion(i, e.target.value)}
-                            placeholder={`Question ${i + 1}`}
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                          />
-                          <button
-                            onClick={() => handleRemoveQuestion(i)}
-                            className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          >
-                            <i className="fas fa-trash text-sm"></i>
-                          </button>
-                        </div>
-                      ))}
-                      {aiConfig.qualification_questions.length === 0 && (
-                        <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">No custom questions yet. Click &quot;Add Question&quot; to start.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Free-form Instructions */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Custom Instructions</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Free-form instructions for the AI. Be specific about what you want.</p>
-                    <textarea
-                      value={aiConfig.custom_instructions || ''}
-                      onChange={(e) => setAiConfig({ ...aiConfig, custom_instructions: e.target.value || null })}
-                      placeholder="e.g., Always mention our free home valuation service. Never discuss commission rates. If they mention foreclosure, handle with extra sensitivity..."
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSaveAiConfig}
-                      disabled={aiConfigSaving}
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-medium"
-                    >
-                      {aiConfigSaving ? 'Saving...' : 'Save AI Personality'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </section>
+            <AiScriptTab
+              aiConfig={aiConfig}
+              aiConfigLoading={aiConfigLoading}
+              aiConfigSaving={aiConfigSaving}
+              aiConfigError={aiConfigError}
+              aiConfigSuccess={aiConfigSuccess}
+              onConfigChange={setAiConfig}
+              onAddQuestion={handleAddQuestion}
+              onUpdateQuestion={handleUpdateQuestion}
+              onRemoveQuestion={handleRemoveQuestion}
+              onSave={handleSaveAiConfig}
+            />
           )}
 
-          {/* Billing Section */}
           {activeSection === 'billing' && (
-            <section className="space-y-6 max-w-5xl">
-              {billingError && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                  {billingError}
-                </div>
-              )}
-
-              {billingLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <>
-                  {/* Current Subscription Status */}
-                  {billingData?.subscription ? (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Current Plan</h3>
-                        <button
-                          onClick={handleManageBilling}
-                          className="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          <i className="fas fa-external-link-alt mr-2"></i>
-                          Manage Billing
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Plan</span>
-                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{billingData.subscription.plan}</p>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
-                          <p className="text-lg font-semibold">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
-                              billingData.subscription.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                              billingData.subscription.status === 'trialing' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
-                              'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                            }`}>
-                              {billingData.subscription.status === 'trialing' ? 'Free Trial' : billingData.subscription.status}
-                            </span>
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {billingData.subscription.status === 'trialing' ? 'Trial ends' : 'Renews'}
-                          </span>
-                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {new Date(billingData.subscription.trialEnd || billingData.subscription.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </p>
-                        </div>
-                      </div>
-
-                      {billingData.subscription.cancelAtPeriodEnd && (
-                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-700 dark:text-yellow-400 text-sm">
-                          <i className="fas fa-exclamation-triangle mr-2"></i>
-                          Your subscription will be cancelled at the end of the current billing period.
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                          <i className="fas fa-gift text-blue-600 dark:text-blue-400"></i>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-blue-900 dark:text-blue-300">Start your 14-day free trial</h3>
-                          <p className="text-sm text-blue-700 dark:text-blue-400">Choose a plan below to get started. No charge during trial.</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Usage Stats */}
-                  {billingData?.subscription && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Usage This Period</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {/* SMS Usage */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">SMS Sent</span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {billingData.usage.sms}{billingData.usage.includedSms > 0 ? `/${billingData.usage.includedSms}` : ''}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${
-                                billingData.usage.includedSms > 0 && billingData.usage.sms / billingData.usage.includedSms > 0.9
-                                  ? 'bg-red-500' : 'bg-blue-600'
-                              }`}
-                              style={{ width: `${Math.min(100, billingData.usage.includedSms > 0 ? (billingData.usage.sms / billingData.usage.includedSms) * 100 : 0)}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Email Usage */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Emails</span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{billingData.usage.email}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
-                          </div>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">Unlimited</span>
-                        </div>
-
-                        {/* WhatsApp Usage */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">WhatsApp</span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{billingData.usage.whatsapp}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
-                          </div>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">Pay per use</span>
-                        </div>
-
-                        {/* Leads */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Leads</span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {billingData.usage.leads}{billingData.usage.includedLeads > 0 ? `/${billingData.usage.includedLeads}` : ''}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${
-                                billingData.usage.includedLeads > 0 && billingData.usage.leads / billingData.usage.includedLeads > 0.9
-                                  ? 'bg-red-500' : 'bg-purple-500'
-                              }`}
-                              style={{ width: `${Math.min(100, billingData.usage.includedLeads > 0 ? (billingData.usage.leads / billingData.usage.includedLeads) * 100 : 0)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Overage Charges */}
-                  {billingData?.overages && billingData.overages.estimatedCost > 0 && (
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-200">Overage Charges</h3>
-                        <span className="text-lg font-bold text-amber-700 dark:text-amber-300">
-                          ${(billingData.overages.estimatedCost / 100).toFixed(2)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
-                        Usage beyond your plan&apos;s included quota is billed at the end of your billing cycle.
-                      </p>
-                      <div className="space-y-2 text-sm">
-                        {billingData.overages.sms > 0 && (
-                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                            <span>SMS overage ({billingData.overages.sms} msgs × ${((billingData.overageRates?.sms || 5) / 100).toFixed(2)})</span>
-                            <span>${(billingData.overages.sms * (billingData.overageRates?.sms || 5) / 100).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {billingData.overages.email > 0 && (
-                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                            <span>Email overage ({billingData.overages.email} msgs × ${((billingData.overageRates?.email || 2) / 100).toFixed(2)})</span>
-                            <span>${(billingData.overages.email * (billingData.overageRates?.email || 2) / 100).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {billingData.overages.whatsapp > 0 && (
-                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                            <span>WhatsApp overage ({billingData.overages.whatsapp} msgs × ${((billingData.overageRates?.whatsapp || 8) / 100).toFixed(2)})</span>
-                            <span>${(billingData.overages.whatsapp * (billingData.overageRates?.whatsapp || 8) / 100).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {billingData.overages.leads > 0 && (
-                          <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                            <span>Lead overage ({billingData.overages.leads} leads × ${((billingData.overageRates?.leads || 15) / 100).toFixed(2)})</span>
-                            <span>${(billingData.overages.leads * (billingData.overageRates?.leads || 15) / 100).toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                      {billingData.overages.reported && (
-                        <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">Already included in your upcoming invoice.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Plan Cards */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      {billingData?.subscription ? 'Change Plan' : 'Choose a Plan'}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {plans.map((plan) => {
-                        const isCurrentPlan = billingData?.subscription?.planSlug === plan.slug;
-                        return (
-                          <div
-                            key={plan.slug}
-                            className={`relative bg-white dark:bg-gray-800 rounded-xl border-2 p-6 transition-all ${
-                              plan.popular
-                                ? 'border-blue-500 dark:border-blue-400 shadow-lg'
-                                : isCurrentPlan
-                                ? 'border-green-500 dark:border-green-400'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
-                          >
-                            {plan.popular && !isCurrentPlan && (
-                              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                                Most Popular
-                              </span>
-                            )}
-                            {isCurrentPlan && (
-                              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                                Current Plan
-                              </span>
-                            )}
-
-                            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{plan.name}</h4>
-                            <div className="flex items-baseline mb-4">
-                              <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">{plan.price}</span>
-                              <span className="text-gray-500 dark:text-gray-400 ml-1">{plan.period}</span>
-                            </div>
-
-                            <ul className="space-y-2 mb-6">
-                              {plan.features.map((feature, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                  <i className="fas fa-check text-green-500 mt-0.5 flex-shrink-0"></i>
-                                  {feature}
-                                </li>
-                              ))}
-                            </ul>
-
-                            {isCurrentPlan ? (
-                              <button
-                                onClick={handleManageBilling}
-                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-                              >
-                                Manage Plan
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleCheckout(plan.stripePriceId)}
-                                disabled={!!checkoutLoading || !plan.stripePriceId}
-                                className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                                  plan.popular
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400'
-                                    : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-400'
-                                }`}
-                              >
-                                {checkoutLoading === plan.stripePriceId ? (
-                                  <><i className="fas fa-spinner fa-spin mr-2"></i>Loading...</>
-                                ) : billingData?.subscription ? (
-                                  'Switch Plan'
-                                ) : (
-                                  'Start Free Trial'
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">
-                      All plans include a 14-day free trial. Cancel anytime. Prices in USD.
-                    </p>
-                  </div>
-                </>
-              )}
-            </section>
+            <BillingTab
+              billingData={billingData}
+              billingLoading={billingLoading}
+              billingError={billingError}
+              checkoutLoading={checkoutLoading}
+              plans={plans}
+              onCheckout={handleCheckout}
+              onManageBilling={handleManageBilling}
+            />
           )}
 
-          {/* Coming Soon Sections */}
-          {(['messaging', 'email', 'team', 'auto-reply'] as const).includes(activeSection as 'messaging' | 'email' | 'team' | 'auto-reply') && (
-            <section className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fas fa-tools text-gray-400 dark:text-gray-500 text-2xl"></i>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Coming Soon</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  This feature is under development and will be available soon.
-                </p>
-              </div>
-            </section>
-          )}
+          {isComingSoon && <ComingSoonTab />}
         </>
       )}
     </div>
