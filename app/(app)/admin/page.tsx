@@ -293,7 +293,7 @@ function OverviewTab({ tasks, onToggle, summary, alerts }: { tasks: Task[]; onTo
     fetch(`/api/admin/daily-digest?date=${digestDate}`)
       .then(r => r.json())
       .then(data => { if (data.ok) setDigest(data) })
-      .catch(() => {})
+      .catch(console.error)
       .finally(() => setDigestLoading(false))
   }, [digestDate])
 
@@ -803,7 +803,7 @@ function MarketResearchTab({ tasks, onToggle }: { tasks: Task[]; onToggle: (id: 
     fetch('/api/research/findings?limit=50')
       .then(r => r.json())
       .then(data => { if (data.ok) setFindings(data.findings) })
-      .catch(() => {})
+      .catch(console.error)
       .finally(() => setFindingsLoading(false))
   }, [])
 

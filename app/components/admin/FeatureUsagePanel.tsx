@@ -35,7 +35,7 @@ export default function FeatureUsagePanel() {
     fetch(`/api/admin/analytics?period=${period}`)
       .then(r => r.json())
       .then(d => { if (d.ok) setData(d) })
-      .catch(() => {})
+      .catch(console.error)
       .finally(() => setLoading(false))
   }, [period])
 

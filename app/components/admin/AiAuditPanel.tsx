@@ -46,7 +46,7 @@ export default function AiAuditPanel() {
     fetch('/api/admin/ai-audit')
       .then(r => r.json())
       .then(d => { if (d.ok) setData(d) })
-      .catch(() => {})
+      .catch(console.error)
       .finally(() => setLoading(false))
   }
 

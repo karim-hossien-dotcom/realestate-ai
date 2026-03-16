@@ -1,3 +1,4 @@
+import logging
 import os
 import csv
 import json
@@ -9,6 +10,9 @@ from typing import Iterable, Optional
 import fcntl
 import requests
 from flask import Flask, request, Response, jsonify
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 from tools.ai_inbound_agent import analyze_with_ai, is_stop_message
 
@@ -118,7 +122,7 @@ def _flush_message_buffer(wa_id: str) -> None:
     # Use the first message's metadata for logging
     first_msg = buffered[0]
 
-    print(f"[Debounce] Flushing {len(buffered)} messages from {wa_id}: {combined_body[:100]}")
+    logger.info(f"[Debounce] Flushing {len(buffered)} messages from {wa_id}: {combined_body[:100]}")
 
     # Process the combined message through the normal pipeline
     _process_whatsapp_message(
@@ -364,7 +368,7 @@ def _update_lead_from_qualification(
             if client:
                 client.table("leads").update(updates).eq("id", lead["id"]).execute()
         except Exception as e:
-            print(f"Error updating lead from qualification: {e}")
+            logger.error(f"Error updating lead from qualification: {e}")
 
 
 def _log_to_supabase(
@@ -494,7 +498,7 @@ def _process_whatsapp_message(
     is_agent_sender = bool(sender_digits and agent_digits and sender_digits == agent_digits)
 
     if is_agent_sender:
-        print(f"[Agent-self] Detected agent {agent_name} texting from {wa_id} — skipping AI reply")
+        logger.info(f"[Agent-self] Detected agent {agent_name} texting from {wa_id} — skipping AI reply")
         _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
         if SUPABASE_AVAILABLE and user_id:
             log_activity(
@@ -591,7 +595,7 @@ def _process_whatsapp_message(
 
     # DNC send-side check: never send to numbers on the DNC list
     if SUPABASE_AVAILABLE and user_id and is_on_dnc_list(user_id, wa_id):
-        print(f"Blocked outbound to DNC number {wa_id}")
+        logger.warning(f"Blocked outbound to DNC number {wa_id}")
         log_activity(
             user_id, "dnc_blocked",
             f"Blocked outbound message to DNC number {wa_id}",
@@ -605,7 +609,7 @@ def _process_whatsapp_message(
     if SUPABASE_AVAILABLE and user_id:
         wa_quota = check_messaging_quota(user_id)
         if wa_quota.get("current", 0) >= wa_quota.get("limit", 0) and wa_quota.get("limit", 0) > 0:
-            print(f"[Overage] User {user_id} over quota ({wa_quota.get('current')}/{wa_quota.get('limit')}), will record overage")
+            logger.warning(f"[Overage] User {user_id} over quota ({wa_quota.get('current')}/{wa_quota.get('limit')}), will record overage")
 
     send_result = _send_whatsapp_message(wa_id, reply_text)
 
@@ -767,7 +771,7 @@ def _handle_meeting_booking(
                 {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
             )
         except Exception as e:
-            print(f"Error creating confirmation follow-up: {e}")
+            logger.error(f"Error creating confirmation follow-up: {e}")
 
 
 def _handle_auto_follow_up(
@@ -827,7 +831,7 @@ def _handle_auto_follow_up(
             {"phone": wa_id, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
         )
     except Exception as e:
-        print(f"Error creating scheduled follow-up: {e}")
+        logger.error(f"Error creating scheduled follow-up: {e}")
 
 
 @app.route("/webhook", methods=["POST"], strict_slashes=False)
@@ -850,7 +854,7 @@ def webhook_inbound():
 
         # Deduplication: skip if we've already processed this message
         if _is_duplicate_message(msg_id):
-            print(f"Skipping duplicate message {msg_id} from {wa_id}")
+            logger.debug(f"Skipping duplicate message {msg_id} from {wa_id}")
             continue
 
         # Resolve which agent owns this lead (for non-text and STOP handling)
@@ -1048,7 +1052,7 @@ def sms_inbound():
 
     # Deduplication
     if _is_duplicate_message(msg_sid):
-        print(f"Skipping duplicate SMS {msg_sid} from {from_number}")
+        logger.debug(f"Skipping duplicate SMS {msg_sid} from {from_number}")
         return Response("", status=200, mimetype="text/plain")
 
     now = datetime.now(timezone.utc).isoformat()
@@ -1062,7 +1066,7 @@ def sms_inbound():
     agent_email = ctx["agent_email"]
     ai_config = ctx.get("ai_config")
 
-    print(f"[SMS] Inbound from {from_number}: {body[:100]}")
+    logger.info(f"[SMS] Inbound from {from_number}: {body[:100]}")
 
     # Log to CSV
     _write_csv_row(
@@ -1207,7 +1211,7 @@ def sms_inbound():
 
     # DNC send-side check
     if SUPABASE_AVAILABLE and user_id and is_on_dnc_list(user_id, from_number):
-        print(f"Blocked SMS outbound to DNC number {from_number}")
+        logger.warning(f"Blocked SMS outbound to DNC number {from_number}")
         return Response("", status=200, mimetype="text/plain")
 
     # Check messaging quota — record overage if over limit
@@ -1215,7 +1219,7 @@ def sms_inbound():
     if SUPABASE_AVAILABLE and user_id:
         sms_quota = check_messaging_quota(user_id)
         if sms_quota.get("current", 0) >= sms_quota.get("limit", 0) and sms_quota.get("limit", 0) > 0:
-            print(f"[Overage] User {user_id} over SMS quota ({sms_quota.get('current')}/{sms_quota.get('limit')}), will record overage")
+            logger.warning(f"[Overage] User {user_id} over SMS quota ({sms_quota.get('current')}/{sms_quota.get('limit')}), will record overage")
 
     send_result = _send_sms_message(from_number, reply_text)
 
@@ -1277,7 +1281,7 @@ def sms_inbound():
                     {"phone": from_number, "follow_up_days": follow_up_days, "scheduled_at": follow_up_dt.isoformat(), "ai_notes": ai_notes},
                 )
         except Exception as e:
-            print(f"Error creating SMS scheduled follow-up: {e}")
+            logger.error(f"Error creating SMS scheduled follow-up: {e}")
 
     # Log outbound
     send_status = "sent" if send_result.get("ok") else "failed"

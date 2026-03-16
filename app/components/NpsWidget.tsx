@@ -39,7 +39,7 @@ export default function NpsWidget() {
             setStep('score')
           }
         })
-        .catch(() => {})
+        .catch(console.error)
     }, 3000)
 
     return () => clearTimeout(timer)

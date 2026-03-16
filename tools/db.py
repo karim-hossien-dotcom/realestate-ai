@@ -1,9 +1,12 @@
 """
 Supabase database client for Python webhook service
 """
+import logging
 import os
 from supabase import create_client, Client
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def get_supabase_client() -> Optional[Client]:
@@ -14,7 +17,7 @@ def get_supabase_client() -> Optional[Client]:
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
     if not url or not key:
-        print("Warning: Supabase credentials not configured")
+        logger.warning("Supabase credentials not configured")
         return None
 
     return create_client(url, key)
@@ -48,7 +51,7 @@ def log_inbound_message(
         }).execute()
         return True
     except Exception as e:
-        print(f"Error logging inbound message: {e}")
+        logger.error(f"Error logging inbound message: {e}")
         return False
 
 
@@ -83,7 +86,7 @@ def log_outbound_message(
         }).execute()
         return True
     except Exception as e:
-        print(f"Error logging outbound message: {e}")
+        logger.error(f"Error logging outbound message: {e}")
         return False
 
 
@@ -105,7 +108,7 @@ def add_to_dnc_list(user_id: str, phone: str, reason: str = "STOP keyword") -> b
         }, on_conflict="user_id,phone").execute()
         return True
     except Exception as e:
-        print(f"Error adding to DNC list: {e}")
+        logger.error(f"Error adding to DNC list: {e}")
         return False
 
 
@@ -133,7 +136,7 @@ def log_activity(
         }).execute()
         return True
     except Exception as e:
-        print(f"Error logging activity: {e}")
+        logger.error(f"Error logging activity: {e}")
         return False
 
 
@@ -161,7 +164,7 @@ def find_lead_by_phone(user_id: str, phone: str) -> Optional[dict]:
             return result.data[0]
         return None
     except Exception as e:
-        print(f"Error finding lead: {e}")
+        logger.error(f"Error finding lead: {e}")
         return None
 
 
@@ -185,7 +188,7 @@ def update_lead_last_response(lead_id: str) -> bool:
 
         return True
     except Exception as e:
-        print(f"Error updating lead: {e}")
+        logger.error(f"Error updating lead: {e}")
         return False
 
 
@@ -231,7 +234,7 @@ def create_meeting(
         client.table("meetings").insert(record).execute()
         return True
     except Exception as e:
-        print(f"Error creating meeting: {e}")
+        logger.error(f"Error creating meeting: {e}")
         return False
 
 
@@ -262,7 +265,7 @@ def create_follow_up(
             .execute()
         )
         if existing.data and len(existing.data) > 0:
-            print(f"Follow-up already exists for lead {lead_id} at {scheduled_at}, skipping")
+            logger.debug(f"Follow-up already exists for lead {lead_id} at {scheduled_at}, skipping")
             return True
 
         record = {
@@ -275,7 +278,7 @@ def create_follow_up(
         client.table("follow_ups").insert(record).execute()
         return True
     except Exception as e:
-        print(f"Error creating follow-up: {e}")
+        logger.error(f"Error creating follow-up: {e}")
         return False
 
 
@@ -345,7 +348,7 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
         merged.sort(key=lambda m: m["created_at"])
         return merged[-limit:]
     except Exception as e:
-        print(f"Error fetching conversation history: {e}")
+        logger.error(f"Error fetching conversation history: {e}")
         return []
 
 
@@ -379,7 +382,7 @@ def is_on_dnc_list(user_id: str, phone: str) -> bool:
 
         return bool(result.data)
     except Exception as e:
-        print(f"Error checking DNC list: {e}")
+        logger.error(f"Error checking DNC list: {e}")
         return False
 
 
@@ -402,7 +405,7 @@ def remove_from_dnc_list(user_id: str, phone: str) -> bool:
         ).like("phone", f"%{digits}").execute()
         return True
     except Exception as e:
-        print(f"Error removing from DNC list: {e}")
+        logger.error(f"Error removing from DNC list: {e}")
         return False
 
 
@@ -427,7 +430,7 @@ def get_default_user_id() -> Optional[str]:
             return result.data[0]["id"]
         return None
     except Exception as e:
-        print(f"Error getting default user: {e}")
+        logger.error(f"Error getting default user: {e}")
         return None
 
 
@@ -456,7 +459,7 @@ def find_user_by_lead_phone(phone: str) -> Optional[dict]:
             return {"user_id": lead.get("user_id"), "lead": lead}
         return None
     except Exception as e:
-        print(f"Error finding user by lead phone: {e}")
+        logger.error(f"Error finding user by lead phone: {e}")
         return None
 
 
@@ -478,7 +481,7 @@ def get_user_profile(user_id: str) -> Optional[dict]:
             return result.data[0]
         return None
     except Exception as e:
-        print(f"Error getting user profile: {e}")
+        logger.error(f"Error getting user profile: {e}")
         return None
 
 
@@ -538,7 +541,7 @@ def check_meeting_availability(
 
         return {"available": len(conflicts) == 0, "conflicts": conflicts}
     except Exception as e:
-        print(f"Error checking meeting availability: {e}")
+        logger.error(f"Error checking meeting availability: {e}")
         return {"available": True, "conflicts": []}
 
 
@@ -560,7 +563,7 @@ def get_user_ai_config(user_id: str) -> Optional[dict]:
             return result.data[0]
         return None
     except Exception as e:
-        print(f"Error getting user AI config: {e}")
+        logger.error(f"Error getting user AI config: {e}")
         return None
 
 
@@ -606,7 +609,7 @@ def record_overage(user_id: str, channel: str, period_start: str, count: int = 1
             }).execute()
         return True
     except Exception as e:
-        print(f"Error recording overage: {e}")
+        logger.error(f"Error recording overage: {e}")
         return False
 
 
@@ -633,7 +636,7 @@ def get_user_plan_slug(user_id: str) -> Optional[str]:
             return plans.get("slug")
         return None
     except Exception as e:
-        print(f"Error getting user plan slug: {e}")
+        logger.error(f"Error getting user plan slug: {e}")
         return None
 
 
@@ -693,6 +696,6 @@ def check_messaging_quota(user_id: str) -> dict:
             "period_start": period_iso,
         }
     except Exception as e:
-        print(f"Error checking messaging quota: {e}")
+        logger.error(f"Error checking messaging quota: {e}")
         # On error, allow (don't block inbound responses)
         return {"allowed": True, "remaining": 999, "limit": -1, "current": 0}
