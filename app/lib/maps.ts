@@ -58,7 +58,7 @@ export async function getDrivingDistance(
   destination: string,
 ): Promise<DistanceResult | null> {
   if (!MAPS_API_KEY) {
-    console.warn('GOOGLE_MAPS_MAPS_API_KEY not set — skipping distance calc');
+    console.warn('GOOGLE_MAPS_API_KEY not set — skipping distance calc');
     return null;
   }
 

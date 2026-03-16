@@ -31,7 +31,7 @@ const FEATURE_LABELS: Record<GatedFeature, string> = {
   team_management: 'Team Management',
 }
 
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any

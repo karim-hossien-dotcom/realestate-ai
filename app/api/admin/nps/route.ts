@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
 
 export async function GET() {
   const auth = await withAuth()

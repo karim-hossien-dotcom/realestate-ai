@@ -1,6 +1,6 @@
 import { createClient, createServiceClient } from '@/app/lib/supabase/server'
 
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
 
 type ResourceType = 'leads' | 'sms' | 'email' | 'whatsapp'
 

@@ -3,7 +3,7 @@ import { createServiceClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 import { runWeeklyAudit } from '@/app/lib/ai-audit'
 
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
 
 // GET — fetch audit results by week
 export async function GET(request: NextRequest) {

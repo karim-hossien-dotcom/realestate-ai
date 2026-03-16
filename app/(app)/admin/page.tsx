@@ -16,7 +16,7 @@ import NpsResultsPanel from '@/app/components/admin/NpsResultsPanel'
 import AiAuditPanel from '@/app/components/admin/AiAuditPanel'
 
 // Owner user ID — only this account can access /admin
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a'
+const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || ''
 
 // ── Types ──
 interface Task {
@@ -251,12 +251,30 @@ function DeptTab({ department, tasks, onToggle, filters }: {
   )
 }
 
-// ── Revenue mock data (until Stripe data flows) ──
-const revenueData = Array.from({ length: 12 }, (_, i) => ({
-  name: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'][i],
-  rev: Math.floor(i * i * 80 + i * 200),
-  cost: Math.floor(14 + i * 40 + Math.random() * 50),
-}))
+// ── Revenue data types ──
+interface RevenueDataPoint {
+  name: string
+  rev: number
+  cost: number
+}
+
+interface RevenueInfo {
+  revenueData: RevenueDataPoint[]
+  currentMrr: number
+  activeSubscribers: number
+  planCounts: Record<string, number>
+}
+
+// Fallback empty revenue data (12 months of zeros)
+const EMPTY_REVENUE: RevenueInfo = {
+  revenueData: Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(new Date().getFullYear(), new Date().getMonth() - 11 + i, 1)
+    return { name: d.toLocaleString('en-US', { month: 'short' }), rev: 0, cost: 14 }
+  }),
+  currentMrr: 0,
+  activeSubscribers: 0,
+  planCounts: {},
+}
 
 const DEPT_COLORS: Record<string, string> = { legal: '#FF4444', engineering: '#22C55E', marketing: '#4488FF', finance: '#FFB800', market_research: '#AA66FF' }
 const TABS = ['Overview', 'Market Research', 'Legal', 'Engineering', 'Marketing', 'Finance'] as const
@@ -283,7 +301,7 @@ const HEALTH_DOT: Record<string, { color: string; label: string }> = {
 }
 
 // ── Overview tab ──
-function OverviewTab({ tasks, onToggle, summary, alerts }: { tasks: Task[]; onToggle: (id: string, s: string) => void; summary: Summary; alerts: SystemAlert[] }) {
+function OverviewTab({ tasks, onToggle, summary, alerts, revenue }: { tasks: Task[]; onToggle: (id: string, s: string) => void; summary: Summary; alerts: SystemAlert[]; revenue: RevenueInfo }) {
   const [digest, setDigest] = useState<DailyDigest | null>(null)
   const [digestLoading, setDigestLoading] = useState(true)
   const [digestDate, setDigestDate] = useState(new Date().toISOString().split('T')[0])
@@ -460,9 +478,9 @@ function OverviewTab({ tasks, onToggle, summary, alerts }: { tasks: Task[]; onTo
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-4">
-        <Card title="Revenue Projection (12-month)" accent="var(--primary)">
+        <Card title="Revenue (12-month MRR)" accent="var(--primary)">
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={revenueData}>
+            <AreaChart data={revenue.revenueData}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.2} />
@@ -706,23 +724,37 @@ function MarketingTab({ tasks, onToggle }: { tasks: Task[]; onToggle: (id: strin
 }
 
 // ── Finance tab ──
-function FinanceTab({ tasks, onToggle }: { tasks: Task[]; onToggle: (id: string, s: string) => void }) {
+function FinanceTab({ tasks, onToggle, revenue }: { tasks: Task[]; onToggle: (id: string, s: string) => void; revenue: RevenueInfo }) {
   const fin = tasks.filter(t => t.department === 'finance')
   const alertTasks = fin.filter(t => t.metric_threshold)
   const vendorTasks = fin.filter(t => t.vendor_name)
 
+  const mrrLabel = revenue.currentMrr > 0 ? `$${revenue.currentMrr.toLocaleString()}` : '$0'
+  const mrrSub = revenue.activeSubscribers > 0
+    ? `${revenue.activeSubscribers} subscriber${revenue.activeSubscribers > 1 ? 's' : ''}`
+    : 'Pre-launch'
+  // Estimate monthly cost from latest data point
+  const latestCost = revenue.revenueData.length > 0
+    ? revenue.revenueData[revenue.revenueData.length - 1].cost
+    : 14
+  const marginPct = revenue.currentMrr > 0
+    ? Math.round(((revenue.currentMrr - latestCost) / revenue.currentMrr) * 100)
+    : 0
+  // Break-even: how many $99 subs needed to cover costs
+  const breakEvenSubs = Math.ceil(latestCost / 99)
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Current MRR" value="$0" sub="Pre-launch" />
-        <StatCard label="Monthly Burn" value="~$14" sub="Render only" />
-        <StatCard label="Break-Even" value="21" sub="subscribers needed" />
-        <StatCard label="SaaS Margin" value=">80%" sub="target" />
+        <StatCard label="Current MRR" value={mrrLabel} sub={mrrSub} />
+        <StatCard label="Monthly Burn" value={`~$${latestCost}`} sub="estimated" />
+        <StatCard label="Break-Even" value={String(breakEvenSubs)} sub="subscribers needed" />
+        <StatCard label="SaaS Margin" value={revenue.currentMrr > 0 ? `${marginPct}%` : '>80%'} sub={revenue.currentMrr > 0 ? 'actual' : 'target'} />
       </div>
 
-      <Card title="Revenue vs Costs Projection" accent="var(--primary)">
+      <Card title="Revenue vs Costs (12-month)" accent="var(--primary)">
         <ResponsiveContainer width="100%" height={240}>
-          <AreaChart data={revenueData}>
+          <AreaChart data={revenue.revenueData}>
             <defs>
               <linearGradient id="revGrad2" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.25} />
@@ -934,6 +966,7 @@ export default function AdminCommandCenter() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [alerts, setAlerts] = useState<SystemAlert[]>([])
   const [alertsLoading, setAlertsLoading] = useState(true)
+  const [revenue, setRevenue] = useState<RevenueInfo>(EMPTY_REVENUE)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Admin gate — check user ID
@@ -976,14 +1009,31 @@ export default function AdminCommandCenter() {
     finally { setAlertsLoading(false) }
   }, [])
 
+  // Fetch revenue data from subscriptions
+  const loadRevenue = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/revenue')
+      const data = await res.json()
+      if (data.ok) {
+        setRevenue({
+          revenueData: data.revenueData,
+          currentMrr: data.currentMrr,
+          activeSubscribers: data.activeSubscribers,
+          planCounts: data.planCounts,
+        })
+      }
+    } catch (err) { console.error('[Admin] Failed to load revenue:', err) }
+  }, [])
+
   useEffect(() => {
     if (isAdmin) {
       loadTasks(true)
       loadAlerts()
-      pollRef.current = setInterval(() => { loadTasks(false); loadAlerts() }, 30000)
+      loadRevenue()
+      pollRef.current = setInterval(() => { loadTasks(false); loadAlerts(); loadRevenue() }, 30000)
       return () => { if (pollRef.current) clearInterval(pollRef.current) }
     }
-  }, [isAdmin, loadTasks, loadAlerts])
+  }, [isAdmin, loadTasks, loadAlerts, loadRevenue])
 
   // Toggle task
   const handleToggle = useCallback(async (taskId: string, newStatus: string) => {
@@ -1015,12 +1065,12 @@ export default function AdminCommandCenter() {
     )
     const props = { tasks, onToggle: handleToggle, summary }
     switch (tab) {
-      case 'Overview': return <OverviewTab {...props} alerts={alerts} />
+      case 'Overview': return <OverviewTab {...props} alerts={alerts} revenue={revenue} />
       case 'Market Research': return <MarketResearchTab tasks={tasks} onToggle={handleToggle} />
       case 'Legal': return <DeptTab department="legal" tasks={tasks} onToggle={handleToggle} filters={['P0', 'P1', 'P2']} />
       case 'Engineering': return <EngineeringTab tasks={tasks} onToggle={handleToggle} alerts={alerts} alertsLoading={alertsLoading} />
       case 'Marketing': return <MarketingTab tasks={tasks} onToggle={handleToggle} />
-      case 'Finance': return <FinanceTab tasks={tasks} onToggle={handleToggle} />
+      case 'Finance': return <FinanceTab tasks={tasks} onToggle={handleToggle} revenue={revenue} />
       default: return null
     }
   }
@@ -1057,7 +1107,7 @@ export default function AdminCommandCenter() {
                   <span className="text-xs font-semibold text-red-400">{criticalAlerts} System Alert{criticalAlerts > 1 ? 's' : ''}</span>
                 </div>
               )}
-              <button onClick={() => { loadTasks(true); loadAlerts() }}
+              <button onClick={() => { loadTasks(true); loadAlerts(); loadRevenue() }}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors cursor-pointer">
                 ↻ Refresh
               </button>

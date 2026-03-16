@@ -15,7 +15,7 @@ type Profile = {
   company: string | null;
 };
 
-const ADMIN_USER_ID = '45435140-9a0a-49aa-a95e-5ace7657f61a';
+const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || '';
 
 const baseNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'fa-chart-line' },
