@@ -92,9 +92,9 @@
 |------|--------|---------------|
 | Test coverage | 3 files, ~180 lines | Only covers api-helpers, lead-scorer, schemas. 51 API routes untested. Target: 80%+ |
 | Settings page tabs | 4 of 8 tabs say "Coming Soon" | Messaging, Email, Team, Auto-Reply tabs are placeholders |
-| Admin revenue data | Mock data in `admin/page.tsx` | `revenueData` array is hardcoded, not connected to Stripe |
+| ~~Admin revenue data~~ | ~~DONE~~ | ~~Connected to `/api/admin/revenue` — real MRR from subscriptions~~ |
 | Logs page | Basic table view | TODO comment for activity timeline chart + log distribution donut |
-| Python logging | 32 print() statements | Should use Python `logging` module for production |
+| ~~Python logging~~ | ~~DONE~~ | ~~35 print() replaced with logging module in webhook_app.py + db.py~~ |
 
 ---
 
@@ -109,14 +109,14 @@
 | Feature Usage | `activity_logs` table | Near-real-time | All API routes via `logActivity()` |
 | NPS Results | `nps_responses` table | Real-time | User submissions |
 | AI Audit | `ai_audits` table | Weekly | `/api/cron/weekly-ai-audit` |
-| Revenue Chart | **HARDCODED MOCK** | Never | Nobody (static array in admin/page.tsx) |
+| Revenue Chart | `/api/admin/revenue` | Real-time | Queries `subscriptions` + `plans` tables |
 
 ### What is NOT connected
 | Gap | Impact | Fix |
 |-----|--------|-----|
 | `PLAN.md` / `task_plan.md` are static markdown | Claude sessions see them, but admin UI does NOT | Sync priorities into `project_tasks` DB table |
 | `daily_reports` findings don't auto-create `project_tasks` | Blockers found by cron require manual task creation | Add auto-creation in daily-ops cron |
-| Revenue chart is mock data | Admin sees fake financials | Wire to `subscriptions` + `usage_records` |
+| ~~Revenue chart is mock data~~ | ~~FIXED~~ | ~~Wired to `/api/admin/revenue`~~ |
 | `progress.md` not synced to DB | Admin panel doesn't reflect session-level progress | Update `project_tasks` status via API, not markdown |
 
 ### Recommendation
@@ -131,33 +131,33 @@ To keep docs and dashboard aligned:
 
 | Issue | Severity | Location | Detail |
 |-------|----------|----------|--------|
-| Silent error swallowing | MEDIUM | 6 `.catch(() => {})` blocks | admin, NPS, audit panels — errors invisible |
+| ~~Silent error swallowing~~ | ~~FIXED~~ | ~~`.catch(console.error)` in all panels~~ | ~~Mar 16~~ |
 | Oversized files | MEDIUM | admin/page.tsx (1,086), settings/page.tsx (1,151), webhook_app.py (1,283) | Exceed 800-line max |
-| Hardcoded ADMIN_USER_ID | LOW | usage.ts, feature-gate.ts | Should be env var or DB config |
+| ~~Hardcoded ADMIN_USER_ID~~ | ~~FIXED~~ | ~~Now `process.env.ADMIN_USER_ID` in 11 files~~ | ~~Mar 16~~ |
 | `system_alerts` table | LOW | Migration exists, 0 code refs | Alerts computed in-memory, table unused |
-| `GOOGLE_MAPS_MAPS_API_KEY` | LOW | maps.ts:61 | Typo in warning message (double MAPS) |
+| ~~`GOOGLE_MAPS_MAPS_API_KEY`~~ | ~~FIXED~~ | ~~Typo corrected in maps.ts~~ | ~~Mar 16~~ |
 | CRM API key encryption | MEDIUM | crm_connections table | API keys stored in plain text |
-| `invoice.created` webhook | MEDIUM | Stripe Dashboard | May not be registered — overage billing won't trigger until added |
-| WABA payment method | HIGH | Meta Business Manager | Marketing templates accepted by API but not delivered without payment |
-| Null lead_id backfill | MEDIUM | messages table | ~30 messages from Mar 12-14 have null lead_id, need SQL backfill |
-| AI assumes agent role | MEDIUM | webhook_app.py system prompt | AI responds as Nadine (agent) even when user is the agent texting |
-| AI stuck on old address | MEDIUM | webhook_app.py qualification logic | Lead data overwrite blocked — client can't discuss multiple properties |
+| `invoice.created` webhook | MEDIUM | Stripe Dashboard | PAUSED — fixing other issues first |
+| WABA payment method | HIGH | Meta Business Manager | Meta support confirms "Missing valid payment method" despite being added — escalate via Developer Forum |
+| Null lead_id backfill | MEDIUM | messages table | ~18 remaining messages from Mar 12-14 need SQL backfill |
+| ~~AI assumes agent role~~ | ~~FIXED~~ | ~~Agent self-detection skips AI reply~~ | ~~Mar 16~~ |
+| ~~AI stuck on old address~~ | ~~FIXED~~ | ~~Qualification overwrite guards removed~~ | ~~Mar 14~~ |
 
 ---
 
 ## Suggested Next Steps (Priority Order)
 
 ### P0 — Critical (do first)
-1. **Register `invoice.created` in Stripe Dashboard** — Without this, overage billing doesn't trigger. Go to Stripe Dashboard > Webhooks > Add `invoice.created` event.
-2. **Add error logging to silent catch blocks** — Replace 6 `.catch(() => {})` with `.catch(console.error)` in admin/NPS/audit panels.
+1. ~~**Register `invoice.created` in Stripe Dashboard**~~ — PAUSED. Fixing other issues first.
+2. ~~**Add error logging to silent catch blocks**~~ — DONE (Mar 16). Replaced 6 `.catch(() => {})` with `.catch(console.error)`.
 
 ### P1 — High Priority
-3. **Connect admin revenue chart to Stripe** — Replace mock `revenueData` with real MRR from `subscriptions` + `usage_records`. This is a data integrity issue — admin sees fake financials.
+3. ~~**Connect admin revenue chart to Stripe**~~ — DONE (Mar 16). New `/api/admin/revenue` route, real MRR from subscriptions.
 4. **Auto-create project_tasks from daily_reports findings** — When `/api/cron/daily-ops` finds blockers, create corresponding tasks in `project_tasks` table so they appear in admin UI.
 5. **Split oversized files** — `admin/page.tsx` and `settings/page.tsx` into subcomponents. `webhook_app.py` SMS handler into separate module.
 6. **Increase test coverage** — Add tests for Stripe webhook, usage limits, feature gating, conversations API. Target 80%+.
-7. **Replace Python print() with logging** — 32 statements across webhook_app.py and db.py.
-8. **Extract ADMIN_USER_ID to env var** — Currently hardcoded in 2 files.
+7. ~~**Replace Python print() with logging**~~ — DONE (Mar 16). 35 statements replaced with logging module.
+8. ~~**Extract ADMIN_USER_ID to env var**~~ — DONE (Mar 16). Now `process.env.ADMIN_USER_ID` in 11 files.
 
 ### P2 — Medium Priority
 9. **Implement Settings "Coming Soon" tabs** — Or remove them to avoid confusion.
