@@ -216,14 +216,24 @@ export async function POST(request: Request) {
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
       // Send WhatsApp via template (works outside 24-hour window for cold outreach)
-      // Template format: "Hello from KW Commercial:\n\n{{1}}\n\n- Nadine Khalil"
-      // {{1}} is the outreach message body
+      // Primary: property_inquiry (UTILITY — no WABA payment required)
+      // Fallback: realestate_outreach (MARKETING — requires WABA payment)
       const outreachBody = lead.sms_text || `I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
       const templateResult = await sendWhatsAppTemplate({
         to: contact,
-        bodyParams: [outreachBody],
+        templateName: 'property_inquiry',
+        bodyParams: [outreachBody, agentName],
       })
-      sendResult = { ok: templateResult.ok, messageId: templateResult.messageId, error: templateResult.error }
+      // If utility template fails (not yet approved), fall back to marketing template
+      if (!templateResult.ok) {
+        const fallback = await sendWhatsAppTemplate({
+          to: contact,
+          bodyParams: [outreachBody],
+        })
+        sendResult = { ok: fallback.ok, messageId: fallback.messageId, error: fallback.error }
+      } else {
+        sendResult = { ok: templateResult.ok, messageId: templateResult.messageId, error: templateResult.error }
+      }
     }
 
     // Record message in DB

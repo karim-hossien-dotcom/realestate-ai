@@ -321,12 +321,23 @@ async function sendFollowUpWhatsApp(
   if (!lead.phone) return { ok: false, error: 'No phone number' }
 
   // Use template for follow-ups (likely outside 24-hour conversation window)
-  // Template format: "Hello from KW Commercial:\n\n{{1}}\n\n- Nadine Khalil"
+  // Primary: property_inquiry (UTILITY — no WABA payment required)
+  // Fallback: realestate_outreach (MARKETING — requires WABA payment)
+  const agentName = profile.full_name || 'Your Real Estate Agent'
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
   const followUpBody = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out!`
   const result = await sendWhatsAppTemplate({
     to: lead.phone,
-    bodyParams: [followUpBody],
+    templateName: 'property_inquiry',
+    bodyParams: [followUpBody, agentName],
   })
+  if (!result.ok) {
+    // Fallback to marketing template
+    const fallback = await sendWhatsAppTemplate({
+      to: lead.phone,
+      bodyParams: [followUpBody],
+    })
+    return { ok: fallback.ok, error: fallback.error }
+  }
   return { ok: result.ok, error: result.error }
 }

@@ -154,7 +154,7 @@ To keep docs and dashboard aligned:
 ### P1 — High Priority
 3. ~~**Connect admin revenue chart to Stripe**~~ — DONE (Mar 16). New `/api/admin/revenue` route, real MRR from subscriptions.
 4. **Auto-create project_tasks from daily_reports findings** — When `/api/cron/daily-ops` finds blockers, create corresponding tasks in `project_tasks` table so they appear in admin UI.
-5. **Split oversized files** — `admin/page.tsx` and `settings/page.tsx` into subcomponents. `webhook_app.py` SMS handler into separate module.
+5. ~~**Split oversized files**~~ — DONE (Mar 16). admin/page.tsx 1,086→205, settings/page.tsx 1,151→447. webhook_app.py SMS handler still needs splitting.
 6. **Increase test coverage** — Add tests for Stripe webhook, usage limits, feature gating, conversations API. Target 80%+.
 7. ~~**Replace Python print() with logging**~~ — DONE (Mar 16). 35 statements replaced with logging module.
 8. ~~**Extract ADMIN_USER_ID to env var**~~ — DONE (Mar 16). Now `process.env.ADMIN_USER_ID` in 11 files.
