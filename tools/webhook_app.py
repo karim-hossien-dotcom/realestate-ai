@@ -488,6 +488,22 @@ def _process_whatsapp_message(
     agent_phone = ctx["agent_phone"]
     ai_config = ctx.get("ai_config")
 
+    # Detect if the sender IS the agent (admin testing or agent messaging themselves)
+    sender_digits = "".join(c for c in wa_id if c.isdigit())
+    agent_digits = "".join(c for c in (agent_phone or "") if c.isdigit())
+    is_agent_sender = bool(sender_digits and agent_digits and sender_digits == agent_digits)
+
+    if is_agent_sender:
+        print(f"[Agent-self] Detected agent {agent_name} texting from {wa_id} — skipping AI reply")
+        _log_to_supabase(user_id, wa_id, body, msg_id, "inbound")
+        if SUPABASE_AVAILABLE and user_id:
+            log_activity(
+                user_id, "agent_self_message",
+                f"Agent texted from their own number {wa_id} — no AI reply sent",
+                "info", {"phone": wa_id, "message": body[:100]},
+            )
+        return
+
     # Feature gate: AI auto-reply requires Pro plan or above
     plan_slug = ctx.get("plan_slug")
     if plan_slug == "starter":
