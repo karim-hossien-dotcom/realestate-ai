@@ -1,5 +1,5 @@
 # Estate AI — PLAN.md
-> Current state of the codebase as of March 12, 2026
+> Current state of the codebase as of March 14, 2026
 
 ## Fully Built & Working
 
@@ -20,7 +20,7 @@
 - [x] Tags, status management, score categories (hot/warm/cold/dead)
 
 ### Multi-Channel Messaging
-- [x] WhatsApp (Meta Graph API v21.0) — send text messages
+- [x] WhatsApp (Meta Graph API v21.0) — send text + template messages
 - [x] SMS (Twilio REST API, no SDK) — send with demo mode fallback
 - [x] Email (Resend SDK) — outreach + follow-up templates with XSS prevention
 - [x] Shared messaging pool (all channels count against one quota)
@@ -138,6 +138,10 @@ To keep docs and dashboard aligned:
 | `GOOGLE_MAPS_MAPS_API_KEY` | LOW | maps.ts:61 | Typo in warning message (double MAPS) |
 | CRM API key encryption | MEDIUM | crm_connections table | API keys stored in plain text |
 | `invoice.created` webhook | MEDIUM | Stripe Dashboard | May not be registered — overage billing won't trigger until added |
+| WABA payment method | HIGH | Meta Business Manager | Marketing templates accepted by API but not delivered without payment |
+| Null lead_id backfill | MEDIUM | messages table | ~30 messages from Mar 12-14 have null lead_id, need SQL backfill |
+| AI assumes agent role | MEDIUM | webhook_app.py system prompt | AI responds as Nadine (agent) even when user is the agent texting |
+| AI stuck on old address | MEDIUM | webhook_app.py qualification logic | Lead data overwrite blocked — client can't discuss multiple properties |
 
 ---
 
