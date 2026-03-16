@@ -32,6 +32,10 @@ const FEATURE_LABELS: Record<GatedFeature, string> = {
 }
 
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const BYPASS_USER_IDS = [
+  ADMIN_USER_ID,
+  process.env.BYPASS_USER_ID_1 || '',  // Nadine — first client, full free access
+].filter(Boolean)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any
@@ -54,7 +58,7 @@ export async function checkFeatureAccess(
   feature: GatedFeature,
   client?: SupabaseClient,
 ): Promise<FeatureAccessResult> {
-  if (userId === ADMIN_USER_ID) {
+  if (BYPASS_USER_IDS.includes(userId)) {
     return { allowed: true, planSlug: 'agency' }
   }
 

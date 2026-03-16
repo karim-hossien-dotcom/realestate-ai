@@ -1,6 +1,10 @@
 import { createClient, createServiceClient } from '@/app/lib/supabase/server'
 
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const BYPASS_USER_IDS = [
+  ADMIN_USER_ID,
+  process.env.BYPASS_USER_ID_1 || '',  // Nadine — first client, full free access
+].filter(Boolean)
 
 type ResourceType = 'leads' | 'sms' | 'email' | 'whatsapp'
 
@@ -52,8 +56,8 @@ export async function checkUsageLimits(
   resource: ResourceType,
   client?: SupabaseClient,
 ): Promise<CheckResult> {
-  // Admin bypass — owner always has unlimited access
-  if (userId === ADMIN_USER_ID) {
+  // Admin/VIP bypass — unlimited access without subscription
+  if (BYPASS_USER_IDS.includes(userId)) {
     return {
       allowed: true,
       current: 0,
