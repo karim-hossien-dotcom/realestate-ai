@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { sendWhatsAppText, sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
@@ -215,24 +215,33 @@ export async function POST(request: Request) {
       const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
-      // Send WhatsApp via template (works outside 24-hour window for cold outreach)
-      // Primary: property_inquiry (UTILITY — no WABA payment required)
-      // Fallback: realestate_outreach (MARKETING — requires WABA payment)
+      // WhatsApp send strategy (3 tiers):
+      // 1. Plain text — free, works within 24h conversation window
+      // 2. property_inquiry template (UTILITY) — no WABA payment needed
+      // 3. realestate_outreach template (MARKETING) — needs WABA payment
       const outreachBody = lead.sms_text || `I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
-      const templateResult = await sendWhatsAppTemplate({
-        to: contact,
-        templateName: 'property_inquiry',
-        bodyParams: [outreachBody, agentName],
-      })
-      // If utility template fails (not yet approved), fall back to marketing template
-      if (!templateResult.ok) {
-        const fallback = await sendWhatsAppTemplate({
-          to: contact,
-          bodyParams: [outreachBody],
-        })
-        sendResult = { ok: fallback.ok, messageId: fallback.messageId, error: fallback.error }
+
+      // Try plain text first (works if lead has messaged in last 24h)
+      const textResult = await sendWhatsAppText({ to: contact, body: outreachBody })
+      if (textResult.ok) {
+        sendResult = { ok: true, messageId: textResult.messageId }
       } else {
-        sendResult = { ok: templateResult.ok, messageId: templateResult.messageId, error: templateResult.error }
+        // Outside 24h window — try utility template (no payment required)
+        const utilityResult = await sendWhatsAppTemplate({
+          to: contact,
+          templateName: 'property_inquiry',
+          bodyParams: [outreachBody, agentName],
+        })
+        if (utilityResult.ok) {
+          sendResult = { ok: true, messageId: utilityResult.messageId }
+        } else {
+          // Last resort — marketing template
+          const marketingResult = await sendWhatsAppTemplate({
+            to: contact,
+            bodyParams: [outreachBody],
+          })
+          sendResult = { ok: marketingResult.ok, messageId: marketingResult.messageId, error: marketingResult.error }
+        }
       }
     }
 

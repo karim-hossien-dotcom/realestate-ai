@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
-import { sendWhatsAppTemplate } from '@/app/lib/whatsapp'
+import { sendWhatsAppText, sendWhatsAppTemplate } from '@/app/lib/whatsapp'
 import { sendSms } from '@/app/lib/sms'
 import { isOnNationalDnc } from '@/app/lib/dnc-registry'
 import { checkMessageQuota } from '@/app/lib/usage'
@@ -320,24 +320,30 @@ async function sendFollowUpWhatsApp(
 ): Promise<{ ok: boolean; error?: string }> {
   if (!lead.phone) return { ok: false, error: 'No phone number' }
 
-  // Use template for follow-ups (likely outside 24-hour conversation window)
-  // Primary: property_inquiry (UTILITY — no WABA payment required)
-  // Fallback: realestate_outreach (MARKETING — requires WABA payment)
+  // Follow-up send strategy (3 tiers):
+  // 1. Plain text — free, works within 24h conversation window
+  // 2. property_inquiry template (UTILITY) — no WABA payment needed
+  // 3. realestate_outreach template (MARKETING) — needs WABA payment
   const agentName = profile.full_name || 'Your Real Estate Agent'
   const recipientName = lead.owner_name?.split(' ')[0] || 'there'
   const followUpBody = followUp.message_text || `Hi ${recipientName}, just following up about your property. Feel free to reach out!`
-  const result = await sendWhatsAppTemplate({
+
+  // Try plain text first (works if lead has messaged in last 24h)
+  const textResult = await sendWhatsAppText({ to: lead.phone, body: followUpBody })
+  if (textResult.ok) return { ok: true }
+
+  // Outside 24h — try utility template
+  const utilityResult = await sendWhatsAppTemplate({
     to: lead.phone,
     templateName: 'property_inquiry',
     bodyParams: [followUpBody, agentName],
   })
-  if (!result.ok) {
-    // Fallback to marketing template
-    const fallback = await sendWhatsAppTemplate({
-      to: lead.phone,
-      bodyParams: [followUpBody],
-    })
-    return { ok: fallback.ok, error: fallback.error }
-  }
-  return { ok: result.ok, error: result.error }
+  if (utilityResult.ok) return { ok: true }
+
+  // Last resort — marketing template
+  const marketingResult = await sendWhatsAppTemplate({
+    to: lead.phone,
+    bodyParams: [followUpBody],
+  })
+  return { ok: marketingResult.ok, error: marketingResult.error }
 }
