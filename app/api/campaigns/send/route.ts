@@ -10,6 +10,7 @@ import { campaignSendSchema } from '@/app/lib/schemas'
 import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
 import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
 import { recordOverage } from '@/app/lib/overage'
+import { generateOutreachMessage } from '@/app/lib/outreach-messages'
 
 type SendResult = {
   phone: string
@@ -219,7 +220,32 @@ export async function POST(request: Request) {
       // 1. Plain text — free, works within 24h conversation window
       // 2. property_inquiry template (UTILITY) — no WABA payment needed
       // 3. realestate_outreach template (MARKETING) — needs WABA payment
-      const outreachBody = lead.sms_text || `I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
+
+      // Fetch full lead data for smart personalization (if we have a lead ID)
+      let outreachBody = lead.sms_text || ''
+      if (!outreachBody && lead.id) {
+        const { data: fullLead } = await supabase
+          .from('leads')
+          .select('owner_name, property_address, property_type, property_interest, notes, status, tags, location_preference')
+          .eq('id', lead.id)
+          .single()
+        if (fullLead) {
+          outreachBody = generateOutreachMessage({
+            ownerName: fullLead.owner_name,
+            propertyAddress: fullLead.property_address,
+            propertyType: fullLead.property_type,
+            propertyInterest: fullLead.property_interest,
+            notes: fullLead.notes,
+            status: fullLead.status,
+            tags: fullLead.tags,
+            locationPreference: fullLead.location_preference,
+            agentName,
+          })
+        }
+      }
+      if (!outreachBody) {
+        outreachBody = `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
+      }
 
       // Try plain text first (works if lead has messaged in last 24h)
       const textResult = await sendWhatsAppText({ to: contact, body: outreachBody })
