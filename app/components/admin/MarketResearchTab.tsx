@@ -107,7 +107,7 @@ export default function MarketResearchTab({ tasks, onToggle }: MarketResearchTab
                 { feature: 'WhatsApp Integration', us: true, fub: false, kv: false, struct: false, sierra: false },
                 { feature: 'SMS Automation', us: true, fub: true, kv: true, struct: true, sierra: true },
                 { feature: 'Email Campaigns', us: true, fub: true, kv: true, struct: false, sierra: true },
-                { feature: 'Smart Calendar', us: false, fub: false, kv: true, struct: false, sierra: false },
+                { feature: 'Smart Calendar', us: true, fub: false, kv: true, struct: false, sierra: false },
                 { feature: 'Starting Price', us: '$99', fub: '$69', kv: '$499', struct: '$179', sierra: '$499' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-[var(--surface-elevated)] transition-colors">

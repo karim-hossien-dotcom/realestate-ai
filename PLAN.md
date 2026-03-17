@@ -138,7 +138,7 @@ To keep docs and dashboard aligned:
 | ~~`GOOGLE_MAPS_MAPS_API_KEY`~~ | ~~FIXED~~ | ~~Typo corrected in maps.ts~~ | ~~Mar 16~~ |
 | CRM API key encryption | MEDIUM | crm_connections table | API keys stored in plain text |
 | `invoice.created` webhook | MEDIUM | Stripe Dashboard | PAUSED — fixing other issues first |
-| WABA payment method | HIGH | Meta Business Manager | Meta support confirms "Missing valid payment method" despite being added — escalate via Developer Forum |
+| WABA payment method | HIGH | Meta Business Manager | Known Meta bug — payment doesn't stick. Workaround: UTILITY template + plain text 3-tier send. See Meta Community thread 1989822904906732 |
 | Null lead_id backfill | MEDIUM | messages table | ~18 remaining messages from Mar 12-14 need SQL backfill |
 | ~~AI assumes agent role~~ | ~~FIXED~~ | ~~Agent self-detection skips AI reply~~ | ~~Mar 16~~ |
 | ~~AI stuck on old address~~ | ~~FIXED~~ | ~~Qualification overwrite guards removed~~ | ~~Mar 14~~ |
