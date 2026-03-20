@@ -574,22 +574,29 @@ def _process_whatsapp_message(
                          reply_text=escalation_reply, send_status="sent")
         return
 
-    # If AI detects stop intent, treat as opt-out
+    # If AI detects stop intent, verify with keyword checker before opt-out.
+    # AI alone is unreliable — it once classified "Thanks" as stop intent.
     if ai_result.get("intent") == "stop":
-        if SUPABASE_AVAILABLE and user_id:
-            add_to_dnc_list(user_id, wa_id, "AI-detected stop intent")
-            log_activity(
-                user_id, "opt_out",
-                f"User {wa_id} opted out (AI-detected intent)",
-                "success",
-                {"phone": wa_id, "message": body},
+        if is_stop_message(body):
+            # Confirmed by keyword checker — actually a stop request
+            if SUPABASE_AVAILABLE and user_id:
+                add_to_dnc_list(user_id, wa_id, "AI-detected stop intent (confirmed by keyword check)")
+                log_activity(
+                    user_id, "opt_out",
+                    f"User {wa_id} opted out (AI + keyword confirmed)",
+                    "success",
+                    {"phone": wa_id, "message": body},
+                )
+            _send_whatsapp_message(
+                wa_id,
+                "You're unsubscribed. You won't receive any further messages. "
+                "Thank you for letting us know.",
             )
-        _send_whatsapp_message(
-            wa_id,
-            "You're unsubscribed. You won't receive any further messages. "
-            "Thank you for letting us know.",
-        )
-        return
+            return
+        else:
+            # AI said stop but keywords don't confirm — override to "other" and continue
+            logger.warning(f"[Stop override] AI classified '{body[:50]}' as stop but keyword check disagreed — continuing")
+            ai_result["intent"] = "other"
 
     reply_text = ai_result.get("reply", "Thanks for your message! I'll follow up shortly.")
 
