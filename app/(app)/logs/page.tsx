@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/app/components/ToastProvider';
 import { SkeletonCard } from '@/app/components/Skeleton';
 import EmptyState from '@/app/components/EmptyState';
@@ -209,6 +210,9 @@ export default function LogsPage() {
         </div>
       )}
 
+      {/* Charts */}
+      {logs.length > 0 && <LogCharts logs={logs} />}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
         {/* Search */}
@@ -401,7 +405,83 @@ export default function LogsPage() {
       {/* Log Detail Modal */}
       {selectedLog && <LogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} onRetry={handleRetry} formatTimestamp={formatTimestamp} />}
 
-      {/* TODO: Add activity timeline chart and log distribution donut chart using recharts */}
+    </div>
+  );
+}
+
+const PIE_COLORS = ['#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#f97316', '#eab308', '#6b7280', '#6366f1'];
+
+function LogCharts({ logs }: { logs: LogEntry[] }) {
+  // Activity timeline: group by day
+  const timelineData = useMemo(() => {
+    const dayMap: Record<string, { date: string; count: number; errors: number }> = {};
+    for (const log of logs) {
+      const day = log.timestamp.split('T')[0];
+      if (!dayMap[day]) dayMap[day] = { date: day, count: 0, errors: 0 };
+      dayMap[day].count++;
+      if (log.status === 'failed') dayMap[day].errors++;
+    }
+    return Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
+      ...d,
+      label: new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    }));
+  }, [logs]);
+
+  // Event type distribution
+  const typeData = useMemo(() => {
+    const typeMap: Record<string, number> = {};
+    for (const log of logs) {
+      const label = EVENT_TYPES[log.eventType]?.label || log.eventType;
+      typeMap[label] = (typeMap[label] || 0) + 1;
+    }
+    return Object.entries(typeMap)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [logs]);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Activity Timeline */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
+        <h3 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">Activity Timeline</h3>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={timelineData} barGap={2}>
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} width={30} />
+            <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+            <Bar dataKey="count" name="Events" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="errors" name="Errors" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Event Type Distribution */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
+        <h3 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">Event Distribution</h3>
+        <div className="flex items-center gap-4">
+          <ResponsiveContainer width="50%" height={180}>
+            <PieChart>
+              <Pie data={typeData} dataKey="value" cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={2}>
+                {typeData.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex-1 space-y-1.5">
+            {typeData.slice(0, 6).map((item, i) => (
+              <div key={item.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <span className="text-[var(--text-secondary)]">{item.name}</span>
+                </div>
+                <span className="font-medium text-[var(--text-primary)]">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

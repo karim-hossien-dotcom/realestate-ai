@@ -14,9 +14,6 @@ import ProfileTab from '@/app/components/settings/ProfileTab';
 import CrmTab from '@/app/components/settings/CrmTab';
 import AiScriptTab from '@/app/components/settings/AiScriptTab';
 import BillingTab from '@/app/components/settings/BillingTab';
-import ComingSoonTab from '@/app/components/settings/ComingSoonTab';
-
-const COMING_SOON_SECTIONS: ReadonlyArray<SettingsSection> = ['messaging', 'email', 'team', 'auto-reply'];
 
 const plans: PlanDef[] = [
   {
@@ -341,7 +338,6 @@ export default function SettingsPage() {
 
   /* --- Render --- */
 
-  const isComingSoon = COMING_SOON_SECTIONS.includes(activeSection);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -366,9 +362,6 @@ export default function SettingsPage() {
             <i className={`fas ${section.icon} text-xs`}></i>
             <span className="hidden sm:inline">{section.label}</span>
             <span className="sm:hidden">{section.shortLabel}</span>
-            {section.comingSoon && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">Soon</span>
-            )}
           </button>
         ))}
       </div>
@@ -439,7 +432,6 @@ export default function SettingsPage() {
             />
           )}
 
-          {isComingSoon && <ComingSoonTab />}
         </>
       )}
     </div>

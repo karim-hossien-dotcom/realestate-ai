@@ -87,9 +87,5 @@ export const settingsSections = [
   { id: 'profile' as const, label: 'Profile & Account', icon: 'fa-user', shortLabel: 'Profile' },
   { id: 'integrations' as const, label: 'Integrations', icon: 'fa-plug', shortLabel: 'CRM' },
   { id: 'ai-personality' as const, label: 'AI Personality', icon: 'fa-brain', shortLabel: 'AI' },
-  { id: 'messaging' as const, label: 'Messaging Provider', icon: 'fa-sms', comingSoon: true, shortLabel: 'Messaging' },
-  { id: 'email' as const, label: 'Email Settings', icon: 'fa-envelope', comingSoon: true, shortLabel: 'Email' },
-  { id: 'team' as const, label: 'Team Management', icon: 'fa-users-cog', comingSoon: true, shortLabel: 'Team' },
-  { id: 'auto-reply' as const, label: 'Auto-Reply', icon: 'fa-robot', comingSoon: true, shortLabel: 'Auto-Reply' },
   { id: 'billing' as const, label: 'Billing & Plans', icon: 'fa-credit-card', shortLabel: 'Billing' },
 ];
