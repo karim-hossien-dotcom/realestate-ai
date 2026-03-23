@@ -753,7 +753,7 @@ def _handle_meeting_booking(
             {"phone": wa_id, "meeting": meeting_data, "qualification": qualification},
         )
 
-    # Auto-create day-before confirmation follow-up
+    # Auto-create day-before confirmation follow-up (DEDUP: only if no existing reminder for this date)
     if meeting_data.get("date_suggestion") and lead:
         try:
             from datetime import timedelta
@@ -761,26 +761,37 @@ def _handle_meeting_booking(
                 meeting_data["date_suggestion"].replace("Z", "+00:00")
             )
             confirm_dt = meeting_dt - timedelta(days=1)
-            lead_name = lead.get("owner_name", "there")
-            confirm_msg = (
-                f"Hi {lead_name}, just a reminder about our meeting tomorrow "
-                f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
-                f"at {meeting_data.get('property_address', 'your property')}. "
-                f"Looking forward to speaking with you! - {agent_name}"
-            )
-            create_follow_up(
-                user_id=user_id,
-                lead_id=lead.get("id"),
-                message_text=confirm_msg,
-                scheduled_at=confirm_dt.isoformat(),
-                channel="whatsapp",
-            )
-            log_activity(
-                user_id, "followup",
-                f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
-                "success",
-                {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
-            )
+
+            # Check if we already created a reminder for this meeting date
+            existing = get_supabase_client().table("follow_ups").select("id").eq(
+                "user_id", user_id
+            ).eq("lead_id", lead.get("id")).like(
+                "message_text", f"%reminder about our meeting tomorrow%"
+            ).gte("scheduled_at", confirm_dt.date().isoformat()).limit(1).execute()
+
+            if existing.data:
+                logger.info(f"[Meeting] Reminder already exists for {wa_id} on {confirm_dt.date()} — skipping")
+            else:
+                lead_name = lead.get("owner_name", "there")
+                confirm_msg = (
+                    f"Hi {lead_name}, just a reminder about our meeting tomorrow "
+                    f"at {meeting_dt.strftime('%I:%M %p')} regarding your property "
+                    f"at {meeting_data.get('property_address', 'your property')}. "
+                    f"Looking forward to speaking with you! - {agent_name}"
+                )
+                create_follow_up(
+                    user_id=user_id,
+                    lead_id=lead.get("id"),
+                    message_text=confirm_msg,
+                    scheduled_at=confirm_dt.isoformat(),
+                    channel="whatsapp",
+                )
+                log_activity(
+                    user_id, "followup",
+                    f"Auto-created meeting confirmation for day before: {confirm_dt.date()}",
+                    "success",
+                    {"phone": wa_id, "meeting_date": meeting_data["date_suggestion"]},
+                )
         except Exception as e:
             logger.error(f"Error creating confirmation follow-up: {e}")
 
