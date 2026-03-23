@@ -50,16 +50,19 @@ export async function GET(request: Request) {
 
     const { data: allTasks } = await allQuery
 
+    const all = allTasks || []
+    const open = all.filter(t => t.status !== 'completed')
     const summary = {
-      total: allTasks?.length || 0,
-      completed: allTasks?.filter(t => t.status === 'completed').length || 0,
-      blockers: allTasks?.filter(t => t.is_blocker && t.status !== 'completed').length || 0,
-      automatable: allTasks?.filter(t => t.is_automatable).length || 0,
+      total: all.length,
+      completed: all.filter(t => t.status === 'completed').length,
+      blockers: all.filter(t => t.is_blocker && t.status !== 'completed').length,
+      automatable: open.filter(t => t.is_automatable).length,
       byDepartment: {
-        legal: allTasks?.filter(t => t.department === 'legal').length || 0,
-        engineering: allTasks?.filter(t => t.department === 'engineering').length || 0,
-        marketing: allTasks?.filter(t => t.department === 'marketing').length || 0,
-        finance: allTasks?.filter(t => t.department === 'finance').length || 0,
+        legal: all.filter(t => t.department === 'legal').length,
+        engineering: all.filter(t => t.department === 'engineering').length,
+        marketing: all.filter(t => t.department === 'marketing').length,
+        finance: all.filter(t => t.department === 'finance').length,
+        market_research: all.filter(t => t.department === 'market_research').length,
       },
     }
 

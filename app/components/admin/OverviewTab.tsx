@@ -267,22 +267,30 @@ export default function OverviewTab({ tasks, onToggle, summary, alerts, revenue 
 
       {/* Automation + completions */}
       <div className="grid grid-cols-2 gap-4">
-        <Card title="Automation Split" accent="#AA66FF">
+        <Card title="Automation Split (open tasks)" accent="#AA66FF">
           <div className="space-y-4 py-2">
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/15">
-              <div className="text-4xl font-bold text-[var(--primary)]">{summary.automatable}</div>
-              <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)]">AI-Assisted Tasks</div>
-                <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Health endpoints, alerting, content drafts, templates</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)]">
-              <div className="text-4xl font-bold text-[var(--text-secondary)]">{summary.total - summary.automatable}</div>
-              <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)]">Needs You</div>
-                <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Account setup, vendor registration, legal, ad launches</div>
-              </div>
-            </div>
+            {(() => {
+              const openCount = summary.total - summary.completed
+              const needsYou = openCount - summary.automatable
+              return (
+                <>
+                  <div className="flex items-center gap-4 p-4 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/15">
+                    <div className="text-4xl font-bold text-[var(--primary)]">{summary.automatable}</div>
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">AI-Assisted</div>
+                      <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Health checks, content drafts, research, templates</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)]">
+                    <div className="text-4xl font-bold text-[var(--text-secondary)]">{needsYou}</div>
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">Needs You</div>
+                      <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Account setup, vendor registration, ad launches</div>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </Card>
 
