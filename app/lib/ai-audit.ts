@@ -185,7 +185,7 @@ export async function runWeeklyAudit(): Promise<{ audited: number; avgScore: num
 
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: AUDIT_PROMPT },
           { role: 'user', content: conversationText },
