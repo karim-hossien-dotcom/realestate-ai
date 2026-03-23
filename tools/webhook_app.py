@@ -109,7 +109,7 @@ def _is_duplicate_message(msg_id: str) -> bool:
 _MSG_BUFFER: dict[str, list[dict]] = {}   # phone -> [buffered messages]
 _MSG_TIMERS: dict[str, threading.Timer] = {}  # phone -> pending timer
 _MSG_BUFFER_LOCK = threading.Lock()
-_DEBOUNCE_SECONDS = 8  # wait this long after last message before processing
+_DEBOUNCE_SECONDS = 12  # wait this long after last message before processing (increased from 8 to catch rapid multi-texters)
 
 
 def _flush_message_buffer(wa_id: str) -> None:
