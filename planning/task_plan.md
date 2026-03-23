@@ -98,20 +98,38 @@ Major features and fixes delivered across 32 commits after the original audit:
 
 ---
 
-## Remaining Work (Priority Order)
+## Phase 6: Mar 23 (continued) — Command Center, Ops Audit, Billing
+
+| Task | Status | Commit |
+|------|--------|--------|
+| Fix AI name repetition + vague closers + debounce 8→12s | DONE | `54db6bf` |
+| Fix meeting reminder spam (380 duplicates, added dedup) | DONE | `ac26a7b` |
+| Add ops health check to weekly AI audit | DONE | `e91d220` |
+| Upgrade remaining gpt-4o-mini → gpt-4o (audit + lead extract) | DONE | `5f767ec` |
+| Fix Command Center automation split numbers | DONE | `3eba1b5` |
+| Register `invoice.created` in Stripe Dashboard | DONE | (Stripe config) |
+| Overage billing end-to-end test passed | DONE | (verified) |
+| Legal: AI disclosure, CCPA, GDPR, SaaS terms, DPA, CASL | DONE | `3d1b285`, `25a3cf0` |
+| Landing page redesign (dark premium) | DONE | `8ecbf66` |
+| Marketing: outreach emails, LinkedIn posts, ad creatives | DONE | `4c98f63`, `aad3474` |
+| Research: AI trends, CRM sentiment, state compliance | DONE | `aad3474`, `4c98f63` |
+| Twilio 10DLC resubmission guide + CTA text | DONE | `25a3cf0` |
+
+---
+
+## Remaining Work (3 items)
 
 ### P1 — High Priority
 1. **Encrypt CRM API keys** — App-level AES-256 before storing in `crm_connections`.
-2. **Register `invoice.created` in Stripe Dashboard** — Paused, revisit after stabilization.
 
 ### P2 — Medium Priority
-3. **Twilio A2P 10DLC registration** — Waiting on external review.
-4. **Landing page redesign** — CallSine-inspired dark premium aesthetic (plan exists).
+2. **Twilio A2P 10DLC** — Resubmitted Mar 23, awaiting review (3-7 business days).
 
 ### P3 — Deferred
-5. **WebSocket for conversations** — Upgrade later when scale demands it.
-6. **2FA** — Nice-to-have post-launch.
-7. **Clean up unused `system_alerts` table** — Either use it or drop migration.
+3. **WebSocket for conversations** — Upgrade later when scale demands it.
+
+## Command Center: 51/63 tasks completed (81%)
+- 12 remaining: all marketing tasks requiring Karim (account setups, ad launches, video, testimonials, groups)
 
 ### Business Documents
 See [`docs/finance-model-updates.md`](docs/finance-model-updates.md) and [`docs/pitch-deck-corrections.md`](docs/pitch-deck-corrections.md) for Excel/PowerPoint update guides.
