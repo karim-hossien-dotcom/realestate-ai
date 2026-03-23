@@ -523,7 +523,7 @@ def _process_whatsapp_message(
             )
         ack_text = (
             f"Thanks for reaching out! {agent_name} will get back to you shortly. "
-            f"For faster service, upgrade to our Pro plan for instant AI-powered responses."
+            f"(Automated reply — {agent_name}'s AI assistant)"
         )
         _send_whatsapp_message(wa_id, ack_text)
         _log_to_supabase(user_id, wa_id, body, msg_id, "outbound",

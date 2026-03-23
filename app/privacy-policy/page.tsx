@@ -84,7 +84,80 @@ export default function PrivacyPolicyPage() {
         us at the information below.
       </p>
 
-      <h2>10. Contact Us</h2>
+      <h2>10. Artificial Intelligence Disclosure</h2>
+      <p>
+        Estate AI uses artificial intelligence technology to assist licensed real estate agents
+        with communication management. This includes:
+      </p>
+      <ul>
+        <li>AI-assisted message drafting and response suggestions for WhatsApp, SMS, and email.</li>
+        <li>Automated lead qualification and scoring based on conversation analysis.</li>
+        <li>AI-generated follow-up scheduling recommendations.</li>
+      </ul>
+      <p>
+        All AI-generated communications are sent on behalf of and under the supervision of
+        a licensed real estate agent. AI-assisted messages are identified as such on initial
+        contact. The licensed agent associated with your inquiry is responsible for the
+        accuracy of information provided.
+      </p>
+
+      <h2>11. California Privacy Rights (CCPA/CPRA)</h2>
+      <p>
+        If you are a California resident, you have the following rights under the California
+        Consumer Privacy Act (CCPA) and California Privacy Rights Act (CPRA):
+      </p>
+      <ul>
+        <li><strong>Right to Know:</strong> You may request that we disclose the categories and specific
+          pieces of personal information we have collected about you, the categories of sources,
+          the business purpose for collecting it, and the categories of third parties with whom
+          we share it.</li>
+        <li><strong>Right to Delete:</strong> You may request that we delete personal information we
+          have collected from you, subject to certain exceptions (e.g., legal compliance, completing
+          a transaction you requested).</li>
+        <li><strong>Right to Opt-Out of Sale/Sharing:</strong> We do not sell your personal information.
+          We do not share your personal information for cross-context behavioral advertising.</li>
+        <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for
+          exercising any of your CCPA/CPRA rights.</li>
+        <li><strong>Right to Correct:</strong> You may request that we correct inaccurate personal
+          information that we maintain about you.</li>
+        <li><strong>Right to Limit Use of Sensitive Information:</strong> We do not use or disclose
+          sensitive personal information for purposes other than those permitted by the CPRA.</li>
+      </ul>
+      <p>
+        To exercise any of these rights, contact us at <strong>privacy@realestate-ai.app</strong> or
+        call <strong>(848) 456-9428</strong>. We will verify your identity before processing your request.
+        We will respond to verifiable requests within 45 days.
+      </p>
+      <p>
+        <strong>Categories of personal information collected in the last 12 months:</strong> Identifiers
+        (name, phone, email, property address), commercial information (property interest, transaction
+        inquiries), internet/electronic activity (message interactions, website usage), and geolocation
+        data (property locations from public records).
+      </p>
+
+      <h2>12. European Privacy Rights (GDPR)</h2>
+      <p>
+        If you are located in the European Economic Area (EEA) or United Kingdom, you have
+        additional rights under the General Data Protection Regulation (GDPR):
+      </p>
+      <ul>
+        <li><strong>Legal Basis:</strong> We process your personal data based on legitimate interest
+          (connecting property owners with licensed agents) or your explicit consent.</li>
+        <li><strong>Right of Access:</strong> You may request a copy of the personal data we hold about you.</li>
+        <li><strong>Right to Rectification:</strong> You may request correction of inaccurate data.</li>
+        <li><strong>Right to Erasure:</strong> You may request deletion of your data (&quot;right to be forgotten&quot;).</li>
+        <li><strong>Right to Restrict Processing:</strong> You may request that we limit how we use your data.</li>
+        <li><strong>Right to Data Portability:</strong> You may request your data in a structured, machine-readable format.</li>
+        <li><strong>Right to Object:</strong> You may object to processing based on legitimate interest.</li>
+        <li><strong>Right to Withdraw Consent:</strong> Where processing is based on consent, you may withdraw at any time.</li>
+      </ul>
+      <p>
+        To exercise these rights, contact us at <strong>privacy@realestate-ai.app</strong>.
+        We will respond within 30 days. You also have the right to lodge a complaint with
+        your local data protection authority.
+      </p>
+
+      <h2>13. Contact Us</h2>
       <p>
         For questions or concerns about this Privacy Policy or your personal data, contact us at:
       </p>

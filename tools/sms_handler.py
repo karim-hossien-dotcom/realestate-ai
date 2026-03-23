@@ -192,7 +192,7 @@ def sms_inbound():
                 f"AI auto-reply skipped for SMS {from_number} — Starter plan.",
                 "info", {"phone": from_number, "feature": "ai_auto_reply", "plan": "starter", "channel": "sms"},
             )
-        ack_text = f"Thanks for reaching out! {agent_name} will get back to you shortly."
+        ack_text = f"Thanks for reaching out! {agent_name} will get back to you shortly. (Automated reply — {agent_name}'s AI assistant)"
         _send_sms_message(from_number, ack_text)
         _log_sms_to_supabase(user_id, from_number, body, "outbound", reply_text=ack_text, send_status="sent")
         return Response("", status=200, mimetype="text/plain")
