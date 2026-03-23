@@ -171,10 +171,44 @@ async function handler(request: NextRequest) {
       blockers: [],
     }, { onConflict: 'department,report_date' }).throwOnError();
 
+    // Auto-create project_tasks for critical/warning findings
+    // Only creates tasks that don't already exist (dedup by title + date)
+    const adminUserId = process.env.ADMIN_USER_ID || '';
+    let tasksCreated = 0;
+
+    if (adminUserId && critical.length > 0) {
+      for (const alert of critical) {
+        const title = `[CRON] ${alert.title}`;
+        // Check if task already exists today
+        const { data: existing } = await supabase
+          .from('project_tasks')
+          .select('id')
+          .eq('user_id', adminUserId)
+          .eq('title', title)
+          .gte('created_at', `${today}T00:00:00`)
+          .limit(1);
+
+        if (!existing?.length) {
+          await supabase.from('project_tasks').insert({
+            user_id: adminUserId,
+            department: 'engineering',
+            priority: 'P0',
+            title,
+            description: `Auto-detected by daily-ops cron on ${today}: ${alert.message}`,
+            is_blocker: true,
+            is_automatable: false,
+            status: 'pending',
+          });
+          tasksCreated++;
+        }
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       date: today,
       departments_reported: 5,
+      tasks_created: tasksCreated,
       engineering_health: engHealth,
       finance_health: finHealth,
       legal_health: legalHealth,
