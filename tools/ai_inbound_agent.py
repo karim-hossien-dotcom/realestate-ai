@@ -360,6 +360,8 @@ MEETING RULES:
 - "requested": true when they ask to meet/call.
 - "ready_to_book": true ONLY with BOTH date AND time.
 - If date but no time → ask for time. If time but no date → ask for date.
+- "date_suggestion" MUST be a FUTURE date. Today is {today}. If someone says "April 20th" the date is 2026-04-20, NOT today. NEVER set date_suggestion to today or a past date.
+- "meeting_date" in qualification must also be FUTURE. Double-check the date makes sense before returning it.
 {config_modifier}"""
 
     # Build messages list with conversation history

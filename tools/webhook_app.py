@@ -638,6 +638,17 @@ def _process_whatsapp_message(
 
     # Create meeting ONLY when ready_to_book (has both date and time)
     meeting_data = ai_result.get("meeting", {})
+    # Validate date_suggestion is in the future — AI sometimes returns today's date by mistake
+    if meeting_data.get("date_suggestion"):
+        try:
+            suggested_dt = datetime.fromisoformat(meeting_data["date_suggestion"].replace("Z", "+00:00"))
+            if suggested_dt < datetime.now(timezone.utc):
+                logger.warning(f"[Meeting] AI suggested past date {meeting_data['date_suggestion']} — ignoring meeting booking")
+                meeting_data["ready_to_book"] = False
+        except (ValueError, TypeError):
+            logger.warning(f"[Meeting] Invalid date_suggestion: {meeting_data.get('date_suggestion')}")
+            meeting_data["ready_to_book"] = False
+
     if meeting_data.get("ready_to_book") and meeting_data.get("date_suggestion") and SUPABASE_AVAILABLE and user_id:
         _handle_meeting_booking(user_id, wa_id, body, msg_id, agent_name,
                                 meeting_data, qualification, ai_result)
