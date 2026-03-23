@@ -3,7 +3,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { parseBody, checkPhoneTaken } from '@/app/lib/api'
 import { createLeadSchema, updateLeadSchema } from '@/app/lib/schemas'
-import { checkUsageLimits, limitExceededPayload } from '@/app/lib/usage'
+import { checkUsageLimits, limitExceededPayload } from '@/app/lib/billing/usage'
 
 export async function GET(request: Request) {
   const auth = await withAuth()
@@ -83,6 +83,18 @@ export async function POST(request: Request) {
   if (dbError) {
     await logActivity(auth.user.id, 'lead.create', `Failed to create lead: ${dbError.message}`, 'failed')
     return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
+  }
+
+  // Record consent for TCPA/CASL compliance when lead has a phone
+  if (lead.phone) {
+    const { error: consentErr } = await supabase.from('consent_records').upsert({
+      user_id: auth.user.id,
+      phone: lead.phone,
+      consent_type: 'sms_marketing',
+      consent_given: true,
+      source: 'manual_creation',
+    }, { onConflict: 'user_id,phone', ignoreDuplicates: true })
+    if (consentErr) console.error('[Consent] Failed to record:', consentErr.message)
   }
 
   await logActivity(auth.user.id, 'lead.create', `Created lead ${lead.owner_name || lead.id}`, 'success')
