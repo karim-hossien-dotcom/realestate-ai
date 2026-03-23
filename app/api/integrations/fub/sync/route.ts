@@ -3,7 +3,8 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { fetchPeople, convertPersonToLead } from '@/app/lib/integrations/follow-up-boss'
 import { checkPhoneTaken } from '@/app/lib/api'
-import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/feature-gate'
+import { decrypt, isEncrypted } from '@/app/lib/crypto'
 
 /**
  * POST /api/integrations/fub/sync
@@ -38,8 +39,17 @@ export async function POST() {
 
   console.log('[FUB Sync] Starting sync for user:', auth.user.id)
 
+  // Decrypt API key (supports both encrypted and legacy plain text keys)
+  let apiKey: string
+  try {
+    apiKey = isEncrypted(connection.api_key) ? decrypt(connection.api_key) : connection.api_key
+  } catch (err) {
+    console.error('[FUB Sync] Failed to decrypt API key:', err)
+    return NextResponse.json({ ok: false, error: 'Failed to decrypt CRM API key' }, { status: 500 })
+  }
+
   // Fetch people from FUB
-  const fetchResult = await fetchPeople(connection.api_key, {
+  const fetchResult = await fetchPeople(apiKey, {
     limit: 100,
     updatedSince: connection.last_sync_at || undefined,
   })

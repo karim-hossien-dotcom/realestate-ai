@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { testConnection } from '@/app/lib/integrations/follow-up-boss'
-import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/feature-gate'
+import { encrypt } from '@/app/lib/crypto'
 
 /**
  * POST /api/integrations/fub/connect
@@ -50,6 +51,15 @@ export async function POST(request: NextRequest) {
 
   console.log('[FUB] Connection successful, user:', testResult.user?.name)
 
+  // Encrypt API key before storage
+  let encryptedKey: string
+  try {
+    encryptedKey = encrypt(apiKey)
+  } catch (err) {
+    console.error('[FUB] Encryption failed:', err)
+    return NextResponse.json({ ok: false, error: 'Failed to encrypt API key. Contact support.' }, { status: 500 })
+  }
+
   // Save or update the connection
   const supabase = await createClient()
 
@@ -65,7 +75,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('crm_connections')
       .update({
-        api_key: apiKey,
+        api_key: encryptedKey,
         status: 'active',
         error_message: null,
         updated_at: new Date().toISOString(),
@@ -86,7 +96,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: auth.user.id,
         provider: 'follow_up_boss',
-        api_key: apiKey,
+        api_key: encryptedKey,
         status: 'active',
       })
 
