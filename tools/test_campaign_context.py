@@ -65,7 +65,7 @@ CAMPAIGNS = [
         "name": "Cold Lead Re-engagement",
         "outbound": "Hi John, it's Nadine from KW Commercial. You reached out a while back about real estate. I wanted to check — did you end up buying or selling, or are you still in the market? Either way, I'd love to reconnect. - Nadine",
         "lead_reply": "Hey Nadine, no I didn't end up doing anything. Still thinking about it though",
-        "must_mention": ["buy", "sell", "market", "help"],
+        "must_mention": ["buy", "sell", "market", "help", "move", "thinking", "looking"],
         "must_not_mention": ["expired", "FSBO"],
     },
     {
