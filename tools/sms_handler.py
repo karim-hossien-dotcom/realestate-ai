@@ -28,6 +28,7 @@ try:
         log_activity,
         find_lead_by_phone,
         get_conversation_history,
+        get_campaign_names,
         get_lead_details,
         check_messaging_quota,
         record_overage,
@@ -200,9 +201,29 @@ def sms_inbound():
     # Fetch conversation history and lead details
     conversation_history = []
     lead_details = None
+    campaign_context = None
     if SUPABASE_AVAILABLE and user_id:
         conversation_history = get_conversation_history(user_id, from_number)
         lead_details = get_lead_details(user_id, from_number)
+
+        # Resolve campaign names for any campaign messages in history
+        campaign_ids = list({
+            msg["campaign_id"] for msg in conversation_history
+            if msg.get("campaign_id")
+        })
+        if campaign_ids:
+            campaign_names_map = get_campaign_names(user_id, campaign_ids)
+            for msg in conversation_history:
+                cid = msg.get("campaign_id")
+                if cid and cid in campaign_names_map:
+                    msg["campaign_name"] = campaign_names_map[cid]
+            latest_campaign_msg = next(
+                (m for m in reversed(conversation_history)
+                 if m.get("campaign_name")),
+                None
+            )
+            if latest_campaign_msg:
+                campaign_context = latest_campaign_msg["campaign_name"]
 
     # Generate AI reply
     ai_result = analyze_with_ai(
@@ -212,6 +233,7 @@ def sms_inbound():
         agent_name=agent_name,
         agent_brokerage=agent_brokerage,
         ai_config=ai_config,
+        campaign_context=campaign_context,
     )
 
     # Handle stop intent — verify with keyword checker (same fix as WhatsApp)

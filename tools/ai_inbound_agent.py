@@ -93,6 +93,7 @@ def analyze_with_ai(
     agent_name: Optional[str] = None,
     agent_brokerage: Optional[str] = None,
     ai_config: Optional[dict] = None,
+    campaign_context: Optional[str] = None,
 ) -> dict:
     """
     Call OpenAI to classify intent and generate a reply.
@@ -122,7 +123,10 @@ def analyze_with_ai(
         convo_lines = []
         for msg in conversation_history[-15:]:  # last 15 messages
             role = "OWNER" if msg.get("direction") == "inbound" else resolved_name.upper()
-            convo_lines.append(f"{role}: {msg.get('body', '')}")
+            tag = ""
+            if msg.get("campaign_name"):
+                tag = f" [CAMPAIGN: {msg['campaign_name']}]"
+            convo_lines.append(f"{role}{tag}: {msg.get('body', '')}")
         convo_context = "\n".join(convo_lines)
 
     # Build known lead info
@@ -166,6 +170,11 @@ def analyze_with_ai(
             elif len(notes) > 10:
                 parts.append(f"Notes: {notes[-300:]}")
         known_info = "\n".join(parts)
+
+    # Add campaign context if this lead was reached via a campaign
+    if campaign_context:
+        campaign_info = f"\n\nCAMPAIGN CONTEXT: This lead is replying to your \"{campaign_context}\" campaign. Stay on topic with that campaign's subject matter. If the lead brings up something different, follow their lead instead."
+        known_info = (known_info + campaign_info) if known_info else campaign_info.strip()
 
     today = dt.date.today().isoformat()
     current_year = dt.date.today().year
@@ -270,10 +279,12 @@ RULE 4 — ALWAYS GIVE CONCRETE NEXT STEPS:
 - Instead: confirm what you know, then ask for the next missing item. E.g., "15K sqft for $15M — solid. What's your timeline for the sale?"
 - If they ask to confirm an appointment, confirm it with the details you have.
 
-RULE 5 — CAMPAIGN MESSAGES ≠ REAL CONVERSATION:
-- In conversation history, some messages are automated campaign outreach ("I noticed your property at..."). These are NOT the lead's words.
-- The lead's ACTUAL statements take priority over campaign context.
-- If the lead mentions a DIFFERENT property than what's in history, follow their lead.
+RULE 5 — CAMPAIGN CONTEXT AWARENESS:
+- Messages tagged with [CAMPAIGN: ...] in conversation history are automated campaign outreach. These are NOT the lead's words.
+- When a lead replies, they are likely responding to the CAMPAIGN topic. Stay on that subject.
+- The CAMPAIGN CONTEXT in lead info tells you which campaign they received — use it to frame your reply.
+- If the lead mentions a DIFFERENT topic than the campaign, follow their lead instead.
+- The lead's ACTUAL statements always take priority over campaign context.
 
 RULE 6 — "THANKS" / "OK" / "SURE" ARE NOT STOP MESSAGES:
 - Only classify intent as "stop" if they EXPLICITLY say STOP, UNSUBSCRIBE, REMOVE ME, DO NOT CONTACT.

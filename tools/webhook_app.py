@@ -34,6 +34,7 @@ try:
         get_default_user_id,
         create_meeting,
         get_conversation_history,
+        get_campaign_names,
         get_lead_details,
         get_supabase_client,
         create_follow_up,
@@ -533,9 +534,31 @@ def _process_whatsapp_message(
     # Fetch conversation history and lead details for context
     conversation_history = []
     lead_details = None
+    campaign_context = None
     if SUPABASE_AVAILABLE and user_id:
         conversation_history = get_conversation_history(user_id, wa_id)
         lead_details = get_lead_details(user_id, wa_id)
+
+        # Resolve campaign names for any campaign messages in history
+        campaign_ids = list({
+            msg["campaign_id"] for msg in conversation_history
+            if msg.get("campaign_id")
+        })
+        if campaign_ids:
+            campaign_names = get_campaign_names(user_id, campaign_ids)
+            # Tag messages with campaign name
+            for msg in conversation_history:
+                cid = msg.get("campaign_id")
+                if cid and cid in campaign_names:
+                    msg["campaign_name"] = campaign_names[cid]
+            # Build context string for the most recent campaign
+            latest_campaign_msg = next(
+                (m for m in reversed(conversation_history)
+                 if m.get("campaign_name")),
+                None
+            )
+            if latest_campaign_msg:
+                campaign_context = latest_campaign_msg["campaign_name"]
 
     # Generate AI reply with full analysis + conversation context
     ai_result = analyze_with_ai(
@@ -545,6 +568,7 @@ def _process_whatsapp_message(
         agent_name=agent_name,
         agent_brokerage=agent_brokerage,
         ai_config=ai_config,
+        campaign_context=campaign_context,
     )
 
     # If AI detects escalation need, notify the agent

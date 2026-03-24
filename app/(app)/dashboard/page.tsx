@@ -1,6 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+
+type ScheduledEvent = {
+  id: string
+  type: 'followup' | 'campaign' | 'automation'
+  title: string
+  scheduled_for: string
+  channel?: string
+  status?: string
+}
 
 type DashboardData = {
   overview: {
@@ -41,6 +50,26 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState(30)
+  const [scheduledEvents, setScheduledEvents] = useState<ScheduledEvent[]>([])
+
+  // Static automation schedule entries
+  const automationSchedule = useMemo<ScheduledEvent[]>(() => {
+    const now = new Date()
+    const tomorrow2am = new Date(now)
+    tomorrow2am.setDate(tomorrow2am.getDate() + 1)
+    tomorrow2am.setHours(2, 0, 0, 0)
+
+    // Next Monday
+    const nextMonday = new Date(now)
+    const daysUntilMon = (1 - now.getDay() + 7) % 7 || 7
+    nextMonday.setDate(now.getDate() + daysUntilMon)
+    nextMonday.setHours(0, 0, 0, 0)
+
+    return [
+      { id: 'auto-scores', type: 'automation' as const, title: 'Lead score refresh', scheduled_for: tomorrow2am.toISOString(), channel: 'system' },
+      { id: 'auto-stale', type: 'automation' as const, title: 'Stale lead detection', scheduled_for: nextMonday.toISOString(), channel: 'system' },
+    ]
+  }, [])
 
   const fetchDashboard = useCallback(async (days: number, isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -65,6 +94,26 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboard(timeRange)
+    // Fetch upcoming events (meetings + follow-ups) for schedule card
+    fetch('/api/calendar/events')
+      .then(r => r.json())
+      .then(result => {
+        if (result.ok && result.events) {
+          const now = new Date()
+          const upcoming: ScheduledEvent[] = result.events
+            .filter((e: { date: string; status: string }) => new Date(e.date) >= now && e.status !== 'cancelled')
+            .slice(0, 6)
+            .map((e: { id: string; type: string; title: string; note: string; date: string; time: string; channel?: string }) => ({
+              id: e.id,
+              type: e.type === 'meeting' ? 'campaign' as const : 'followup' as const,
+              title: e.title || e.note || (e.type === 'meeting' ? 'Meeting' : 'Follow-up'),
+              scheduled_for: e.time ? `${e.date}T${e.time}` : e.date,
+              channel: e.channel,
+            }))
+          setScheduledEvents(upcoming)
+        }
+      })
+      .catch(console.error)
   }, [timeRange, fetchDashboard])
 
   if (loading) {
@@ -170,6 +219,63 @@ export default function DashboardPage() {
         <StatCard title="Pending Follow-ups" value={overview.pendingFollowUps} icon="fa-clock" color="yellow" />
         <StatCard title="DNC List" value={overview.dncCount} icon="fa-ban" color="red" />
         <StatCard title="Failed Messages" value={overview.messagesFailed} icon="fa-exclamation-triangle" color="orange" />
+      </div>
+
+      {/* Scheduled Activity */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Upcoming Scheduled Activity</h2>
+        {(() => {
+          const allEvents = [...scheduledEvents, ...automationSchedule]
+            .sort((a, b) => new Date(a.scheduled_for).getTime() - new Date(b.scheduled_for).getTime())
+            .slice(0, 8)
+
+          if (allEvents.length === 0) {
+            return (
+              <p className="text-sm text-[var(--text-secondary)] text-center py-4">
+                No upcoming scheduled activity. Create follow-ups or campaigns to see them here.
+              </p>
+            )
+          }
+
+          return (
+            <div className="space-y-3">
+              {allEvents.map(event => {
+                const dt = new Date(event.scheduled_for)
+                const isToday = dt.toDateString() === new Date().toDateString()
+                const isTomorrow = dt.toDateString() === new Date(Date.now() + 86400000).toDateString()
+                const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+                const timeLabel = dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+
+                const typeColors: Record<string, { bg: string; text: string; label: string }> = {
+                  followup: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Follow-up' },
+                  campaign: { bg: 'bg-purple-500/10', text: 'text-purple-400', label: 'Campaign' },
+                  automation: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Auto' },
+                }
+                const tc = typeColors[event.type] || typeColors.followup
+
+                return (
+                  <div key={event.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${tc.bg} ${tc.text}`}>
+                        {tc.label}
+                      </span>
+                      <div>
+                        <p className="text-sm text-[var(--text-primary)] line-clamp-1">{event.title}</p>
+                        {event.channel && event.channel !== 'system' && (
+                          <p className="text-[10px] text-[var(--text-secondary)] capitalize">{event.channel}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-3">
+                      <p className={`text-xs font-medium ${isToday ? 'text-amber-400' : 'text-[var(--text-primary)]'}`}>{dateLabel}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)]">{timeLabel}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Lead Score Distribution with progress bars */}

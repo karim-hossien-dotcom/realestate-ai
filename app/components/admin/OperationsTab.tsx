@@ -43,19 +43,63 @@ const ORG = {
   ],
 }
 
+// Helper to calculate next run time
+function getNextRun(schedule: string): string {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  if (schedule.startsWith('Every')) {
+    const mins = parseInt(schedule.match(/\d+/)?.[0] || '5')
+    const next = new Date(now.getTime() + mins * 60 * 1000)
+    return `${pad(next.getHours())}:${pad(next.getMinutes())}`
+  }
+  if (schedule.includes('Daily')) {
+    const match = schedule.match(/(\d+)(am|pm)/)
+    if (match) {
+      let hour = parseInt(match[1])
+      if (match[2] === 'pm' && hour !== 12) hour += 12
+      const next = new Date(now)
+      next.setHours(hour, 0, 0, 0)
+      if (next <= now) next.setDate(next.getDate() + 1)
+      return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    }
+    const next = new Date(now)
+    next.setDate(next.getDate() + 1)
+    next.setHours(0, 0, 0, 0)
+    return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+  if (schedule.includes('Weekly')) {
+    const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
+    const dayName = schedule.match(/\((\w+)\)/)?.[1] || 'Monday'
+    const targetDay = dayMap[dayName] ?? 1
+    const next = new Date(now)
+    const daysUntil = (targetDay - now.getDay() + 7) % 7 || 7
+    next.setDate(now.getDate() + daysUntil)
+    return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+  if (schedule.includes('Monthly')) {
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+  return '—'
+}
+
 const CRON_SCHEDULES = [
   { name: 'send-followups', frequency: 'Every 5 min', endpoint: '/api/cron/send-followups', desc: 'Send scheduled follow-up messages', status: 'active', agent: 'Eng Ops' },
   { name: 'check-alerts', frequency: 'Every 30 min', endpoint: '/api/cron/check-alerts', desc: 'Monitor services + email on critical', status: 'active', agent: 'Eng Ops' },
   { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports + auto-create tasks', status: 'active', agent: 'Eng Ops' },
+  { name: 'refresh-lead-scores', frequency: 'Daily (2am)', endpoint: '/api/cron/refresh-lead-scores', desc: 'Recalculate all lead scores — time decay + activity', status: 'active', agent: 'Eng Ops' },
   { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'Security Reviewer' },
-  { name: 'UX review', frequency: 'Monthly (1st)', endpoint: 'Manual', desc: 'Full UX checklist — core flows, mobile, dark mode', status: 'manual', agent: 'None' },
+  { name: 'stale-lead-detection', frequency: 'Weekly (Monday)', endpoint: '/api/cron/stale-lead-detection', desc: 'Flag stale hot/warm leads, auto-create follow-ups', status: 'active', agent: 'Eng Ops' },
+  { name: 'competitor-pricing', frequency: 'Monthly (1st)', endpoint: '/api/cron/competitor-pricing', desc: 'Competitor pricing snapshot + positioning analysis', status: 'active', agent: 'Market Research' },
+  { name: 'cost-report', frequency: 'Monthly (1st)', endpoint: '/api/cron/cost-report', desc: 'MRR, message volume, cost breakdown, margins', status: 'active', agent: 'Finance Ops' },
 ]
 
-const PROPOSED_AUTOMATIONS = [
-  { name: 'Lead score refresh', frequency: 'Daily (2am)', desc: 'Recalculate all lead scores based on latest activity', agent: 'Eng Ops', priority: 'P1' },
-  { name: 'Stale lead detection', frequency: 'Weekly (Monday)', desc: 'Flag leads with no activity in 30+ days, create follow-up tasks', agent: 'Eng Ops', priority: 'P2' },
-  { name: 'Competitor pricing check', frequency: 'Monthly (1st)', desc: 'Scrape competitor pricing changes', agent: 'Market Research', priority: 'P2' },
-  { name: 'Usage/cost report', frequency: 'Monthly (1st)', desc: 'Pull vendor costs and update finance metrics', agent: 'Finance Ops', priority: 'P2' },
+const MANUAL_TASKS = [
+  { name: 'NAR REACH application', deadline: '2026-03-31', frequency: 'One-time', desc: 'Submit MLS data access application', priority: 'P0' },
+  { name: 'UX review', frequency: 'Monthly (1st)', desc: 'Full UX checklist — core flows, mobile, dark mode', priority: 'P2' },
+  { name: '10DLC follow-up', frequency: 'Weekly (check)', desc: 'Check Twilio 10DLC registration status', priority: 'P1' },
+  { name: 'E&O insurance', frequency: 'One-time', desc: 'Get quotes and activate professional liability insurance', priority: 'P1' },
 ]
 
 const SKILLS = [
@@ -155,12 +199,12 @@ export default function OperationsTab() {
       </Card>
 
       {/* Automated Schedules */}
-      <Card title="Automated Schedules (Live)" accent="#22C55E">
+      <Card title={`Automated Schedules — ${CRON_SCHEDULES.length} Active`} accent="#22C55E">
         <div className="space-y-0">
           {CRON_SCHEDULES.map(cron => (
             <div key={cron.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${cron.status === 'active' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <div>
                   <p className="text-sm font-medium text-[var(--text-primary)]">{cron.name}</p>
                   <p className="text-[10px] text-[var(--text-secondary)]">{cron.desc}</p>
@@ -168,33 +212,46 @@ export default function OperationsTab() {
               </div>
               <div className="text-right">
                 <span className="text-xs font-medium text-[var(--text-primary)]">{cron.frequency}</span>
-                <p className="text-[9px] text-[var(--text-secondary)]">Agent: {cron.agent}</p>
+                <p className="text-[9px] text-emerald-400">Next: {getNextRun(cron.frequency)}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">{cron.agent}</p>
               </div>
             </div>
           ))}
         </div>
       </Card>
 
-      {/* Proposed Automations */}
-      <Card title="Proposed Automations (Not Yet Built)" accent="#F59E0B">
+      {/* Manual Recurring Tasks */}
+      <Card title="Manual / Recurring Tasks" accent="#F59E0B">
         <div className="space-y-0">
-          {PROPOSED_AUTOMATIONS.map(auto => (
-            <div key={auto.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
-              <div className="flex items-center gap-3">
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                  auto.priority === 'P1' ? 'bg-amber-500/10 text-amber-400' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
-                }`}>{auto.priority}</span>
-                <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{auto.name}</p>
-                  <p className="text-[10px] text-[var(--text-secondary)]">{auto.desc}</p>
+          {MANUAL_TASKS.map(task => {
+            const isOverdue = task.deadline && new Date(task.deadline) < new Date()
+            const daysLeft = task.deadline
+              ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null
+            return (
+              <div key={task.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                    task.priority === 'P0' ? 'bg-red-500/10 text-red-400'
+                    : task.priority === 'P1' ? 'bg-amber-500/10 text-amber-400'
+                    : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
+                  }`}>{task.priority}</span>
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{task.name}</p>
+                    <p className="text-[10px] text-[var(--text-secondary)]">{task.desc}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-[var(--text-secondary)]">{task.frequency}</span>
+                  {task.deadline && (
+                    <p className={`text-[9px] font-medium ${isOverdue ? 'text-red-400' : daysLeft !== null && daysLeft <= 7 ? 'text-amber-400' : 'text-[var(--text-secondary)]'}`}>
+                      {isOverdue ? 'OVERDUE' : `${daysLeft}d left`} — {task.deadline}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="text-right">
-                <span className="text-xs text-[var(--text-secondary)]">{auto.frequency}</span>
-                <p className="text-[9px] text-[var(--text-secondary)]">Agent: {auto.agent}</p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </Card>
 

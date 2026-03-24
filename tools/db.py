@@ -301,7 +301,7 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
         if lead:
             result = (
                 client.table("messages")
-                .select("direction, body, channel, created_at, from_number, to_number")
+                .select("direction, body, channel, created_at, from_number, to_number, campaign_id")
                 .eq("user_id", user_id)
                 .eq("lead_id", lead["id"])
                 .order("created_at", desc=False)
@@ -317,7 +317,7 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
             # Match inbound (from_number) and outbound (to_number) by phone digits
             result_in = (
                 client.table("messages")
-                .select("direction, body, channel, created_at, from_number, to_number")
+                .select("direction, body, channel, created_at, from_number, to_number, campaign_id")
                 .eq("user_id", user_id)
                 .like("from_number", f"%{digits}")
                 .order("created_at", desc=False)
@@ -326,7 +326,7 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
             )
             result_out = (
                 client.table("messages")
-                .select("direction, body, channel, created_at, from_number, to_number")
+                .select("direction, body, channel, created_at, from_number, to_number, campaign_id")
                 .eq("user_id", user_id)
                 .like("to_number", f"%{digits}")
                 .order("created_at", desc=False)
@@ -350,6 +350,28 @@ def get_conversation_history(user_id: str, phone: str, limit: int = 20) -> list:
     except Exception as e:
         logger.error(f"Error fetching conversation history: {e}")
         return []
+
+
+def get_campaign_names(user_id: str, campaign_ids: list) -> dict:
+    """
+    Fetch campaign names for a list of campaign IDs.
+    Returns {campaign_id: campaign_name} dict.
+    """
+    client = get_supabase_client()
+    if not client or not campaign_ids:
+        return {}
+    try:
+        result = (
+            client.table("campaigns")
+            .select("id, name")
+            .eq("user_id", user_id)
+            .in_("id", campaign_ids)
+            .execute()
+        )
+        return {c["id"]: c["name"] for c in (result.data or [])}
+    except Exception as e:
+        logger.error(f"Error fetching campaign names: {e}")
+        return {}
 
 
 def get_lead_details(user_id: str, phone: str) -> Optional[dict]:
