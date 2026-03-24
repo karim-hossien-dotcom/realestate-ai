@@ -1,3 +1,8 @@
+"""
+LEGACY: Extended CLI outreach agent with SMTP email + multi-template support.
+Replaced by campaign-templates.ts + /api/campaigns/send route + Resend email.
+Owner: marketing-ops agent
+"""
 import csv
 import json
 import argparse

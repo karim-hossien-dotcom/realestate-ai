@@ -1,3 +1,8 @@
+"""
+LEGACY: CSV-based follow-up scheduler reading from leads_state.csv.
+Replaced by Supabase follow_ups table + /api/cron/send-followups cron.
+Owner: engineering-ops agent
+"""
 import csv
 import os
 from datetime import datetime, timedelta, timezone

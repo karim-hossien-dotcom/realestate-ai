@@ -1,3 +1,8 @@
+"""
+LEGACY: ICS calendar invite sender via SMTP.
+Replaced by /api/calendar/ routes with Google Calendar export + ICS download.
+Owner: engineering-ops agent
+"""
 import os
 import smtplib
 from datetime import datetime, timedelta, timezone

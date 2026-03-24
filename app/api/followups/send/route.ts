@@ -3,6 +3,8 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+const CRON_SECRET = process.env.CRON_SECRET || ''
+
 const pythonDir =
   process.env.TOOLS_DIR || path.join(process.cwd(), 'tools');
 const scriptName = 'send_followups.py';
@@ -16,7 +18,20 @@ function runPython(command: string, args: string[]) {
   });
 }
 
+/**
+ * POST /api/followups/send
+ * LEGACY: CSV-based follow-up sender. Protected by CRON_SECRET.
+ * Modern follow-ups use /api/cron/send-followups (Supabase-backed).
+ */
 export async function POST(request: Request) {
+  // Auth: require CRON_SECRET
+  if (CRON_SECRET) {
+    const token = request.headers.get('x-cron-secret')
+    if (token !== CRON_SECRET) {
+      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   const body = await request.json().catch(() => ({}));
   const testToPhone = String(body?.testToPhone || '').trim();
 

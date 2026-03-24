@@ -1,3 +1,9 @@
+"""
+LEGACY: CSV-based follow-up sender (demo mode).
+Replaced by /api/cron/send-followups which reads from Supabase follow_ups table.
+Still referenced by /api/followups/send route (protected by CRON_SECRET).
+Owner: engineering-ops agent
+"""
 import csv
 import argparse
 from datetime import date

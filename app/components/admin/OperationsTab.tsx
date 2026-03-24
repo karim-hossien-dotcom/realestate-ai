@@ -21,6 +21,7 @@ const ORG = {
         { name: 'E2E Runner', type: 'on-demand' },
         { name: 'Doc Updater', type: 'on-demand' },
         { name: 'Eng Ops', type: 'automated' },
+        { name: 'AI Improver', type: 'automated' },
       ],
     },
     {
@@ -136,7 +137,7 @@ const INFRA = [
 ]
 
 const MCPS = [
-  { name: 'Supabase', status: 'connected', desc: '18+ tables, RLS, PostgREST' },
+  { name: 'Supabase', status: 'connected', desc: '23 tables, RLS, PostgREST' },
   { name: 'Sentry', status: 'disconnected', desc: 'Error tracking (not configured)' },
 ]
 

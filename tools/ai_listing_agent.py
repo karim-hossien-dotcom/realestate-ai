@@ -1,3 +1,8 @@
+"""
+LEGACY: CLI outreach message generator (SMS + email from CSV).
+Replaced by campaign-templates.ts + /api/campaigns/send route.
+Owner: marketing-ops agent
+"""
 import csv
 import json
 import argparse

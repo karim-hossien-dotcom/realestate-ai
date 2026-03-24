@@ -1,3 +1,8 @@
+"""
+LEGACY: CLI tool to generate follow-up CSV schedules from GPT.
+Replaced by /api/followups/build route which uses app/lib/ai/followup-generator.ts.
+Owner: engineering-ops agent
+"""
 import csv
 import json
 from datetime import date, timedelta

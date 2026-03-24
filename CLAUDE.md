@@ -18,30 +18,25 @@ AI-powered real estate CRM that automates lead outreach, follow-ups, and convers
 ## Architecture
 ```
 app/
-  api/              -> 51 API routes (Next.js Route Handlers)
+  api/              -> 60 API routes (Next.js Route Handlers)
   components/       -> 17 React components (inc. admin/ subdir)
   lib/
     ai/             -> Lead scorer, follow-up generator, listing agent, prompt builder
+    billing/        -> stripe.ts, overage.ts, usage.ts, feature-gate.ts
+    messaging/      -> whatsapp.ts, sms.ts, email.ts, outreach-messages.ts, dnc-registry.ts
     supabase/       -> Database clients (browser, server, middleware, types)
     integrations/   -> Follow-Up Boss CRM
     auth.ts         -> withAuth() + logActivity()
-    usage.ts        -> Shared messaging pool + quota enforcement
-    feature-gate.ts -> Plan-tier feature gating
-    overage.ts      -> Overage billing (Stripe invoice items)
-    whatsapp.ts     -> Meta Graph API v21.0
-    sms.ts          -> Twilio REST API (no SDK)
-    email.ts        -> Resend SDK + HTML templates
-    stripe.ts       -> Stripe SDK + plan definitions
     api.ts          -> parseBody(), success(), error(), checkPhoneTaken()
     schemas.ts      -> Zod schemas for all API validation
     csv-mapper.ts   -> CSV import field mapping
-    dnc-registry.ts -> National DNC registry check
     maps.ts         -> Google Maps integration
     system-checks.ts-> Service health checks
     ai-audit.ts     -> AI audit utilities
-  (app)/            -> 12 pages (dashboard, leads, campaigns, conversations, etc.)
+  (app)/            -> 14 pages (dashboard, leads, campaigns, conversations, etc.)
 tools/              -> Python backend (Flask webhooks, AI agents)
 scripts/            -> Migration scripts
+planning/           -> PLAN.md, task_plan.md, progress.md, findings.md
 supabase/           -> Schema + 16 migrations
 __tests__/          -> 3 test files (Vitest)
 middleware.ts       -> Supabase session management
@@ -60,11 +55,12 @@ middleware.ts       -> Supabase session management
 - Functions: Keep under 50 lines
 - Error handling: Explicit try/catch on every API route, log with context
 
-## Database Tables (18+)
+## Database Tables (23)
 profiles, leads, messages, campaigns, campaign_leads, follow_ups,
 plans, subscriptions, usage_records, activity_logs, dnc_list,
 consent_records, crm_connections, research_findings, daily_reports,
-ai_config, nps_responses, ai_audits, project_tasks, meetings
+ai_config, nps_responses, ai_audits, project_tasks, meetings,
+custom_templates, system_alerts, ai_improvements
 
 ## Key Patterns
 
@@ -122,10 +118,10 @@ project_tasks            →    (live CRUD)            →    Admin Tasks tab
 ```
 
 **Important distinctions:**
-- `PLAN.md` and `task_plan.md` are **static docs for Claude sessions** — they do NOT feed the admin UI
+- `planning/PLAN.md` and `planning/task_plan.md` are **static docs for Claude sessions** — they do NOT feed the admin UI
 - The admin panel reads from `project_tasks` and `daily_reports` **DB tables**
 - `daily_reports`: written by `/api/cron/daily-ops` (1x/day), one row per department per day
-- Revenue chart in admin is **hardcoded mock** — not connected to Stripe (see PLAN.md P2)
+- Revenue chart in admin is connected to `/api/admin/revenue` — real MRR from subscriptions (fixed Mar 16)
 - Daily reports findings do NOT auto-create `project_tasks` — manual linking only
 
 ## Danger Zones
@@ -202,6 +198,7 @@ See `.env.example` for full list. Critical:
 | e2e-runner | Testing critical user flows end-to-end |
 | refactor-cleaner | Dead code cleanup, file splitting |
 | doc-updater | Updating documentation after changes |
+| ai-improver | Analyzing AI conversation quality, proposing prompt improvements |
 | engineering-ops | App health monitoring, feature delivery |
 | finance-ops | Cost tracking, revenue monitoring |
 | legal-ops | Compliance monitoring, policy review |
