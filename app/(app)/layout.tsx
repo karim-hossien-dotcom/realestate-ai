@@ -26,7 +26,6 @@ const baseNavItems = [
   { href: '/calendar', label: 'Calendar', icon: 'fa-calendar' },
   { href: '/logs', label: 'Logs', icon: 'fa-file-alt' },
   { href: '/settings', label: 'Settings', icon: 'fa-cog' },
-  { href: '/test-playbook', label: 'Test Playbook', icon: 'fa-flask' },
 ];
 
 const adminNavItem = { href: '/admin', label: 'Command Center', icon: 'fa-terminal' };
