@@ -117,6 +117,48 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Verify Meta X-Hub-Signature-256 if app secret is configured
+  const appSecret = process.env.META_APP_SECRET;
+  if (appSecret) {
+    const signature = request.headers.get('x-hub-signature-256');
+    if (!signature) {
+      console.warn('[whatsapp/webhook] Missing X-Hub-Signature-256 header');
+      return NextResponse.json({ ok: false, error: 'Missing signature.' }, { status: 401 });
+    }
+
+    const body = await request.text();
+    const { createHmac } = await import('crypto');
+    const expectedSig = 'sha256=' + createHmac('sha256', appSecret).update(body).digest('hex');
+
+    if (signature !== expectedSig) {
+      console.warn('[whatsapp/webhook] Invalid signature');
+      return NextResponse.json({ ok: false, error: 'Invalid signature.' }, { status: 403 });
+    }
+
+    // Parse the body we already read
+    let payload: unknown;
+    try { payload = JSON.parse(body); } catch {
+      return NextResponse.json({ ok: false, error: 'Invalid JSON.' }, { status: 400 });
+    }
+
+    const inbound = extractInboundMessages(payload);
+    console.log(`[whatsapp/webhook] inbound_count=${inbound.length} (signature verified)`);
+
+    if (inbound.length === 0) {
+      return NextResponse.json({ ok: true, message: 'No inbound messages.', data: null });
+    }
+
+    try {
+      await forwardToInboundAgent(payload);
+    } catch (err) {
+      console.error('[whatsapp/webhook] inbound forward failed', err);
+      return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Forwarding failed.', data: null }, { status: 502 });
+    }
+
+    return NextResponse.json({ ok: true, message: `Processed ${inbound.length} message(s).`, data: null });
+  }
+
+  // Fallback: no app secret configured — process without signature check
   const payload = await request.json().catch(() => null);
   if (!payload) {
     return NextResponse.json(
