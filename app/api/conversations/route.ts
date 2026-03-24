@@ -98,14 +98,22 @@ export async function POST(request: NextRequest) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const body = await request.json().catch(() => ({}))
-  const { leadId, message, channel } = body
+  const parsed = await (await import('@/app/lib/sanitize')).safeParseBody(request)
+  if (!parsed.ok) return parsed.response
 
-  if (!leadId || !message) {
+  const { sanitizeString, isValidUuid } = await import('@/app/lib/sanitize')
+  const { leadId, message, channel } = parsed.data as Record<string, unknown>
+
+  if (!leadId || !isValidUuid(leadId) || !message || typeof message !== 'string') {
     return NextResponse.json(
-      { ok: false, error: 'leadId and message are required' },
+      { ok: false, error: 'Valid leadId (UUID) and message (string) are required' },
       { status: 400 }
     )
+  }
+
+  const sanitizedMessage = sanitizeString(message, 1600)
+  if (!sanitizedMessage) {
+    return NextResponse.json({ ok: false, error: 'Message cannot be empty' }, { status: 400 })
   }
 
   // Check message quota before sending
@@ -164,7 +172,7 @@ export async function POST(request: NextRequest) {
       // Demo mode
       sendResult = { ok: true, messageId: `demo-${Date.now()}` }
     } else {
-      const waResult = await sendWhatsAppText({ to: lead.phone, body: message })
+      const waResult = await sendWhatsAppText({ to: lead.phone, body: sanitizedMessage })
       sendResult = { ok: waResult.ok, error: waResult.error, messageId: waResult.messageId }
     }
   } else if (sendChannel === 'sms') {
@@ -175,7 +183,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    sendResult = await sendSms({ to: lead.phone, body: message })
+    sendResult = await sendSms({ to: lead.phone, body: sanitizedMessage })
   } else if (sendChannel === 'email') {
     if (!lead.email) {
       return NextResponse.json(
@@ -194,12 +202,12 @@ export async function POST(request: NextRequest) {
     // Escape HTML entities to prevent XSS in email
     const escapeHtml = (str: string) =>
       str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    const safeMessage = escapeHtml(message).replace(/\n/g, '<br>')
+    const safeMessage = escapeHtml(sanitizedMessage).replace(/\n/g, '<br>')
 
     const emailResult = await sendEmail({
       to: lead.email,
       subject: `Message from ${profile?.full_name || 'Your Agent'}`,
-      text: message,
+      text: sanitizedMessage,
       html: `<p>${safeMessage}</p>`,
       fromName: profile?.full_name,
       replyTo: profile?.email,
@@ -226,7 +234,7 @@ export async function POST(request: NextRequest) {
     direction: 'outbound',
     channel: sendChannel,
     to_number: sendChannel === 'email' ? lead.email : lead.phone,  // phone used for both whatsapp and sms
-    body: message,
+    body: sanitizedMessage,
     status: 'sent',
     external_id: sendResult.messageId,
   })
