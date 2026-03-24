@@ -6,6 +6,7 @@ import StatusBadge from '@/app/components/StatusBadge';
 import ScoreBadge from '@/app/components/ScoreBadge';
 import EmptyState from '@/app/components/EmptyState';
 import { SkeletonTable } from '@/app/components/Skeleton';
+import { type CampaignTemplate, CAMPAIGN_TEMPLATES, fillTemplate } from '@/app/lib/messaging/campaign-templates';
 
 type CampaignLead = {
   id: string;
@@ -52,6 +53,8 @@ export default function CampaignsPage() {
   const [sendStats, setSendStats] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
+  const [customMessage, setCustomMessage] = useState('');
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -360,15 +363,75 @@ export default function CampaignsPage() {
               </div>
             </div>
 
-            {/* Message Preview */}
-            {selectedLeads[0]?.sms_text && (
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Message Preview (first lead)</label>
-                <div className="bg-[var(--surface-elevated)] rounded-lg p-4 text-sm text-[var(--text-primary)] border border-[var(--border)]">
-                  {selectedLeads[0].sms_text}
-                </div>
+            {/* Template Picker */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Message Template</label>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+                <button
+                  onClick={() => { setSelectedTemplate(null); setCustomMessage(''); }}
+                  className={`p-3 rounded-lg border text-left text-xs transition-colors cursor-pointer ${
+                    !selectedTemplate
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                      : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--text-secondary)]'
+                  }`}
+                >
+                  <div className="font-semibold text-[var(--text-primary)]">AI Auto-Generate</div>
+                  <div className="text-[var(--text-secondary)] mt-0.5">AI personalizes per lead</div>
+                </button>
+                {CAMPAIGN_TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setSelectedTemplate(t);
+                      const firstLead = selectedLeads[0];
+                      const preview = channel === 'email' ? t.emailBody : t.smsBody;
+                      setCustomMessage(fillTemplate(preview, {
+                        firstName: firstLead?.owner_name?.split(' ')[0] || 'there',
+                        address: firstLead?.property_address || 'your property',
+                        area: firstLead?.property_address?.split(',')[1]?.trim() || 'your area',
+                      }));
+                    }}
+                    className={`p-3 rounded-lg border text-left text-xs transition-colors cursor-pointer ${
+                      selectedTemplate?.id === t.id
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                        : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--text-secondary)]'
+                    }`}
+                  >
+                    <div className="font-semibold text-[var(--text-primary)]">{t.name}</div>
+                    <div className="text-[var(--text-secondary)] mt-0.5 line-clamp-2">{t.bestFor}</div>
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Message Preview / Editor */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                {selectedTemplate ? 'Message Preview (editable)' : 'Message Preview'}
+              </label>
+              {selectedTemplate ? (
+                <textarea
+                  value={customMessage}
+                  onChange={e => setCustomMessage(e.target.value)}
+                  rows={channel === 'email' ? 12 : 4}
+                  className="w-full px-3 py-2.5 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 resize-y"
+                  placeholder="Edit your message..."
+                />
+              ) : (
+                <div className="bg-[var(--surface-elevated)] rounded-lg p-4 text-sm text-[var(--text-secondary)] border border-[var(--border)]">
+                  AI will auto-generate a personalized message for each lead based on their property, intent, and context.
+                </div>
+              )}
+              {selectedTemplate && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[11px] text-[var(--text-secondary)]">Template: {selectedTemplate.name}</span>
+                  <span className="text-[11px] text-[var(--text-secondary)]">|</span>
+                  {selectedTemplate.tags.map(tag => (
+                    <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-elevated)] text-[var(--text-secondary)]">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Navigation */}
