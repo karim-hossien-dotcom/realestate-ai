@@ -1,6 +1,7 @@
 'use client'
 
 import { Card, StatCard, DeptTab } from './AdminShared'
+import { AgentBoardroom, BUSINESS_AGENTS, agentStyles } from './AgentCharacters'
 import type { Task } from './admin-types'
 
 interface MarketingTabProps {
@@ -15,6 +16,8 @@ export default function MarketingTab({ tasks, onToggle }: MarketingTabProps) {
 
   return (
     <div className="space-y-4">
+      <style>{agentStyles}</style>
+      <AgentBoardroom agents={BUSINESS_AGENTS.filter(a => a.name === 'Marketing')} teamColor="#D946EF" teamName="Marketing" />
       <div className="grid grid-cols-4 gap-4">
         <StatCard label="Website Target" value="5K" sub="visitors in 90 days" />
         <StatCard label="Signup Conv." value="3-5%" sub="visitor \u2192 trial" />

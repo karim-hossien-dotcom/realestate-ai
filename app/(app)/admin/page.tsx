@@ -8,6 +8,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import OverviewTab from '@/app/components/admin/OverviewTab'
+import SecurityTab from '@/app/components/admin/SecurityTab'
+import OperationsTab from '@/app/components/admin/OperationsTab'
 import EngineeringTab from '@/app/components/admin/EngineeringTab'
 import MarketingTab from '@/app/components/admin/MarketingTab'
 import FinanceTab from '@/app/components/admin/FinanceTab'
@@ -21,7 +23,7 @@ import {
 // Owner user ID — only this account can access /admin
 const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || ''
 
-const TABS = ['Overview', 'Market Research', 'Legal', 'Engineering', 'Marketing', 'Finance'] as const
+const TABS = ['Overview', 'Security', 'Operations', 'Engineering', 'Marketing', 'Finance', 'Legal', 'Research'] as const
 
 export default function AdminCommandCenter() {
   const router = useRouter()
@@ -135,11 +137,13 @@ export default function AdminCommandCenter() {
     )
     switch (tab) {
       case 'Overview': return <OverviewTab tasks={tasks} onToggle={handleToggle} summary={summary} alerts={alerts} revenue={revenue} />
-      case 'Market Research': return <MarketResearchTab tasks={tasks} onToggle={handleToggle} />
-      case 'Legal': return <DeptTab department="legal" tasks={tasks} onToggle={handleToggle} filters={['P0', 'P1', 'P2']} />
+      case 'Security': return <SecurityTab alerts={alerts} />
+      case 'Operations': return <OperationsTab />
       case 'Engineering': return <EngineeringTab tasks={tasks} onToggle={handleToggle} alerts={alerts} alertsLoading={alertsLoading} />
       case 'Marketing': return <MarketingTab tasks={tasks} onToggle={handleToggle} />
       case 'Finance': return <FinanceTab tasks={tasks} onToggle={handleToggle} revenue={revenue} />
+      case 'Legal': return <DeptTab department="legal" tasks={tasks} onToggle={handleToggle} filters={['P0', 'P1', 'P2']} />
+      case 'Research': return <MarketResearchTab tasks={tasks} onToggle={handleToggle} />
       default: return null
     }
   }
