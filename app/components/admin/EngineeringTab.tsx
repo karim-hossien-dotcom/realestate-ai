@@ -3,7 +3,6 @@
 import AlertsPanel from './AlertsPanel'
 import AiAuditPanel from './AiAuditPanel'
 import { Card, DeptTab } from './AdminShared'
-import { AgentBoardroom, ENGINEERING_AGENTS, agentStyles } from './AgentCharacters'
 import type { Task, SystemAlert } from './admin-types'
 
 interface EngineeringTabProps {
@@ -16,11 +15,6 @@ interface EngineeringTabProps {
 export default function EngineeringTab({ tasks, onToggle, alerts, alertsLoading }: EngineeringTabProps) {
   return (
     <div className="space-y-4">
-      <style>{agentStyles}</style>
-
-      {/* Agent Characters */}
-      <AgentBoardroom agents={ENGINEERING_AGENTS} teamColor="#3B82F6" teamName="Engineering" />
-
       {/* Live system alerts */}
       <AlertsPanel alerts={alerts} loading={alertsLoading} />
 

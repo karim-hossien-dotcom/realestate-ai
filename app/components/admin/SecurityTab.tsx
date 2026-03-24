@@ -1,7 +1,6 @@
 'use client'
 
 import { Card, StatCard } from './AdminShared'
-import { AgentBoardroom, SECURITY_AGENTS, agentStyles } from './AgentCharacters'
 
 interface SecurityTabProps {
   alerts: Array<{ title: string; severity: string; message: string }>
@@ -36,11 +35,6 @@ export default function SecurityTab({ alerts }: SecurityTabProps) {
 
   return (
     <div className="space-y-4">
-      <style>{agentStyles}</style>
-
-      {/* Agent Characters */}
-      <AgentBoardroom agents={SECURITY_AGENTS} teamColor="#EF4444" teamName="Security" />
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard label="Security Checks" value={activeChecks} sub={`${pendingChecks} pending`} />
