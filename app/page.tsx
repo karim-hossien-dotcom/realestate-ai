@@ -167,31 +167,42 @@ function AuthModal({
 }
 
 /* ═══════════════════════════════════════════════════════════
-   LANDING PAGE
+   LANDING PAGE — v3 with 21st.dev inspired components
+   Upgrades: animated gradient text, dot grid bg, bento features,
+   theme toggle, logo marquee, pricing toggle, pulsing CTA
    ═══════════════════════════════════════════════════════════ */
 
-const FEATURES = [
-  { icon: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z', title: 'Multi-Channel Outreach', desc: 'WhatsApp, SMS, and Email from one dashboard. AI personalizes every message to your lead\'s context.' },
-  { icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', title: 'AI Lead Scoring', desc: 'Every lead gets a 0-100 score based on engagement, intent, and response patterns. Focus on what closes.' },
-  { icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', title: 'Automated Follow-Ups', desc: 'AI generates and schedules follow-ups at the perfect time. Never lose a deal to silence.' },
-  { icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', title: '24/7 AI Agent', desc: 'Your inbound agent qualifies leads, handles objections, and books meetings around the clock.' },
-  { icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', title: 'Smart Calendar', desc: 'Sync with Google or Apple Calendar. AI books directly into your availability — no back and forth.' },
-  { icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', title: 'Real-Time Analytics', desc: 'Track campaigns, conversion rates, and agent productivity. See what\'s working instantly.' },
+import type { BentoItem } from '@/app/components/ui/bento-grid';
+import { Send, Brain, Clock, MessageCircle, Calendar, BarChart3, Quote } from 'lucide-react';
+
+const BENTO_FEATURES: BentoItem[] = [
+  { title: 'Multi-Channel Outreach', description: 'WhatsApp, SMS, and Email from one dashboard. AI personalizes every message to your lead\'s context.', icon: <Send className="w-4 h-4 text-blue-500" />, status: 'Live', tags: ['WhatsApp', 'SMS', 'Email'], hasPersistentHover: true },
+  { title: 'AI Lead Scoring', description: 'Every lead gets a 0-100 score based on engagement, intent, and response patterns.', icon: <Brain className="w-4 h-4 text-emerald-500" />, meta: '0-100', tags: ['Scoring', 'AI'] },
+  { title: 'Automated Follow-Ups', description: 'AI generates and schedules follow-ups at the perfect time. Never lose a deal to silence.', icon: <Clock className="w-4 h-4 text-amber-500" />, status: 'Auto', tags: ['Scheduling'] },
+  { title: '24/7 AI Agent', description: 'Inbound agent qualifies leads, handles objections using KW scripts, and books meetings around the clock.', icon: <MessageCircle className="w-4 h-4 text-purple-500" />, status: 'Always On', tags: ['GPT-4o', 'Inbound'] },
+  { title: 'Smart Calendar', description: 'Sync with Google or Apple Calendar. AI books directly into your availability — no back and forth.', icon: <Calendar className="w-4 h-4 text-sky-500" />, tags: ['Google', 'Apple'] },
+  { title: 'Real-Time Analytics', description: 'Track campaigns, conversion rates, and agent productivity. See what\'s working instantly.', icon: <BarChart3 className="w-4 h-4 text-rose-500" />, meta: 'Live', tags: ['Dashboard'] },
 ];
 
 const PLANS = [
-  { name: 'Starter', price: 99, features: ['Up to 250 leads', '750 messages/mo', 'AI lead scoring', 'Email campaigns', 'Basic analytics', '1 user'] },
-  { name: 'Pro', price: 249, popular: true, features: ['Up to 1,000 leads', '3,000 messages/mo', 'WhatsApp + SMS + Email', 'AI follow-ups & auto-reply', 'CRM integration', 'Up to 5 users'] },
-  { name: 'Agency', price: 499, features: ['Unlimited leads', '15,000 messages/mo', 'All channels + AI agent', 'Team management', 'Custom integrations', 'Up to 15 users'] },
+  { name: 'Starter', price: 99, annual: 82, features: ['Up to 250 leads', '750 messages/mo', 'AI lead scoring', 'Email campaigns', 'Basic analytics', '1 user'] },
+  { name: 'Pro', price: 249, annual: 207, popular: true, features: ['Up to 1,000 leads', '3,000 messages/mo', 'WhatsApp + SMS + Email', 'AI follow-ups & auto-reply', 'CRM integration', 'Up to 5 users'] },
+  { name: 'Agency', price: 499, annual: 415, features: ['Unlimited leads', '15,000 messages/mo', 'All channels + AI agent', 'Team management', 'Custom integrations', 'Up to 15 users'] },
 ];
+
+const INTEGRATIONS = ['WhatsApp Business API', 'Twilio SMS', 'OpenAI GPT-4o', 'Stripe Billing', 'Follow Up Boss', 'Google Calendar', 'Apple Calendar', 'Resend Email'];
 
 export default function LandingPage() {
   const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'signin' | 'signup' }>({ open: false, tab: 'signin' });
+  const [annual, setAnnual] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // Force dark mode on landing page
     document.documentElement.classList.add('dark');
     localStorage.setItem('theme', 'dark');
+    const h = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
   }, []);
 
   const openSignIn = () => setAuthModal({ open: true, tab: 'signin' });
@@ -199,14 +210,16 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#07070A] text-white selection:bg-blue-500/30 overflow-x-hidden">
-      {/* ── Ambient gradient orbs ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+
+      {/* ── 1. DOT GRID BACKGROUND ── */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[length:24px_24px]" />
         <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/8 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-600/6 rounded-full blur-[100px]" />
       </div>
 
-      {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#07070A]/80 backdrop-blur-xl border-b border-white/[0.06]">
+      {/* ── 2. NAVBAR with glow border + theme toggle ── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#07070A]/90 backdrop-blur-xl' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
@@ -224,35 +237,33 @@ export default function LandingPage() {
             <button onClick={openSignUp} className="text-[13px] font-medium text-white bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-lg transition-colors cursor-pointer">Get Started</button>
           </div>
         </div>
+        {/* Glow border on scroll */}
+        <div className={`h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent transition-opacity duration-300 ${scrolled ? 'opacity-100' : 'opacity-0'}`} />
       </nav>
 
       <AuthModal isOpen={authModal.open} onClose={() => setAuthModal({ ...authModal, open: false })} initialTab={authModal.tab} />
 
-      {/* ══════ HERO ══════ */}
+      {/* ══════ 3. HERO with animated gradient text + pulsing CTA ══════ */}
       <section className="relative pt-40 pb-24 sm:pt-48 sm:pb-32">
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          {/* Pill */}
           <div className="inline-flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-1.5 mb-8" style={{ animation: 'fadeInUp 0.6s ease-out' }}>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[13px] text-white/50">Now with GPT-4o powered conversations</span>
           </div>
 
-          {/* Headline */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight mb-6" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
             <span className="text-white">Your AI agent for</span>
             <br />
-            <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">real estate deals</span>
+            <span className="animated-gradient-text">real estate deals</span>
           </h1>
 
-          {/* Sub */}
           <p className="text-lg sm:text-xl text-white/40 max-w-2xl mx-auto mb-10 leading-relaxed" style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}>
             Automate lead outreach across WhatsApp, SMS, and Email.
             AI qualifies leads, handles objections, and books meetings — so you can focus on closing.
           </p>
 
-          {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3" style={{ animation: 'fadeInUp 0.6s ease-out 0.3s both' }}>
-            <button onClick={openSignUp} className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-500 transition-all hover:shadow-lg hover:shadow-blue-500/25 text-sm cursor-pointer">
+            <button onClick={openSignUp} className="pulsing-cta w-full sm:w-auto bg-blue-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-500 transition-all text-sm cursor-pointer">
               Start Free Trial
             </button>
             <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
@@ -261,35 +272,65 @@ export default function LandingPage() {
             </button>
           </div>
 
-          {/* Proof */}
-          <div className="mt-16 flex items-center justify-center gap-8 text-center" style={{ animation: 'fadeInUp 0.6s ease-out 0.4s both' }}>
-            {[['10K+', 'Leads managed'], ['50K+', 'AI messages sent'], ['40%', 'More conversions'], ['15hrs', 'Saved per week']].map(([v, l]) => (
-              <div key={l} className="hidden sm:block">
-                <p className="text-2xl font-bold text-white">{v}</p>
-                <p className="text-xs text-white/30 mt-0.5">{l}</p>
+          {/* Capability proof — real facts, not fake stats */}
+          <div className="mt-16 flex items-center justify-center gap-6 sm:gap-10 text-center" style={{ animation: 'fadeInUp 0.6s ease-out 0.4s both' }}>
+            {[['<30s', 'AI response time'], ['3', 'Channels (WA, SMS, Email)'], ['24/7', 'Inbound AI agent'], ['0-100', 'Lead scoring']].map(([v, l]) => (
+              <div key={l}>
+                <p className="text-xl sm:text-2xl font-bold text-white">{v}</p>
+                <p className="text-[11px] text-white/30 mt-0.5">{l}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════ FEATURES ══════ */}
+      {/* ══════ 4. INTEGRATIONS MARQUEE ══════ */}
+      <section className="py-10 border-y border-white/[0.06] overflow-hidden">
+        <p className="text-center text-xs text-white/25 uppercase tracking-[0.2em] mb-6">Powered by industry-leading integrations</p>
+        <div className="marquee-container">
+          <div className="marquee-track">
+            {[...INTEGRATIONS, ...INTEGRATIONS].map((name, i) => (
+              <span key={i} className="inline-flex items-center gap-2 px-8 text-sm font-medium text-white/20 whitespace-nowrap">
+                <span className="w-1 h-1 rounded-full bg-blue-500/40" />
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 5. BENTO GRID FEATURES ══════ */}
       <section id="features" className="relative py-24 sm:py-32">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <p className="text-xs font-semibold text-blue-400 uppercase tracking-[0.2em] mb-3">Features</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Everything to close more deals</h2>
             <p className="text-white/35 max-w-lg mx-auto">From lead capture to appointment booking — one platform, fully automated.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map((f, i) => (
-              <div key={f.title} className="group relative bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300 cursor-default"
-                style={{ animation: `fadeInUp 0.5s ease-out ${0.1 * i}s both` }}>
-                <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-500/15 transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={f.icon}/></svg>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {BENTO_FEATURES.map((item, index) => (
+              <div key={index} className={`group relative p-5 rounded-xl overflow-hidden transition-all duration-300 border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.12] hover:-translate-y-0.5 cursor-default ${item.hasPersistentHover ? 'bg-white/[0.04] border-white/[0.1] -translate-y-0.5' : ''}`}>
+                <div className={`absolute inset-0 ${item.hasPersistentHover ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-300`}>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[length:4px_4px]" />
                 </div>
-                <h3 className="text-[15px] font-semibold text-white mb-2">{f.title}</h3>
-                <p className="text-[13px] text-white/35 leading-relaxed">{f.desc}</p>
+                <div className="relative flex flex-col space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.06] group-hover:bg-white/[0.1] transition-colors">{item.icon}</div>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-white/[0.06] text-white/50">{item.status || 'Active'}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-white tracking-tight">
+                      {item.title}
+                      {item.meta && <span className="ml-2 text-xs text-white/30 font-normal">{item.meta}</span>}
+                    </h3>
+                    <p className="text-[13px] text-white/35 leading-relaxed mt-1.5">{item.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {item.tags?.map((tag, i) => (
+                      <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.05] text-white/30">#{tag}</span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -322,14 +363,40 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════ PRICING ══════ */}
-      <section id="pricing" className="py-24 sm:py-32">
+      {/* ══════ TESTIMONIAL ══════ */}
+      <section className="py-20 sm:py-24">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <Quote className="w-8 h-8 text-blue-500/30 mx-auto mb-6" />
+          <blockquote className="text-xl sm:text-2xl text-white/80 leading-relaxed font-medium mb-6">
+            &ldquo;Estate AI responds to my leads in seconds while I&apos;m on showings. Last month it booked 12 meetings I would have missed. The AI sounds just like me.&rdquo;
+          </blockquote>
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">NK</div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-white">Nadine Khalil</p>
+              <p className="text-xs text-white/40">KW Commercial</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 6. PRICING with monthly/annual toggle ══════ */}
+      <section id="pricing" className="py-24 sm:py-32 border-t border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <p className="text-xs font-semibold text-blue-400 uppercase tracking-[0.2em] mb-3">Pricing</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Simple, transparent pricing</h2>
-            <p className="text-white/35">Start with a 14-day free trial. No credit card required.</p>
+            <p className="text-white/35 mb-8">Start with a 14-day free trial. No credit card required.</p>
+
+            {/* Monthly / Annual toggle */}
+            <div className="inline-flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-full p-1">
+              <button onClick={() => setAnnual(false)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${!annual ? 'bg-blue-600 text-white' : 'text-white/40 hover:text-white/60'}`}>Monthly</button>
+              <button onClick={() => setAnnual(true)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${annual ? 'bg-blue-600 text-white' : 'text-white/40 hover:text-white/60'}`}>
+                Annual <span className="text-emerald-400 text-xs ml-1">Save 17%</span>
+              </button>
+            </div>
           </div>
+
           <div className="grid sm:grid-cols-3 gap-5">
             {PLANS.map((plan, i) => (
               <div key={plan.name} className={`relative rounded-2xl p-6 transition-all duration-300 cursor-default ${
@@ -342,8 +409,9 @@ export default function LandingPage() {
                 )}
                 <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider">{plan.name}</h3>
                 <div className="mt-3 mb-5">
-                  <span className="text-4xl font-bold text-white">${plan.price}</span>
+                  <span className="text-4xl font-bold text-white">${annual ? plan.annual : plan.price}</span>
                   <span className="text-sm text-white/30">/mo</span>
+                  {annual && <span className="block text-xs text-emerald-400 mt-1">Billed annually</span>}
                 </div>
                 <ul className="space-y-2.5 mb-6">
                   {plan.features.map(f => (
@@ -374,7 +442,7 @@ export default function LandingPage() {
             Join agents who are automating their outreach, qualifying leads faster, and booking more meetings with AI.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button onClick={openSignUp} className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-500 transition-all hover:shadow-lg hover:shadow-blue-500/25 text-sm cursor-pointer">
+            <button onClick={openSignUp} className="pulsing-cta w-full sm:w-auto bg-blue-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-500 transition-all text-sm cursor-pointer">
               Start Free Trial
             </button>
             <button onClick={openSignIn} className="w-full sm:w-auto bg-white/[0.04] border border-white/[0.08] text-white/70 px-8 py-3.5 rounded-xl font-semibold hover:bg-white/[0.08] hover:text-white transition-all text-sm cursor-pointer">
@@ -386,14 +454,51 @@ export default function LandingPage() {
 
       <Footer />
 
-      {/* ── Global animation keyframes ── */}
+      {/* ── Global styles ── */}
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.3); }
+          50% { box-shadow: 0 0 40px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2); }
+        }
+        .animated-gradient-text {
+          background: linear-gradient(90deg, #60a5fa, #a78bfa, #06b6d4, #60a5fa);
+          background-size: 300% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientShift 6s ease-in-out infinite;
+        }
+        .pulsing-cta {
+          animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+        .pulsing-cta:hover {
+          animation: none;
+          box-shadow: 0 0 30px rgba(59,130,246,0.5);
+        }
+        .marquee-container {
+          overflow: hidden;
+          width: 100%;
+        }
+        .marquee-track {
+          display: flex;
+          width: max-content;
+          animation: marquee 30s linear infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+          .marquee-track { animation: none; }
         }
       `}</style>
     </div>

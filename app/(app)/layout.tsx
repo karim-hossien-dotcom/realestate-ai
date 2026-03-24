@@ -96,7 +96,7 @@ export default function AppLayout({
 
       {/* Desktop Sidebar - collapsible on hover */}
       <aside
-        className={`hidden md:flex bg-[var(--surface)] dark:bg-[#141827] border-r border-[var(--border)] flex-shrink-0 flex-col transition-all duration-300 ${
+        className={`hidden md:flex bg-[var(--surface)] dark:bg-[#0C0E14] border-r border-[var(--border)] flex-shrink-0 flex-col transition-all duration-300 ${
           sidebarExpanded ? 'w-64' : 'w-16'
         }`}
         onMouseEnter={() => setSidebarExpanded(true)}
@@ -104,7 +104,7 @@ export default function AppLayout({
       >
         <div className={`p-4 border-b border-[var(--border)] ${sidebarExpanded ? 'px-6' : 'px-3'}`}>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-[#4F7BF7] dark:to-[#2563EB] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-[0_0_12px_rgba(79,123,247,0.2)]">
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-blue-500 dark:to-blue-700 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-[0_0_12px_rgba(79,123,247,0.2)]">
               <i className="fas fa-home text-white text-lg"></i>
             </div>
             {sidebarExpanded && (
@@ -143,11 +143,11 @@ export default function AppLayout({
         </nav>
 
         {/* User Profile, Theme Toggle & Sign out */}
-        <div className="border-t border-[var(--border)] bg-[var(--surface)] dark:bg-[#141827]">
+        <div className="border-t border-[var(--border)] bg-[var(--surface)] dark:bg-[#0C0E14]">
           {/* User Profile */}
           <div className={`p-3 border-b border-[var(--border)] ${sidebarExpanded ? 'px-4' : ''}`}>
             <div className={`flex items-center ${sidebarExpanded ? 'space-x-3' : 'justify-center'}`}>
-              <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-[#4F7BF7] dark:to-[#2563EB] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[#1E40AF] dark:from-blue-500 dark:to-blue-700 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {initial}
               </div>
               {sidebarExpanded && (
@@ -178,7 +178,7 @@ export default function AppLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with hamburger menu on mobile */}
-        <header className="bg-[var(--surface)] dark:bg-[#141827] border-b border-[var(--border)] px-4 md:px-6 py-3 md:hidden">
+        <header className="bg-[var(--surface)] dark:bg-[#0C0E14] border-b border-[var(--border)] px-4 md:px-6 py-3 md:hidden">
           <div className="flex items-center justify-between">
             {/* Hamburger menu */}
             <button
