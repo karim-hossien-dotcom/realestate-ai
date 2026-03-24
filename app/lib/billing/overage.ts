@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/app/lib/supabase/server'
-import { getStripe } from '@/app/lib/stripe'
+import { getStripe } from '@/app/lib/billing/stripe'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any

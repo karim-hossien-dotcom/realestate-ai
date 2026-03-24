@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { createClient } from '@/app/lib/supabase/server'
-import { getOrCreateCustomer, createCheckoutSession } from '@/app/lib/stripe'
+import { getOrCreateCustomer, createCheckoutSession } from '@/app/lib/billing/stripe'
 import { parseBody } from '@/app/lib/api'
 import { stripeCheckoutSchema } from '@/app/lib/schemas'
 

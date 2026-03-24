@@ -1,4 +1,4 @@
-import { sendWhatsAppText } from '@/app/lib/whatsapp'
+import { sendWhatsAppText } from '@/app/lib/messaging/whatsapp'
 import { withAuth } from '@/app/lib/auth'
 import { parseBody, success, error } from '@/app/lib/api'
 import { whatsappSendSchema } from '@/app/lib/schemas'

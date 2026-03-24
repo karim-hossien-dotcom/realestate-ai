@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { getStripe, PLANS } from '@/app/lib/stripe'
+import { getStripe, PLANS } from '@/app/lib/billing/stripe'
 import { createServiceClient } from '@/app/lib/supabase/server'
-import { addOverageLineItems } from '@/app/lib/overage'
+import { addOverageLineItems } from '@/app/lib/billing/overage'
 
 /**
  * POST /api/stripe/webhook

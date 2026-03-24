@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/app/lib/auth'
 import { createClient } from '@/app/lib/supabase/server'
-import { createPortalSession } from '@/app/lib/stripe'
+import { createPortalSession } from '@/app/lib/billing/stripe'
 
 /**
  * POST /api/stripe/portal

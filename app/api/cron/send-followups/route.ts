@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
-import { sendEmail, generateFollowUpEmail } from '@/app/lib/email'
-import { sendWhatsAppText, sendWhatsAppTemplate } from '@/app/lib/whatsapp'
-import { sendSms } from '@/app/lib/sms'
-import { isOnNationalDnc } from '@/app/lib/dnc-registry'
-import { checkMessageQuota } from '@/app/lib/usage'
-import { recordOverage } from '@/app/lib/overage'
+import { sendEmail, generateFollowUpEmail } from '@/app/lib/messaging/email'
+import { sendWhatsAppText, sendWhatsAppTemplate } from '@/app/lib/messaging/whatsapp'
+import { sendSms } from '@/app/lib/messaging/sms'
+import { isOnNationalDnc } from '@/app/lib/messaging/dnc-registry'
+import { checkMessageQuota } from '@/app/lib/billing/usage'
+import { recordOverage } from '@/app/lib/billing/overage'
 
 const BATCH_SIZE = 10
 

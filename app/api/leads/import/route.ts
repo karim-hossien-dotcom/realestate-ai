@@ -4,7 +4,7 @@ import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { checkPhonesTaken } from '@/app/lib/api'
 import { applyMapping } from '@/app/lib/csv-mapper'
-import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/billing/usage'
 
 // Strip leading characters that trigger formula execution in spreadsheet apps
 function sanitizeCsvValue(val: string | null | undefined): string | null {

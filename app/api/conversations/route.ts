@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { createServiceClient, createClient } from '@/app/lib/supabase/server'
-import { sendWhatsAppText } from '@/app/lib/whatsapp'
-import { sendEmail } from '@/app/lib/email'
-import { sendSms } from '@/app/lib/sms'
-import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
-import { recordOverage } from '@/app/lib/overage'
+import { sendWhatsAppText } from '@/app/lib/messaging/whatsapp'
+import { sendEmail } from '@/app/lib/messaging/email'
+import { sendSms } from '@/app/lib/messaging/sms'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/billing/usage'
+import { recordOverage } from '@/app/lib/billing/overage'
 
 // GET /api/conversations - Get list of conversations (leads with messages)
 export async function GET(request: NextRequest) {

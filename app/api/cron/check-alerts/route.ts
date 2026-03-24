@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { runSystemChecks } from '@/app/lib/system-checks'
-import { sendEmail } from '@/app/lib/email'
+import { sendEmail } from '@/app/lib/messaging/email'
 
 const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'karim@eywaconsulting.com'
 const CRON_SECRET = process.env.CRON_SECRET || ''

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/app/lib/auth'
 import { createClient } from '@/app/lib/supabase/server'
-import { OVERAGE_RATES } from '@/app/lib/overage'
+import { OVERAGE_RATES } from '@/app/lib/billing/overage'
 
 /**
  * GET /api/stripe/usage

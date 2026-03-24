@@ -1,10 +1,10 @@
 import { withAuth, logActivity } from '@/app/lib/auth'
-import { sendEmail, generateOutreachEmail } from '@/app/lib/email'
+import { sendEmail, generateOutreachEmail } from '@/app/lib/messaging/email'
 import { createClient } from '@/app/lib/supabase/server'
 import { parseBody, success, error } from '@/app/lib/api'
 import { emailSendSchema } from '@/app/lib/schemas'
-import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/usage'
-import { recordOverage } from '@/app/lib/overage'
+import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/app/lib/billing/usage'
+import { recordOverage } from '@/app/lib/billing/overage'
 
 export async function POST(request: Request) {
   const auth = await withAuth()

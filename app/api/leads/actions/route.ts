@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
-import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/feature-gate'
+import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/feature-gate'
 
 export async function GET(request: Request) {
   const auth = await withAuth()

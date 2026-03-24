@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PLANS } from '@/app/lib/stripe'
+import { PLANS } from '@/app/lib/billing/stripe'
 
 /**
  * GET /api/stripe/plans
