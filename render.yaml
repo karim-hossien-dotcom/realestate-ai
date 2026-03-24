@@ -7,6 +7,8 @@ services:
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npx next start -p $PORT
     envVars:
+      - key: NODE_VERSION
+        value: "20"
       - key: NODE_ENV
         value: production
       # Supabase
