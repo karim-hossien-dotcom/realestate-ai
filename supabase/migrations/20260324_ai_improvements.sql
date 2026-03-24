@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS ai_improvements (
 -- Index for pending review queue
 CREATE INDEX IF NOT EXISTS idx_ai_improvements_status ON ai_improvements(status, priority);
 
+-- Create the updated_at trigger function if it doesn't exist
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Auto-update timestamp
 CREATE OR REPLACE TRIGGER set_ai_improvements_updated_at
   BEFORE UPDATE ON ai_improvements
