@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/app/lib/auth';
+import { rateLimitExport } from '@/app/lib/rate-limit';
 import fs from 'fs';
 import path from 'path';
 
@@ -31,6 +33,15 @@ function loadLogs(): LogsStore {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+
+  // Rate limit exports: 5 per minute
+  const rl = rateLimitExport(auth.user.id);
+  if (rl.limited) {
+    return NextResponse.json({ ok: false, error: 'Export rate limit exceeded.' }, { status: 429 });
+  }
+
   const { searchParams } = new URL(request.url);
   const format = searchParams.get('format') || 'csv';
   const timeRange = searchParams.get('range') || '7d';

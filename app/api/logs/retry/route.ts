@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/app/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -38,6 +39,9 @@ function saveLogs(data: LogsStore): void {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+
   const body = await request.json().catch(() => ({}));
   const { logId } = body;
 
