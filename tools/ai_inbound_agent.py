@@ -484,11 +484,39 @@ MEETING RULES:
         data["agent_brief"] = None
 
     # Post-processing: fix common GPT-4o bad habits the prompt can't fully prevent
+    import re
     reply = data["reply"]
 
     # Strip name from "Got it, [Name]" openers — GPT-4o ignores the ban
-    import re
     reply = re.sub(r'^(Got it|Perfect|Great|Sounds good),?\s+[A-Z][a-z]+[.!]?\s*', r'\1. ', reply)
+
+    # De-duplicate openers — don't start 2+ replies in a row with the same word
+    recent_outbound = [
+        m.get("body", "") for m in (conversation_history or [])
+        if m.get("direction") == "outbound"
+    ][-3:]  # last 3 agent replies
+    recent_openers = [msg.split()[0].rstrip(".,!").lower() for msg in recent_outbound if msg.strip()]
+    current_opener = reply.split()[0].rstrip(".,!").lower() if reply.strip() else ""
+
+    if current_opener and recent_openers.count(current_opener) >= 1:
+        # This opener was already used recently — swap it
+        alternatives = {
+            "got": ["Right —", "Makes sense.", "Okay,"],
+            "great": ["Nice.", "Love it —", "Perfect."],
+            "perfect": ["Great.", "Sounds good.", "Nice —"],
+            "sounds": ["Right.", "Makes sense.", "Perfect."],
+            "right": ["Got it.", "Makes sense.", "So,"],
+            "makes": ["Right.", "Got it.", "Okay,"],
+            "nice": ["Great.", "Love it.", "Perfect."],
+        }
+        swaps = alternatives.get(current_opener, ["So,", "Right —", "Okay,"])
+        # Pick the first alternative not recently used
+        for swap in swaps:
+            swap_opener = swap.split()[0].rstrip(".,!—").lower()
+            if swap_opener not in recent_openers:
+                # Replace the opener phrase (e.g., "Got it." or "Great,")
+                reply = re.sub(r'^(Got it|Perfect|Great|Sounds good|Right|Makes sense|Nice|Okay)[.,!—\s]*', swap + " ", reply, count=1)
+                break
 
     # Strip conversation killers that slip through
     killer_patterns = [
