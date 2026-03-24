@@ -84,6 +84,11 @@ export async function POST(req: NextRequest) {
           status: mapped.status || 'new',
           notes: sanitizeCsvValue(mapped.notes),
           tags: mapped.tags || [],
+          property_type: mapped.property_type || null,
+          property_interest: mapped.property_interest || null,
+          budget_min: mapped.budget_min || null,
+          budget_max: mapped.budget_max || null,
+          location_preference: mapped.location_preference || null,
           score: 50,
           score_category: 'Warm',
         }

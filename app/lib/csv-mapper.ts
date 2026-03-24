@@ -17,6 +17,7 @@ export type LeadField =
   | 'contact_preference'
   | 'tags'
   | 'property_type'
+  | 'property_interest'
   | 'budget_min'
   | 'budget_max'
   | 'location_preference'
@@ -44,8 +45,9 @@ export const MAPPABLE_FIELDS: { value: LeadField | '(skip)'; label: string }[] =
   { value: 'contact_preference', label: 'Contact Preference' },
   { value: 'tags', label: 'Tags' },
   { value: 'property_type', label: 'Property Type' },
-  { value: 'budget_min', label: 'Budget Min' },
-  { value: 'budget_max', label: 'Budget Max' },
+  { value: 'property_interest', label: 'Interest (Buyer/Seller/Investor)' },
+  { value: 'budget_min', label: 'Budget Min / List Price' },
+  { value: 'budget_max', label: 'Budget Max / Ask Price' },
   { value: 'location_preference', label: 'Location Preference' },
 ]
 
@@ -57,51 +59,101 @@ const HEADER_ALIASES: Record<LeadField, string[]> = {
   phone: [
     'phone', 'phone number', 'phone_number', 'mobile', 'cell', 'tel',
     'telephone', 'contact number', 'primary phone', 'cell phone',
-    'mobile phone', 'home phone', 'work phone',
+    'mobile phone', 'home phone', 'work phone', 'phone1', 'phone 1',
+    // FUB
+    'phones', 'best phone', 'direct phone',
+    // MLS / Zillow
+    'owner phone', 'listing agent phone', 'agent phone',
   ],
   email: [
     'email', 'email address', 'email_address', 'e-mail', 'e_mail',
-    'contact email', 'primary email',
+    'contact email', 'primary email', 'email1', 'email 1',
+    // FUB
+    'emails', 'best email',
+    // MLS
+    'owner email', 'listing agent email', 'agent email',
   ],
   owner_name: [
     'name', 'full name', 'full_name', 'owner name', 'owner_name',
     'contact name', 'contact_name', 'lead name', 'client name', 'client',
+    // FUB
+    'people', 'person', 'contact',
+    // MLS / Public Records
+    'owner', 'property owner', 'owner 1', 'owner1',
   ],
   first_name: [
     'first name', 'first_name', 'firstname', 'first', 'given name',
+    'fname', 'f name',
   ],
   last_name: [
     'last name', 'last_name', 'lastname', 'last', 'surname', 'family name',
+    'lname', 'l name',
   ],
   property_address: [
     'address', 'property address', 'property_address', 'street address',
-    'street', 'full address', 'mailing address', 'home address', 'location',
+    'street', 'full address', 'mailing address', 'home address',
+    // MLS / Public Records
+    'site address', 'situs address', 'property location', 'listing address',
+    'subject property address', 'parcel address',
   ],
   status: [
     'status', 'lead status', 'lead_status', 'stage', 'disposition',
+    // FUB
+    'people stage', 'pipeline stage', 'deal stage',
+    // MLS
+    'listing status', 'mls status',
   ],
   notes: [
     'notes', 'note', 'comments', 'comment', 'description', 'remarks',
+    // FUB
+    'background', 'bio', 'summary',
   ],
   contact_preference: [
     'contact preference', 'contact_preference', 'preferred channel',
-    'channel', 'contact method',
+    'channel', 'contact method', 'preferred contact',
   ],
   tags: [
     'tags', 'tag', 'labels', 'label', 'categories', 'category',
+    // FUB
+    'lead tags', 'groups', 'lists',
   ],
   property_type: [
     'property type', 'property_type', 'type', 'listing type',
+    // MLS
+    'prop type', 'building type', 'class', 'property class',
+    'use code', 'land use', 'zoning',
+    // Commercial
+    'asset type', 'asset class',
+  ],
+  property_interest: [
+    'interest', 'property interest', 'property_interest', 'intent',
+    'lead type', 'lead_type', 'buyer seller', 'buyer or seller',
+    // FUB
+    'people type', 'contact type', 'role',
+    // Common CRM
+    'looking to', 'goal', 'objective', 'motivation',
+    'buying or selling', 'transaction type', 'deal type',
   ],
   budget_min: [
     'budget min', 'budget_min', 'min budget', 'min price', 'price min',
+    'low price', 'price from', 'starting price',
+    // MLS
+    'list price', 'listing price', 'asking price', 'price',
+    'original price', 'current price',
   ],
   budget_max: [
     'budget max', 'budget_max', 'max budget', 'max price', 'price max',
+    'high price', 'price to', 'max listing price',
+    // Buyer searches
+    'search price max', 'budget', 'price range',
   ],
   location_preference: [
-    'location', 'location preference', 'preferred location', 'area',
-    'neighborhood', 'city',
+    'location preference', 'preferred location',
+    'neighborhood', 'preferred area', 'target area',
+    // FUB
+    'search city', 'search area', 'desired location',
+    // MLS
+    'subdivision', 'community', 'development',
   ],
 }
 
@@ -257,6 +309,7 @@ export type MappedLead = {
   contact_preference: string
   tags: string[]
   property_type: string | null
+  property_interest: string | null
   budget_min: number | null
   budget_max: number | null
   location_preference: string | null
@@ -276,6 +329,7 @@ export function applyMapping(
     contact_preference: 'sms',
     tags: [],
     property_type: null,
+    property_interest: null,
     budget_min: null,
     budget_max: null,
     location_preference: null,
@@ -323,6 +377,9 @@ export function applyMapping(
       case 'property_type':
         lead.property_type = value
         break
+      case 'property_interest':
+        lead.property_interest = normalizeInterest(value)
+        break
       case 'budget_min': {
         const num = parseFloat(value.replace(/[^0-9.]/g, ''))
         lead.budget_min = isNaN(num) ? null : num
@@ -366,5 +423,66 @@ export function applyMapping(
     }
   }
 
+  // Auto-detect property_interest from status, tags, and notes if not explicitly mapped
+  if (!lead.property_interest) {
+    lead.property_interest = inferInterest(lead)
+  }
+
   return lead
+}
+
+// ---------------------------------------------------------------------------
+// Interest normalization and inference
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize raw interest values to standard categories.
+ * Maps various CRM export values to: sell, buy, invest, rent, valuation, or the original.
+ */
+function normalizeInterest(raw: string): string {
+  const lower = raw.toLowerCase().trim()
+
+  // Seller signals
+  if (/sell|listing|list|fsbo|for sale|motivated seller|pre-foreclosure|probate|absentee|vacant|expired/.test(lower)) return 'sell'
+
+  // Buyer signals
+  if (/buy|purchas|looking|search|seeking|want.*home|need.*property|first.*time.*buyer|relocat/.test(lower)) return 'buy'
+
+  // Investor signals
+  if (/invest|rental|cap rate|noi|portfolio|flip|wholesale|1031|exchange/.test(lower)) return 'invest'
+
+  // Rent signals
+  if (/rent|lease|tenant/.test(lower)) return 'rent'
+
+  // Valuation signals
+  if (/valuat|apprais|cma|market analysis|what.*worth|home.*value/.test(lower)) return 'valuation'
+
+  return raw.toLowerCase()
+}
+
+/**
+ * Infer buyer/seller intent from status, tags, and notes when no explicit interest field exists.
+ */
+function inferInterest(lead: MappedLead): string | null {
+  const signals: string[] = []
+  if (lead.status) signals.push(lead.status)
+  if (lead.notes) signals.push(lead.notes)
+  if (lead.tags.length) signals.push(lead.tags.join(' '))
+
+  const combined = signals.join(' ').toLowerCase()
+  if (!combined) return null
+
+  // Check for seller signals
+  if (/sell|listing|fsbo|for sale|motivated|pre-foreclosure|probate|absentee|vacant|expired|owner occupied/.test(combined)) return 'sell'
+
+  // Check for buyer signals
+  if (/buy|purchas|looking|search|seeking|relocat|first time|pre-approved|pre-qual/.test(combined)) return 'buy'
+
+  // Check for investor signals
+  if (/invest|rental|cap rate|noi|portfolio|flip|wholesale/.test(combined)) return 'invest'
+
+  // Check for common FUB/CRM stage names
+  if (/new lead|hot|warm|nurture|prospect|active/.test(combined)) return null // ambiguous — let AI figure it out
+
+  return null
 }
