@@ -1,13 +1,61 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, StatCard } from './AdminShared'
 
+// ── Org Chart Data ──
+const ORG = {
+  ceo: { name: 'Karim Hossien', title: 'CEO — EYWA Consulting', color: '#F59E0B' },
+  ai: { name: 'Claude Opus 4.6', title: 'AI CTO — Orchestrates all agents', color: '#3B82F6' },
+  departments: [
+    {
+      name: 'Engineering',
+      color: '#3B82F6',
+      agents: [
+        { name: 'Architect', type: 'on-demand' },
+        { name: 'Planner', type: 'on-demand' },
+        { name: 'TDD Guide', type: 'on-demand' },
+        { name: 'Code Reviewer', type: 'on-demand' },
+        { name: 'Build Resolver', type: 'on-demand' },
+        { name: 'Refactor', type: 'on-demand' },
+        { name: 'E2E Runner', type: 'on-demand' },
+        { name: 'Doc Updater', type: 'on-demand' },
+        { name: 'Eng Ops', type: 'automated' },
+      ],
+    },
+    {
+      name: 'Security',
+      color: '#EF4444',
+      agents: [
+        { name: 'Security Reviewer', type: 'automated' },
+      ],
+    },
+    {
+      name: 'Business',
+      color: '#A855F7',
+      agents: [
+        { name: 'Finance Ops', type: 'on-demand' },
+        { name: 'Legal Ops', type: 'on-demand' },
+        { name: 'Marketing Ops', type: 'on-demand' },
+        { name: 'Market Research', type: 'on-demand' },
+      ],
+    },
+  ],
+}
+
 const CRON_SCHEDULES = [
-  { name: 'send-followups', frequency: 'Every 5 min', endpoint: '/api/cron/send-followups', desc: 'Send scheduled follow-up messages', status: 'active' },
-  { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports', status: 'active' },
-  { name: 'check-alerts', frequency: 'Every 15 min', endpoint: '/api/cron/check-alerts', desc: 'Monitor services + email on critical', status: 'active' },
-  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI quality scoring + ops health check', status: 'active' },
-  { name: 'UX review', frequency: 'Monthly (1st)', endpoint: 'Manual', desc: 'Full UX checklist — core flows, mobile, dark mode', status: 'manual' },
+  { name: 'send-followups', frequency: 'Every 5 min', endpoint: '/api/cron/send-followups', desc: 'Send scheduled follow-up messages', status: 'active', agent: 'Eng Ops' },
+  { name: 'check-alerts', frequency: 'Every 30 min', endpoint: '/api/cron/check-alerts', desc: 'Monitor services + email on critical', status: 'active', agent: 'Eng Ops' },
+  { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports + auto-create tasks', status: 'active', agent: 'Eng Ops' },
+  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'Security Reviewer' },
+  { name: 'UX review', frequency: 'Monthly (1st)', endpoint: 'Manual', desc: 'Full UX checklist — core flows, mobile, dark mode', status: 'manual', agent: 'None' },
+]
+
+const PROPOSED_AUTOMATIONS = [
+  { name: 'Lead score refresh', frequency: 'Daily (2am)', desc: 'Recalculate all lead scores based on latest activity', agent: 'Eng Ops', priority: 'P1' },
+  { name: 'Stale lead detection', frequency: 'Weekly (Monday)', desc: 'Flag leads with no activity in 30+ days, create follow-up tasks', agent: 'Eng Ops', priority: 'P2' },
+  { name: 'Competitor pricing check', frequency: 'Monthly (1st)', desc: 'Scrape competitor pricing changes', agent: 'Market Research', priority: 'P2' },
+  { name: 'Usage/cost report', frequency: 'Monthly (1st)', desc: 'Pull vendor costs and update finance metrics', agent: 'Finance Ops', priority: 'P2' },
 ]
 
 const SKILLS = [
@@ -18,9 +66,9 @@ const SKILLS = [
 ]
 
 const INFRA = [
-  { label: 'Node.js Service', value: 'Render (free tier)', status: 'live' },
+  { label: 'Node.js Service', value: 'Render (free)', status: 'live' },
   { label: 'Python Webhook', value: 'Render (starter)', status: 'live' },
-  { label: 'Database', value: 'Supabase (free tier)', status: 'live' },
+  { label: 'Database', value: 'Supabase (free)', status: 'live' },
   { label: 'AI Model', value: 'GPT-4o', status: 'live' },
   { label: 'Domain', value: 'realestate-ai.app', status: 'live' },
   { label: 'WhatsApp', value: 'Meta Business API v21.0', status: 'live' },
@@ -31,23 +79,83 @@ const INFRA = [
 ]
 
 const MCPS = [
-  { name: 'Supabase', status: 'connected', desc: '18+ tables, RLS, PostgREST API' },
+  { name: 'Supabase', status: 'connected', desc: '18+ tables, RLS, PostgREST' },
   { name: 'Sentry', status: 'disconnected', desc: 'Error tracking (not configured)' },
 ]
 
 export default function OperationsTab() {
+  const [showOrgChart, setShowOrgChart] = useState(true)
+
+  const totalAgents = ORG.departments.reduce((s, d) => s + d.agents.length, 0)
+  const automatedAgents = ORG.departments.reduce((s, d) => s + d.agents.filter(a => a.type === 'automated').length, 0)
+
   return (
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
+        <StatCard label="Total Agents" value={totalAgents} sub={`${automatedAgents} automated`} />
         <StatCard label="Cron Jobs" value={CRON_SCHEDULES.filter(c => c.status === 'active').length} sub={`${CRON_SCHEDULES.length} total`} />
-        <StatCard label="Skill Packs" value={SKILLS.length} sub={`${SKILLS.reduce((s, sk) => s + sk.count, 0)} skills total`} />
-        <StatCard label="Services" value={INFRA.filter(i => i.status === 'live').length} sub="All operational" />
-        <StatCard label="MCP Servers" value={MCPS.filter(m => m.status === 'connected').length} sub={`${MCPS.length} configured`} />
+        <StatCard label="Services" value={INFRA.filter(i => i.status === 'live').length} sub="operational" />
+        <StatCard label="Skill Packs" value={SKILLS.length} sub={`${SKILLS.reduce((s, sk) => s + sk.count, 0)} skills`} />
       </div>
 
-      {/* Cron Schedules */}
-      <Card title="Automated Schedules" accent="#22C55E">
+      {/* Org Chart */}
+      <Card title="Organization Chart" accent="var(--primary)">
+        <div className="space-y-4 py-2">
+          {/* CEO */}
+          <div className="flex justify-center">
+            <div className="px-5 py-3 rounded-xl border-2 text-center" style={{ borderColor: ORG.ceo.color, background: `${ORG.ceo.color}10` }}>
+              <p className="text-sm font-bold text-[var(--text-primary)]">{ORG.ceo.name}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">{ORG.ceo.title}</p>
+            </div>
+          </div>
+          <div className="flex justify-center"><div className="w-px h-5 bg-[var(--border)]" /></div>
+
+          {/* AI CTO */}
+          <div className="flex justify-center">
+            <div className="px-5 py-3 rounded-xl border-2 text-center" style={{ borderColor: ORG.ai.color, background: `${ORG.ai.color}10` }}>
+              <p className="text-sm font-bold" style={{ color: ORG.ai.color }}>{ORG.ai.name}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">{ORG.ai.title}</p>
+            </div>
+          </div>
+          <div className="flex justify-center"><div className="w-px h-5 bg-[var(--border)]" /></div>
+
+          {/* Connector line */}
+          <div className="flex justify-center">
+            <div className="w-3/4 h-px bg-[var(--border)]" />
+          </div>
+
+          {/* Departments */}
+          <div className="grid grid-cols-3 gap-4">
+            {ORG.departments.map(dept => (
+              <div key={dept.name} className="rounded-xl border p-4" style={{ borderColor: `${dept.color}30` }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full" style={{ background: dept.color }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: dept.color }}>{dept.name}</span>
+                  <span className="text-[9px] text-[var(--text-secondary)] ml-auto">{dept.agents.length}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {dept.agents.map(agent => (
+                    <div key={agent.name} className="flex items-center justify-between text-xs py-1">
+                      <span className="text-[var(--text-primary)]">{agent.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                        agent.type === 'automated'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
+                      }`}>
+                        {agent.type === 'automated' ? '⚡ Auto' : 'On-demand'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Automated Schedules */}
+      <Card title="Automated Schedules (Live)" accent="#22C55E">
         <div className="space-y-0">
           {CRON_SCHEDULES.map(cron => (
             <div key={cron.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
@@ -60,7 +168,30 @@ export default function OperationsTab() {
               </div>
               <div className="text-right">
                 <span className="text-xs font-medium text-[var(--text-primary)]">{cron.frequency}</span>
-                <p className="text-[9px] text-[var(--text-secondary)] font-mono">{cron.endpoint}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">Agent: {cron.agent}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Proposed Automations */}
+      <Card title="Proposed Automations (Not Yet Built)" accent="#F59E0B">
+        <div className="space-y-0">
+          {PROPOSED_AUTOMATIONS.map(auto => (
+            <div key={auto.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+              <div className="flex items-center gap-3">
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  auto.priority === 'P1' ? 'bg-amber-500/10 text-amber-400' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
+                }`}>{auto.priority}</span>
+                <div>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{auto.name}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">{auto.desc}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-[var(--text-secondary)]">{auto.frequency}</span>
+                <p className="text-[9px] text-[var(--text-secondary)]">Agent: {auto.agent}</p>
               </div>
             </div>
           ))}
@@ -110,7 +241,7 @@ export default function OperationsTab() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full ${mcp.status === 'connected' ? 'bg-emerald-400' : 'bg-white/20'}`} />
-                  <span className={`text-[9px] ${mcp.status === 'connected' ? 'text-emerald-400' : 'text-white/30'}`}>{mcp.status}</span>
+                  <span className={`text-[9px] ${mcp.status === 'connected' ? 'text-emerald-400' : 'text-[var(--text-secondary)]'}`}>{mcp.status}</span>
                 </div>
               </div>
             ))}
