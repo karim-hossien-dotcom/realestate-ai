@@ -2,6 +2,7 @@
 
 import AlertsPanel from './AlertsPanel'
 import AiAuditPanel from './AiAuditPanel'
+import AiImprovementPanel from './AiImprovementPanel'
 import { Card, DeptTab } from './AdminShared'
 import type { Task, SystemAlert } from './admin-types'
 
@@ -51,6 +52,11 @@ export default function EngineeringTab({ tasks, onToggle, alerts, alertsLoading 
 
       {/* AI Conversation Quality Audit */}
       <AiAuditPanel />
+
+      {/* AI Improvement Proposals — review and accept/reject */}
+      <Card title="AI Agent Improvements" accent="#A855F7">
+        <AiImprovementPanel />
+      </Card>
 
       <DeptTab department="engineering" tasks={tasks} onToggle={onToggle} filters={['P0', 'P1', 'P2', 'P3', 'auto']} />
     </div>

@@ -31,11 +31,23 @@ const ORG = {
       ],
     },
     {
-      name: 'Business',
-      color: '#A855F7',
+      name: 'Finance',
+      color: '#22C55E',
       agents: [
         { name: 'Finance Ops', type: 'on-demand' },
+      ],
+    },
+    {
+      name: 'Legal',
+      color: '#F59E0B',
+      agents: [
         { name: 'Legal Ops', type: 'on-demand' },
+      ],
+    },
+    {
+      name: 'Marketing',
+      color: '#A855F7',
+      agents: [
         { name: 'Marketing Ops', type: 'on-demand' },
         { name: 'Market Research', type: 'on-demand' },
       ],
@@ -90,6 +102,7 @@ const CRON_SCHEDULES = [
   { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports + auto-create tasks', status: 'active', agent: 'Eng Ops' },
   { name: 'refresh-lead-scores', frequency: 'Daily (2am)', endpoint: '/api/cron/refresh-lead-scores', desc: 'Recalculate all lead scores — time decay + activity', status: 'active', agent: 'Eng Ops' },
   { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'Security Reviewer' },
+  { name: 'ai-improvement-report', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/ai-improvement-report', desc: 'Analyze low-scoring convos, propose AI prompt improvements', status: 'active', agent: 'AI Improver' },
   { name: 'stale-lead-detection', frequency: 'Weekly (Monday)', endpoint: '/api/cron/stale-lead-detection', desc: 'Flag stale hot/warm leads, auto-create follow-ups', status: 'active', agent: 'Eng Ops' },
   { name: 'competitor-pricing', frequency: 'Monthly (1st)', endpoint: '/api/cron/competitor-pricing', desc: 'Competitor pricing snapshot + positioning analysis', status: 'active', agent: 'Market Research' },
   { name: 'cost-report', frequency: 'Monthly (1st)', endpoint: '/api/cron/cost-report', desc: 'MRR, message volume, cost breakdown, margins', status: 'active', agent: 'Finance Ops' },
@@ -170,7 +183,7 @@ export default function OperationsTab() {
           </div>
 
           {/* Departments */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-5 gap-3">
             {ORG.departments.map(dept => (
               <div key={dept.name} className="rounded-xl border p-4" style={{ borderColor: `${dept.color}30` }}>
                 <div className="flex items-center gap-2 mb-3">
