@@ -380,8 +380,37 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ══════ TRUST SECTION ══════ */}
+      <section className="py-16 border-y border-white/[0.06]">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="grid sm:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="w-10 h-10 mx-auto bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center mb-3">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3 className="text-sm font-semibold text-white mb-1">Your Data Stays Yours</h3>
+              <p className="text-xs text-white/35">We never sell, share, or mine your leads. Unlike some CRMs, we have zero conflict of interest with listing portals.</p>
+            </div>
+            <div>
+              <div className="w-10 h-10 mx-auto bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-3">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              </div>
+              <h3 className="text-sm font-semibold text-white mb-1">Enterprise-Grade Security</h3>
+              <p className="text-xs text-white/35">AES-256 encryption, Supabase RLS, rate limiting on every endpoint, TCPA/CAN-SPAM compliant.</p>
+            </div>
+            <div>
+              <div className="w-10 h-10 mx-auto bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center mb-3">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <h3 className="text-sm font-semibold text-white mb-1">Transparent Pricing</h3>
+              <p className="text-xs text-white/35">No sales calls. No hidden fees. No annual contracts. Published prices — what you see is what you pay.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ══════ 6. PRICING with monthly/annual toggle ══════ */}
-      <section id="pricing" className="py-24 sm:py-32 border-t border-white/[0.06]">
+      <section id="pricing" className="py-24 sm:py-32">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
             <p className="text-xs font-semibold text-blue-400 uppercase tracking-[0.2em] mb-3">Pricing</p>
