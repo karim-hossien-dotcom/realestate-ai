@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
 import { sendEmail } from '@/app/lib/messaging/email'
 import { z } from 'zod'
-import { parseBody, success } from '@/app/lib/api'
+import { parseBody } from '@/app/lib/api'
 
 const sendCmaSchema = z.object({
   lead_id: z.string().uuid().optional(),
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       { email, property_address },
     )
 
-    return NextResponse.json(success({ sent: true, email }))
+    return NextResponse.json({ ok: true, sent: true, email })
   } catch (error) {
     console.error('CMA email send error:', error)
     return NextResponse.json(

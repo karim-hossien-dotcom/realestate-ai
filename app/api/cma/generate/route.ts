@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
-import { parseBody, success } from '@/app/lib/api'
+import { parseBody } from '@/app/lib/api'
 import { z } from 'zod'
 import OpenAI from 'openai'
 
@@ -119,7 +119,8 @@ export async function POST(request: Request) {
       { property_address: data.property_address, property_type: data.property_type },
     )
 
-    return NextResponse.json(success({
+    return NextResponse.json({
+      ok: true,
       cma,
       property: {
         address: data.property_address,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
         sqft: data.sqft,
         owner_name: data.owner_name,
       },
-    }))
+    })
   } catch (error) {
     console.error('CMA generation error:', error)
     return NextResponse.json(
