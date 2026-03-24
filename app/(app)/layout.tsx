@@ -24,6 +24,7 @@ const baseNavItems = [
   { href: '/follow-ups', label: 'Follow-Ups', icon: 'fa-clock' },
   { href: '/conversations', label: 'Conversations', icon: 'fa-comments' },
   { href: '/calendar', label: 'Calendar', icon: 'fa-calendar' },
+  { href: '/cma', label: 'CMA Tool', icon: 'fa-file-invoice-dollar' },
   { href: '/logs', label: 'Logs', icon: 'fa-file-alt' },
   { href: '/settings', label: 'Settings', icon: 'fa-cog' },
 ];

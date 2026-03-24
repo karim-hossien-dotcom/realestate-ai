@@ -4,7 +4,7 @@ import csv
 import json
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Iterable, Optional
 
 import fcntl
@@ -682,6 +682,36 @@ def _process_whatsapp_message(
     if follow_up_days and isinstance(follow_up_days, (int, float)) and follow_up_days > 0 and SUPABASE_AVAILABLE and user_id:
         _handle_auto_follow_up(user_id, wa_id, agent_name, agent_brokerage,
                                follow_up_days, ai_result)
+
+    # Auto-create CMA task when AI detects valuation request
+    if ai_result.get("valuation_requested") and SUPABASE_AVAILABLE and user_id:
+        lead = find_lead_by_phone(user_id, wa_id)
+        lead_name = (lead or {}).get("owner_name", wa_id)
+        prop_addr = (lead or {}).get("property_address", "unknown property")
+        try:
+            client_sb = get_supabase_client()
+            if client_sb:
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                # Dedup by title + date
+                existing = client_sb.table("follow_ups").select("id").eq("user_id", user_id).eq("source", "valuation_request").like("message", f"%{wa_id}%").eq("status", "pending").limit(1).execute()
+                if not (existing.data and len(existing.data) > 0):
+                    client_sb.table("follow_ups").insert({
+                        "user_id": user_id,
+                        "lead_id": (lead or {}).get("id"),
+                        "channel": "email",
+                        "message": f"Send full CMA to {lead_name} ({wa_id}) for {prop_addr}. Lead requested valuation via WhatsApp.",
+                        "status": "pending",
+                        "scheduled_for": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+                        "source": "valuation_request",
+                    }).execute()
+                    log_activity(
+                        user_id, "valuation_request",
+                        f"CMA follow-up task created for {lead_name} at {prop_addr}",
+                        "success",
+                        {"phone": wa_id, "property": prop_addr},
+                    )
+        except Exception as e:
+            logger.error(f"Failed to create valuation follow-up task: {e}")
 
     # Log agent brief when lead is fully qualified
     agent_brief = ai_result.get("agent_brief")
