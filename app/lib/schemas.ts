@@ -91,6 +91,31 @@ export const createProjectTaskSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
+// ===== CUSTOM TEMPLATES =====
+
+export const createCustomTemplateSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200),
+  category: z.string().max(50).default('custom'),
+  description: z.string().max(500).optional(),
+  sms_body: z.string().min(1, 'SMS/WhatsApp message is required').max(1600),
+  email_subject: z.string().max(200).optional(),
+  email_body: z.string().max(5000).optional(),
+  tags: z.array(z.string().max(30)).max(10).optional(),
+  is_favorite: z.boolean().optional(),
+})
+
+export const updateCustomTemplateSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(200).optional(),
+  category: z.string().max(50).optional(),
+  description: z.string().max(500).optional(),
+  sms_body: z.string().min(1).max(1600).optional(),
+  email_subject: z.string().max(200).optional(),
+  email_body: z.string().max(5000).optional(),
+  tags: z.array(z.string().max(30)).max(10).optional(),
+  is_favorite: z.boolean().optional(),
+})
+
 export const updateProjectTaskSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(['pending', 'in_progress', 'completed', 'blocked', 'skipped']).optional(),

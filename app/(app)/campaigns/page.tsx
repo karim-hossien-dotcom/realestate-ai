@@ -55,6 +55,10 @@ export default function CampaignsPage() {
   const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [customMessage, setCustomMessage] = useState('');
+  const [customTemplates, setCustomTemplates] = useState<Array<{ id: string; name: string; sms_body: string; email_subject?: string; email_body?: string; tags?: string[]; category: string; is_favorite: boolean; use_count: number }>>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -81,10 +85,19 @@ export default function CampaignsPage() {
     } catch { /* silent */ }
   }, []);
 
+  const fetchCustomTemplates = useCallback(async () => {
+    try {
+      const res = await fetch('/api/campaigns/templates/custom');
+      const data = await res.json();
+      if (data.ok) setCustomTemplates(data.templates || []);
+    } catch { /* silent */ }
+  }, []);
+
   useEffect(() => {
     fetchLeads();
     fetchCampaignHistory();
-  }, [fetchLeads, fetchCampaignHistory]);
+    fetchCustomTemplates();
+  }, [fetchLeads, fetchCampaignHistory, fetchCustomTemplates]);
 
   const filteredLeads = leads.filter((lead) => {
     if (!searchQuery) return true;
@@ -378,6 +391,32 @@ export default function CampaignsPage() {
                   <div className="font-semibold text-[var(--text-primary)]">AI Auto-Generate</div>
                   <div className="text-[var(--text-secondary)] mt-0.5">AI personalizes per lead</div>
                 </button>
+                {/* Custom templates first */}
+                {customTemplates.map(ct => (
+                  <button
+                    key={ct.id}
+                    onClick={() => {
+                      setSelectedTemplate({ id: ct.id, name: ct.name, category: 'custom' as CampaignTemplate['category'], description: '', smsBody: ct.sms_body, emailSubject: ct.email_subject || '', emailBody: ct.email_body || '', tags: ct.tags || ['custom'], bestFor: '' });
+                      const firstLead = selectedLeads[0];
+                      const preview = channel === 'email' && ct.email_body ? ct.email_body : ct.sms_body;
+                      setCustomMessage(fillTemplate(preview, {
+                        firstName: firstLead?.owner_name?.split(' ')[0] || 'there',
+                        address: firstLead?.property_address || 'your property',
+                        area: firstLead?.property_address?.split(',')[1]?.trim() || 'your area',
+                      }));
+                    }}
+                    className={`p-3 rounded-lg border text-left text-xs transition-colors cursor-pointer relative ${
+                      selectedTemplate?.id === ct.id
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                        : 'border-purple-500/30 bg-purple-500/5 hover:border-purple-500/50'
+                    }`}
+                  >
+                    {ct.is_favorite && <span className="absolute top-1.5 right-1.5 text-amber-400 text-[10px]"><i className="fas fa-star"></i></span>}
+                    <div className="font-semibold text-[var(--text-primary)]">{ct.name}</div>
+                    <div className="text-purple-400 mt-0.5">Your template</div>
+                  </button>
+                ))}
+                {/* Built-in templates */}
                 {CAMPAIGN_TEMPLATES.map(t => (
                   <button
                     key={t.id}
@@ -422,13 +461,80 @@ export default function CampaignsPage() {
                   AI will auto-generate a personalized message for each lead based on their property, intent, and context.
                 </div>
               )}
-              {selectedTemplate && (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[11px] text-[var(--text-secondary)]">Template: {selectedTemplate.name}</span>
-                  <span className="text-[11px] text-[var(--text-secondary)]">|</span>
-                  {selectedTemplate.tags.map(tag => (
-                    <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-elevated)] text-[var(--text-secondary)]">{tag}</span>
-                  ))}
+              <div className="flex items-center gap-3 mt-2">
+                {selectedTemplate && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-[var(--text-secondary)]">Template: {selectedTemplate.name}</span>
+                    <span className="text-[11px] text-[var(--text-secondary)]">|</span>
+                    {selectedTemplate.tags.map(tag => (
+                      <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-elevated)] text-[var(--text-secondary)]">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                {customMessage && (
+                  <button
+                    onClick={() => setShowSaveTemplate(true)}
+                    className="ml-auto text-[11px] text-blue-400 hover:text-blue-300 cursor-pointer flex items-center gap-1"
+                  >
+                    <i className="fas fa-save text-[10px]"></i> Save as Template
+                  </button>
+                )}
+              </div>
+
+              {/* Save as Template Dialog */}
+              {showSaveTemplate && (
+                <div className="bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg p-4 space-y-3 mt-2">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Save as Custom Template</p>
+                  <input
+                    type="text"
+                    value={saveTemplateName}
+                    onChange={e => setSaveTemplateName(e.target.value)}
+                    placeholder="Template name (e.g., My Follow-Up Script)"
+                    className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      disabled={!saveTemplateName.trim() || savingTemplate}
+                      onClick={async () => {
+                        setSavingTemplate(true);
+                        try {
+                          const res = await fetch('/api/campaigns/templates/custom', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              name: saveTemplateName.trim(),
+                              sms_body: customMessage,
+                              email_subject: selectedTemplate?.emailSubject || '',
+                              email_body: channel === 'email' ? customMessage : '',
+                              tags: ['custom'],
+                            }),
+                          });
+                          const data = await res.json();
+                          if (data.ok) {
+                            showToast('Template saved!', 'success');
+                            setShowSaveTemplate(false);
+                            setSaveTemplateName('');
+                            fetchCustomTemplates();
+                          } else {
+                            showToast(data.error || data.message || 'Failed to save', 'error');
+                          }
+                        } catch {
+                          showToast('Failed to save template', 'error');
+                        } finally {
+                          setSavingTemplate(false);
+                        }
+                      }}
+                      className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {savingTemplate ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => { setShowSaveTemplate(false); setSaveTemplateName(''); }}
+                      className="px-4 py-1.5 text-[var(--text-secondary)] text-sm cursor-pointer hover:text-[var(--text-primary)]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
