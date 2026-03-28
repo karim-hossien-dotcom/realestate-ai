@@ -8,7 +8,7 @@
 export interface CampaignTemplate {
   id: string
   name: string
-  category: 'prospecting' | 'follow_up' | 'expired' | 'fsbo' | 'investor' | 'reengagement' | 'referral' | 'valuation'
+  category: 'prospecting' | 'follow_up' | 'expired' | 'fsbo' | 'investor' | 'reengagement' | 'referral' | 'valuation' | 'buyer' | 'tenant'
   description: string
   smsBody: string
   emailSubject: string
@@ -251,6 +251,138 @@ Best,
 {{brokerage}}`,
     tags: ['commercial', 'follow-up', 'LoopNet', 'Crexi'],
     bestFor: 'Leads who viewed commercial listings on LoopNet, Crexi, CoStar',
+  },
+
+  // ─── BUYER / TENANT TEMPLATES ───
+
+  {
+    id: 'commercial-lease-outreach',
+    name: 'Commercial Lease — Space Available',
+    category: 'tenant',
+    description: 'Outreach to prospective tenants looking for commercial space. Ideal for leads imported from lease inquiry lists.',
+    smsBody: `Hi {{firstName}}, this is {{agentName}} with {{brokerage}}. I have a few commercial spaces available in {{area}} that might be a great fit for your business. Would you be open to a quick call to discuss what you're looking for? - {{agentName}}`,
+    emailSubject: 'Commercial spaces available in {{area}}',
+    emailBody: `Hi {{firstName}},
+
+I'm reaching out because I have several commercial spaces available in {{area}} that could be a great fit for your needs.
+
+Whether you're looking for retail, office, or flex space, I'd love to understand your requirements and match you with the right property.
+
+A few things I can help with:
+- Available spaces in your preferred area and budget
+- Lease terms and negotiation
+- Touring properties at a time that works for you
+
+What type of space are you looking for, and what's your ideal size and budget range?
+
+Best,
+{{agentName}}
+{{brokerage}}`,
+    tags: ['tenant', 'lease', 'commercial space', 'buyer'],
+    bestFor: 'Prospective tenants and commercial lease inquiries',
+  },
+
+  {
+    id: 'tenant-showing-invite',
+    name: 'Tenant — Tour/Showing Invite',
+    category: 'tenant',
+    description: 'Invite a prospective tenant to tour available properties. Works for both warm and cold leads.',
+    smsBody: `Hi {{firstName}}, {{agentName}} here from {{brokerage}}. I just listed a few new spaces in {{area}} that match what tenants in your industry are looking for. Would you like to schedule a tour this week? I have openings Thursday and Friday. - {{agentName}}`,
+    emailSubject: 'New commercial spaces in {{area}} — schedule a tour?',
+    emailBody: `Hi {{firstName}},
+
+I wanted to let you know about some new commercial spaces that just became available in {{area}}.
+
+These properties are moving fast, and I think one or two of them could be exactly what you're looking for.
+
+I have tour openings this week — would Thursday or Friday work for you? I can show you 2-3 properties in about an hour.
+
+If you have specific requirements (size, layout, parking, budget), let me know and I'll narrow it down before we meet.
+
+Best,
+{{agentName}}
+{{brokerage}}`,
+    tags: ['tenant', 'tour', 'showing', 'commercial'],
+    bestFor: 'Warm leads who need to see spaces — push toward in-person tour',
+  },
+
+  {
+    id: 'buyer-property-match',
+    name: 'Buyer — Property Match Alert',
+    category: 'buyer',
+    description: 'Let a buyer know you have properties matching their criteria. Works for any buyer type.',
+    smsBody: `Hi {{firstName}}, it's {{agentName}} from {{brokerage}}. I found a few properties in {{area}} that match what you're looking for. Want me to send you the details? I can also set up showings if any catch your eye. - {{agentName}}`,
+    emailSubject: 'Properties matching your search in {{area}}',
+    emailBody: `Hi {{firstName}},
+
+Good news — I've found some properties in {{area}} that match the criteria you're looking for.
+
+I'd love to send you the details and discuss which ones make the most sense for your needs. I'm also happy to schedule showings at your convenience.
+
+A few things that would help me refine the search:
+- Preferred square footage range
+- Budget / price range
+- Must-have features (parking, loading dock, visibility, etc.)
+- Timeline — when are you looking to move in?
+
+Would a quick call work this week to go over the options?
+
+Best,
+{{agentName}}
+{{brokerage}}`,
+    tags: ['buyer', 'property match', 'showing'],
+    bestFor: 'Active buyers who have expressed interest or submitted inquiries',
+  },
+
+  {
+    id: 'buyer-nurture-checkin',
+    name: 'Buyer — Check-In / Still Looking?',
+    category: 'buyer',
+    description: 'Re-engage buyers who went quiet. Light touch to see if they are still in the market.',
+    smsBody: `Hey {{firstName}}, it's {{agentName}} from {{brokerage}}. Just checking in — are you still looking for space in {{area}}? A few new options just came on the market that might work. Let me know if you want details! - {{agentName}}`,
+    emailSubject: 'Still looking for space in {{area}}?',
+    emailBody: `Hi {{firstName}},
+
+It's been a little while since we last connected, and I wanted to check in.
+
+Are you still looking for commercial space in {{area}}? The market has shifted a bit since we last spoke — some new options just became available, and I've seen a few price reductions on existing listings.
+
+If your search is still active, I'd love to send you an updated list of properties that fit your criteria. If your plans have changed, no worries at all — just let me know.
+
+Either way, I'm here whenever you're ready to make a move.
+
+Best,
+{{agentName}}
+{{brokerage}}`,
+    tags: ['buyer', 'nurture', 'check-in', 'cold lead'],
+    bestFor: 'Buyers who inquired 2+ weeks ago and went silent',
+  },
+
+  {
+    id: 'tenant-lease-renewal',
+    name: 'Tenant — Lease Renewal / Relocation',
+    category: 'tenant',
+    description: 'Reach out to tenants whose leases may be expiring. Offer to help negotiate renewal or find a new space.',
+    smsBody: `Hi {{firstName}}, this is {{agentName}} from {{brokerage}}. As lease renewals come up in {{area}}, many tenants are exploring their options — whether that's renegotiating terms or finding a better space. Would you be open to a quick conversation about your options? - {{agentName}}`,
+    emailSubject: 'Your lease options in {{area}}',
+    emailBody: `Hi {{firstName}},
+
+With lease renewal season approaching, I wanted to reach out to see where you stand with your current space.
+
+Many tenants in {{area}} are using this as an opportunity to either:
+- **Renegotiate** their current lease at better terms
+- **Relocate** to a space that better fits their needs and budget
+- **Expand** into a larger space as their business grows
+
+I specialize in helping commercial tenants navigate these decisions. Whether you're looking to stay put with better terms or explore what else is out there, I can help.
+
+Would you be open to a 10-minute call to discuss your options?
+
+Best,
+{{agentName}}
+{{brokerage}}`,
+    tags: ['tenant', 'lease renewal', 'relocation', 'commercial'],
+    bestFor: 'Existing tenants approaching lease expiration or looking to relocate',
   },
 ]
 

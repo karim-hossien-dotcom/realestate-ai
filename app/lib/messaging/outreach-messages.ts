@@ -37,14 +37,20 @@ function extractArea(address: string | null | undefined): string | null {
 /**
  * Detect lead intent from property_interest, notes, and tags.
  */
-function detectIntent(ctx: LeadContext): 'seller' | 'buyer' | 'investor' | 'expired' | 'cold' {
+function detectIntent(ctx: LeadContext): 'seller' | 'buyer' | 'tenant' | 'investor' | 'expired' | 'cold' {
   const interest = (ctx.propertyInterest || '').toLowerCase()
   const notes = (ctx.notes || '').toLowerCase()
   const tags = (ctx.tags || []).map(t => t.toLowerCase())
   const status = (ctx.status || '').toLowerCase()
+  const propType = (ctx.propertyType || '').toLowerCase()
+
+  // Check property_type for lease/buy signals (common in CRM imports)
+  if (propType.includes('lease') || propType.includes('rent') || propType.includes('tenant')) return 'tenant'
+  if (propType.includes('for sale') && !propType.includes('by owner')) return 'buyer'
 
   // Check explicit property_interest field
   if (interest.includes('sell') || interest.includes('listing')) return 'seller'
+  if (interest.includes('lease') || interest.includes('rent') || interest.includes('tenant')) return 'tenant'
   if (interest.includes('buy') || interest.includes('purchas') || interest.includes('looking')) return 'buyer'
   if (interest.includes('invest')) return 'investor'
 
@@ -53,19 +59,20 @@ function detectIntent(ctx: LeadContext): 'seller' | 'buyer' | 'investor' | 'expi
       notes.includes('inherited') || notes.includes('absentee') || notes.includes('vacant') ||
       notes.includes('fsbo') || notes.includes('for sale by owner')) return 'seller'
   if (notes.includes('expired listing') || notes.includes('didn\'t sell') || notes.includes('failed listing')) return 'expired'
+  if (notes.includes('lease') || notes.includes('tenant') || notes.includes('looking for space') ||
+      notes.includes('office space') || notes.includes('retail space')) return 'tenant'
   if (notes.includes('buyer') || notes.includes('looking to buy') || notes.includes('searching for')) return 'buyer'
   if (notes.includes('invest') || notes.includes('rental') || notes.includes('cap rate') ||
       notes.includes('noi') || notes.includes('portfolio')) return 'investor'
 
   // Check tags
   if (tags.some(t => t.includes('seller') || t.includes('listing'))) return 'seller'
+  if (tags.some(t => t.includes('tenant') || t.includes('lease'))) return 'tenant'
   if (tags.some(t => t.includes('buyer'))) return 'buyer'
   if (tags.some(t => t.includes('investor') || t.includes('investment'))) return 'investor'
   if (tags.some(t => t.includes('expired'))) return 'expired'
 
-  // Check status
-  if (status === 'hot' || status === 'warm') return 'seller' // Most leads are sellers in commercial RE
-
+  // Check status — don't assume warm = seller, could be buyer
   return 'cold'
 }
 
@@ -96,10 +103,15 @@ export function generateOutreachMessage(ctx: LeadContext): string {
       return `Hi ${firstName}, I noticed your property at ${address} and wanted to reach out. The market has been very active and I have buyers looking in your area. Would you be open to a quick conversation about your property's current market value?`
     }
 
+    case 'tenant': {
+      const locationHint = ctx.locationPreference || area || 'your preferred area'
+      return `Hi ${firstName}, this is ${ctx.agentName}. I have a few commercial spaces available in ${locationHint} that could be a great fit. Whether you're looking for office, retail, or flex space — I'd love to understand what you need and match you with the right property. Would you be open to a quick call?`
+    }
+
     case 'buyer': {
       const locationHint = ctx.locationPreference || area || 'your preferred area'
       if (isCommercial) {
-        return `Hi ${firstName}, I saw you're looking for commercial space in ${locationHint}. We have some off-market opportunities that might be a great fit. Would you be open to a quick conversation about what's available?`
+        return `Hi ${firstName}, I have some commercial properties in ${locationHint} that match what buyers in your space are looking for — a few aren't on the market yet. Would you be open to a quick call to go over what's available?`
       }
       return `Hi ${firstName}, I understand you're looking for property in ${locationHint}. We have some listings that match what you're looking for — a few aren't even on the market yet. Would you be open to a quick chat?`
     }
@@ -116,11 +128,12 @@ export function generateOutreachMessage(ctx: LeadContext): string {
 
     case 'cold':
     default: {
-      // Generic but still personalized — works for both buy and sell
-      if (area) {
-        return `Hi ${firstName}, I'm reaching out about ${address}. The ${area} market has been moving fast and I wanted to connect in case you're considering any real estate moves. Would you be open to a brief chat?`
+      // Generic but still personalized
+      const areaHint = ctx.locationPreference || area
+      if (areaHint) {
+        return `Hi ${firstName}, this is ${ctx.agentName}. The ${areaHint} market has been very active and I wanted to connect. Whether you're looking to buy, sell, lease, or just want to know what's happening in your area — I'd love to share some insights. Would you be open to a quick chat?`
       }
-      return `Hi ${firstName}, I noticed your property at ${address} and wanted to connect. Whether you're exploring selling, buying, or just curious about market value, I'd love to share some insights. Would you be open to a quick conversation?`
+      return `Hi ${firstName}, this is ${ctx.agentName}. I wanted to connect about ${address}. Whether you're exploring selling, buying, leasing, or just curious about the market — I'd love to share some insights. Would you be open to a quick conversation?`
     }
   }
 }
