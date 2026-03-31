@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Lead } from '@/app/lib/supabase/types';
 import StatusBadge, { STATUS_LABELS } from './StatusBadge';
 import ScoreBadge from './ScoreBadge';
@@ -14,6 +15,7 @@ type LeadDetailPanelProps = {
 };
 
 export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: LeadDetailPanelProps) {
+  const router = useRouter();
   const { showToast } = useToast();
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -304,7 +306,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 <i className="fas fa-clock w-4"></i>Add Follow-Up
               </button>
               <button
-                onClick={() => window.location.href = `/conversations?leadId=${lead.id}`}
+                onClick={() => router.push(`/conversations?leadId=${lead.id}`)}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
               >
                 <i className="fas fa-comments w-4"></i>View Messages

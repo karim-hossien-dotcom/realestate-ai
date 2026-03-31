@@ -1,42 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/app/lib/auth';
-import fs from 'fs';
-import path from 'path';
-
-const logsFile = path.join(process.cwd(), 'tools', 'activity_logs.json');
-
-type LogEntry = {
-  id: string;
-  timestamp: string;
-  eventType: string;
-  description: string;
-  user: string;
-  status: string;
-  metadata?: {
-    phone?: string;
-    [key: string]: unknown;
-  };
-};
-
-type LogsStore = {
-  logs: LogEntry[];
-  stats: Record<string, number>;
-};
-
-function loadLogs(): LogsStore {
-  if (!fs.existsSync(logsFile)) {
-    return { logs: [], stats: {} };
-  }
-  try {
-    return JSON.parse(fs.readFileSync(logsFile, 'utf-8'));
-  } catch {
-    return { logs: [], stats: {} };
-  }
-}
-
-function saveLogs(data: LogsStore): void {
-  fs.writeFileSync(logsFile, JSON.stringify(data, null, 2));
-}
+import { createClient } from '@/app/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   const auth = await withAuth();
@@ -52,17 +16,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const data = loadLogs();
-  const logIndex = data.logs.findIndex(l => l.id === logId);
+  const supabase = await createClient();
 
-  if (logIndex === -1) {
+  // Find the original log entry scoped to this user
+  const { data: originalLog, error: fetchError } = await supabase
+    .from('activity_logs')
+    .select('*')
+    .eq('id', logId)
+    .eq('user_id', auth.user.id)
+    .single();
+
+  if (fetchError || !originalLog) {
     return NextResponse.json(
       { ok: false, error: 'Log entry not found' },
       { status: 404 }
     );
   }
-
-  const originalLog = data.logs[logIndex];
 
   if (originalLog.status !== 'failed') {
     return NextResponse.json(
@@ -71,39 +40,48 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Simulate retry - in production this would actually resend the message
+  // Determine demo mode
   const hasWhatsAppConfig = process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID;
   const isDemoMode = !hasWhatsAppConfig;
 
   // Create a new log entry for the retry attempt
-  const retryLog: LogEntry = {
-    id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    timestamp: new Date().toISOString(),
-    eventType: originalLog.eventType,
+  const retryLogData = {
+    user_id: auth.user.id,
+    event_type: originalLog.event_type,
     description: `Retry: ${originalLog.description}`,
-    user: 'John Smith',
-    status: isDemoMode ? 'success' : 'success', // In demo mode, always succeed
+    status: 'success',
     metadata: {
-      ...originalLog.metadata,
+      ...(originalLog.metadata ?? {}),
       retryOf: originalLog.id,
       demo: isDemoMode,
     },
   };
 
-  // Add retry log to the beginning
-  data.logs.unshift(retryLog);
+  const { data: retryLog, error: insertError } = await supabase
+    .from('activity_logs')
+    .insert(retryLogData)
+    .select()
+    .single();
+
+  if (insertError) {
+    return NextResponse.json(
+      { ok: false, error: 'Failed to create retry log entry' },
+      { status: 500 }
+    );
+  }
 
   // Update original log to show it was retried
-  data.logs[logIndex + 1] = {
-    ...originalLog,
-    metadata: {
-      ...originalLog.metadata,
-      retriedAt: new Date().toISOString(),
-      retryLogId: retryLog.id,
-    },
-  };
-
-  saveLogs(data);
+  await supabase
+    .from('activity_logs')
+    .update({
+      metadata: {
+        ...(originalLog.metadata ?? {}),
+        retriedAt: new Date().toISOString(),
+        retryLogId: retryLog.id,
+      },
+    })
+    .eq('id', originalLog.id)
+    .eq('user_id', auth.user.id);
 
   return NextResponse.json({
     ok: true,

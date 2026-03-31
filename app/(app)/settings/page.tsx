@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   type Profile,
   type FUBStatus,
@@ -43,7 +44,12 @@ const plans: PlanDef[] = [
   },
 ];
 
+const VALID_SECTIONS: SettingsSection[] = [
+  'profile', 'integrations', 'ai-personality', 'messaging', 'email', 'team', 'auto-reply', 'billing',
+];
+
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +92,14 @@ export default function SettingsPage() {
   const [aiConfigSaving, setAiConfigSaving] = useState(false);
   const [aiConfigError, setAiConfigError] = useState<string | null>(null);
   const [aiConfigSuccess, setAiConfigSuccess] = useState<string | null>(null);
+
+  // Set active tab from URL param (e.g. ?tab=integrations from onboarding)
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && VALID_SECTIONS.includes(tab as SettingsSection)) {
+      setActiveSection(tab as SettingsSection);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchProfile();

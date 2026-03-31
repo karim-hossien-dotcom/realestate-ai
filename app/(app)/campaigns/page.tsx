@@ -53,6 +53,10 @@ export default function CampaignsPage() {
   const [sendResults, setSendResults] = useState<SendResult[]>([]);
   const [sendStats, setSendStats] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [scoreFilters, setScoreFilters] = useState<Set<string>>(new Set());
+  const [hasPhoneOnly, setHasPhoneOnly] = useState(false);
+  const [hasEmailOnly, setHasEmailOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'score' | 'name' | 'address'>('score');
   const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [customMessage, setCustomMessage] = useState('');
@@ -100,15 +104,41 @@ export default function CampaignsPage() {
     fetchCustomTemplates();
   }, [fetchLeads, fetchCampaignHistory, fetchCustomTemplates]);
 
-  const filteredLeads = leads.filter((lead) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (lead.owner_name || '').toLowerCase().includes(q) ||
-      (lead.phone || '').includes(q) ||
-      (lead.property_address || '').toLowerCase().includes(q)
-    );
-  });
+  const toggleScoreFilter = (category: string) => {
+    setScoreFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category); else next.add(category);
+      return next;
+    });
+  };
+
+  const filteredLeads = leads
+    .filter((lead) => {
+      if (scoreFilters.size > 0 && !scoreFilters.has(lead.score_category)) return false;
+      if (hasPhoneOnly && !lead.phone) return false;
+      if (hasEmailOnly && !lead.email) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          (lead.owner_name || '').toLowerCase().includes(q) ||
+          (lead.phone || '').includes(q) ||
+          (lead.property_address || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'score':
+          return b.score - a.score;
+        case 'name':
+          return (a.owner_name || '').localeCompare(b.owner_name || '');
+        case 'address':
+          return (a.property_address || '').localeCompare(b.property_address || '');
+        default:
+          return 0;
+      }
+    });
 
   const selectedLeads = leads.filter(l => selectedIds.has(l.id));
   const selectedWithPhone = selectedLeads.filter(l => l.phone).length;
@@ -264,16 +294,95 @@ export default function CampaignsPage() {
             <MiniStat label="With Email" value={selectedWithEmail} />
           </div>
 
-          {/* Search */}
-          <div className="relative max-w-xs">
-            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-            <input
-              type="text"
-              placeholder="Search leads..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
+          {/* Filter Bar */}
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[180px] max-w-xs">
+                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input
+                  type="text"
+                  placeholder="Search leads..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Score chips */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-[var(--text-secondary)] mr-0.5">Score:</span>
+                {(['Hot', 'Warm', 'Cold', 'Dead'] as const).map(cat => {
+                  const active = scoreFilters.has(cat);
+                  const colorMap: Record<string, string> = {
+                    Hot: active ? 'bg-red-600 text-white border-red-600' : 'border-red-500/40 text-red-400 hover:bg-red-500/10',
+                    Warm: active ? 'bg-amber-600 text-white border-amber-600' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10',
+                    Cold: active ? 'bg-blue-600 text-white border-blue-600' : 'border-blue-500/40 text-blue-400 hover:bg-blue-500/10',
+                    Dead: active ? 'bg-gray-600 text-white border-gray-600' : 'border-gray-500/40 text-gray-400 hover:bg-gray-500/10',
+                  };
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => toggleScoreFilter(cat)}
+                      className={`px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${colorMap[cat]}`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Contact toggles */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setHasPhoneOnly(prev => !prev)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+                    hasPhoneOnly
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
+                  }`}
+                >
+                  <i className="fas fa-phone text-[10px]"></i>Has Phone
+                </button>
+                <button
+                  onClick={() => setHasEmailOnly(prev => !prev)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+                    hasEmailOnly
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
+                  }`}
+                >
+                  <i className="fas fa-envelope text-[10px]"></i>Has Email
+                </button>
+              </div>
+
+              {/* Sort */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-xs text-[var(--text-secondary)]">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="px-2 py-1 border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-md text-xs focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="score">Score (High to Low)</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="address">Address</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active filter summary */}
+            {(scoreFilters.size > 0 || hasPhoneOnly || hasEmailOnly) && (
+              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                <span>Showing {filteredLeads.length} of {leads.length} leads</span>
+                <button
+                  onClick={() => { setScoreFilters(new Set()); setHasPhoneOnly(false); setHasEmailOnly(false); }}
+                  className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
           </div>
 
           {filteredLeads.length === 0 ? (
@@ -380,6 +489,14 @@ export default function CampaignsPage() {
                   </button>
                 ))}
               </div>
+              {channel === 'both' && (
+                <div className="mt-3 flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <i className="fas fa-exclamation-triangle text-amber-500 mt-0.5 text-sm flex-shrink-0"></i>
+                  <p className="text-sm text-amber-400">
+                    This will send 3 separate messages per lead (WhatsApp + SMS + Email), using 3x your message quota.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Template Picker */}

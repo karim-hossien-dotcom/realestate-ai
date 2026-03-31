@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/app/components/ToastProvider';
 import { SkeletonCard } from '@/app/components/Skeleton';
@@ -64,6 +65,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function LogsPage() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -512,6 +514,7 @@ function LogDetailModal({ log, onClose, onRetry, formatTimestamp }: {
   onRetry: (id: string) => void;
   formatTimestamp: (ts: string) => string;
 }) {
+  const router = useRouter();
   const et = EVENT_TYPES[log.eventType] || { label: log.eventType, icon: 'fa-circle', color: 'gray' };
 
   return (
@@ -593,7 +596,7 @@ function LogDetailModal({ log, onClose, onRetry, formatTimestamp }: {
             )}
             {(log.eventType === 'message_reply' || log.eventType === 'campaign_send') && (
               <button
-                onClick={() => { window.location.href = '/conversations'; }}
+                onClick={() => { router.push('/conversations'); }}
                 className="px-4 py-2 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors"
               >
                 <i className="fas fa-comments mr-2"></i>View Conversation
@@ -601,7 +604,7 @@ function LogDetailModal({ log, onClose, onRetry, formatTimestamp }: {
             )}
             {log.eventType === 'appointment' && (
               <button
-                onClick={() => { window.location.href = '/calendar'; }}
+                onClick={() => { router.push('/calendar'); }}
                 className="px-4 py-2 text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 text-sm font-medium transition-colors"
               >
                 <i className="fas fa-calendar mr-2"></i>View Calendar

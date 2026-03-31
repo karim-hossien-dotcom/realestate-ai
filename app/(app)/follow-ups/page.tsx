@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/app/components/ToastProvider';
 import EmptyState from '@/app/components/EmptyState';
 import { SkeletonCard } from '@/app/components/Skeleton';
@@ -60,6 +61,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function FollowUpsPage() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [followups, setFollowups] = useState<FollowUpItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -260,13 +262,13 @@ export default function FollowUpsPage() {
                   {/* Right: actions */}
                   <div className="flex sm:flex-col gap-2 flex-shrink-0">
                     <button
-                      onClick={() => window.location.href = `/conversations?leadId=${fu.leadId}`}
+                      onClick={() => router.push(`/conversations?leadId=${fu.leadId}`)}
                       className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
                     >
                       <i className="fas fa-comments mr-1"></i>View
                     </button>
                     <button
-                      onClick={() => window.location.href = '/campaigns'}
+                      onClick={() => router.push('/campaigns')}
                       className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-300 dark:bg-green-500/10 dark:hover:bg-green-500/20 rounded-lg transition-colors"
                     >
                       <i className="fas fa-paper-plane mr-1"></i>Send

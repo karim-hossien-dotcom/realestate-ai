@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Lead } from '@/app/lib/supabase/types';
 import { DndContext, DragOverlay, closestCorners, useDroppable, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -27,11 +28,17 @@ const ALL_STATUSES = [
 
 export default function LeadsPage() {
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [scoreFilters, setScoreFilters] = useState<Set<string>>(new Set());
+  const [tagFilters, setTagFilters] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<'score' | 'name' | 'last_contacted' | 'created_at'>('score');
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -65,20 +72,88 @@ export default function LeadsPage() {
     fetchLeads();
   }, [fetchLeads]);
 
-  // Filter leads
-  const filteredLeads = leads.filter((lead) => {
-    if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        (lead.owner_name || '').toLowerCase().includes(q) ||
-        (lead.phone || '').includes(q) ||
-        (lead.email || '').toLowerCase().includes(q) ||
-        (lead.property_address || '').toLowerCase().includes(q)
-      );
+  // Auto-open import modal when navigated with ?import=true (e.g. from onboarding)
+  useEffect(() => {
+    if (searchParams.get('import') === 'true') {
+      setImportModalOpen(true);
     }
-    return true;
-  });
+  }, [searchParams]);
+
+  // Close tag dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) {
+        setShowTagDropdown(false);
+      }
+    };
+    if (showTagDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTagDropdown]);
+
+  // Collect all unique tags across leads for tag filter options
+  const allTags = Array.from(
+    new Set(leads.flatMap(l => l.tags || []))
+  ).sort();
+
+  const toggleScoreFilter = (category: string) => {
+    setScoreFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category); else next.add(category);
+      return next;
+    });
+  };
+
+  const toggleTagFilter = (tag: string) => {
+    setTagFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag); else next.add(tag);
+      return next;
+    });
+  };
+
+  // Filter leads
+  const filteredLeads = leads
+    .filter((lead) => {
+      if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+      if (scoreFilters.size > 0 && !scoreFilters.has(lead.score_category)) return false;
+      if (tagFilters.size > 0) {
+        const leadTags = lead.tags || [];
+        const hasMatchingTag = Array.from(tagFilters).some(t => leadTags.includes(t));
+        if (!hasMatchingTag) return false;
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          (lead.owner_name || '').toLowerCase().includes(q) ||
+          (lead.phone || '').includes(q) ||
+          (lead.email || '').toLowerCase().includes(q) ||
+          (lead.property_address || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'score':
+          return b.score - a.score;
+        case 'name':
+          return (a.owner_name || '').localeCompare(b.owner_name || '');
+        case 'last_contacted': {
+          const aDate = a.last_contacted ? new Date(a.last_contacted).getTime() : 0;
+          const bDate = b.last_contacted ? new Date(b.last_contacted).getTime() : 0;
+          return bDate - aDate;
+        }
+        case 'created_at': {
+          const aDate = new Date(a.created_at).getTime();
+          const bDate = new Date(b.created_at).getTime();
+          return bDate - aDate;
+        }
+        default:
+          return 0;
+      }
+    });
 
   // Stats (totalLeads comes from API pagination metadata)
   const withMessages = leads.filter(l => l.sms_text || l.email_text).length;
@@ -291,63 +366,166 @@ export default function LeadsPage() {
       </div>
 
       {/* Filters & View Toggle */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        {/* Search */}
-        <div className="relative flex-1 w-full sm:max-w-xs">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-          <input
-            type="text"
-            placeholder="Search leads..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-[var(--surface)] text-gray-900 dark:text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 space-y-3">
+        {/* Row 1: Search, Status, View Toggle, Bulk */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1 w-full sm:max-w-xs">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input
+              type="text"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface-elevated)] text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-[var(--surface)] text-gray-900 dark:text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">All Statuses</option>
-          {ALL_STATUSES.map(s => (
-            <option key={s} value={s}>{s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
-          ))}
-        </select>
-
-        {/* View Toggle */}
-        <div className="flex items-center bg-gray-100 dark:bg-[var(--surface)] rounded-lg p-0.5">
-          <button
-            onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'table' ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700'
-            }`}
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-1.5 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface-elevated)] text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
           >
-            <i className="fas fa-list mr-1"></i>Table
-          </button>
-          <button
-            onClick={() => setViewMode('kanban')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'kanban' ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <i className="fas fa-columns mr-1"></i>Kanban
-          </button>
-        </div>
+            <option value="all">All Statuses</option>
+            {ALL_STATUSES.map(s => (
+              <option key={s} value={s}>{s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
+            ))}
+          </select>
 
-        {/* Bulk actions */}
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{selectedIds.size} selected</span>
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="px-3 py-1.5 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface-elevated)] text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="score">Sort: Score</option>
+            <option value="name">Sort: Name (A-Z)</option>
+            <option value="last_contacted">Sort: Last Contacted</option>
+            <option value="created_at">Sort: Date Added</option>
+          </select>
+
+          {/* View Toggle */}
+          <div className="flex items-center bg-[var(--surface-elevated)] rounded-lg p-0.5">
             <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'table' ? 'bg-[var(--surface)] shadow text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
             >
-              <i className="fas fa-trash-alt mr-1"></i>Delete
+              <i className="fas fa-list mr-1"></i>Table
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'kanban' ? 'bg-[var(--surface)] shadow text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <i className="fas fa-columns mr-1"></i>Kanban
             </button>
           </div>
-        )}
+
+          {/* Bulk actions */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-sm text-[var(--text-secondary)]">{selectedIds.size} selected</span>
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+              >
+                <i className="fas fa-trash-alt mr-1"></i>Delete
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Row 2: Score chips + Tags */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Score chips */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-[var(--text-secondary)] mr-0.5">Score:</span>
+            {(['Hot', 'Warm', 'Cold', 'Dead'] as const).map(cat => {
+              const active = scoreFilters.has(cat);
+              const colorMap: Record<string, string> = {
+                Hot: active ? 'bg-red-600 text-white border-red-600' : 'border-red-500/40 text-red-400 hover:bg-red-500/10',
+                Warm: active ? 'bg-amber-600 text-white border-amber-600' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10',
+                Cold: active ? 'bg-blue-600 text-white border-blue-600' : 'border-blue-500/40 text-blue-400 hover:bg-blue-500/10',
+                Dead: active ? 'bg-gray-600 text-white border-gray-600' : 'border-gray-500/40 text-gray-400 hover:bg-gray-500/10',
+              };
+              return (
+                <button
+                  key={cat}
+                  onClick={() => toggleScoreFilter(cat)}
+                  className={`px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${colorMap[cat]}`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tags multi-select dropdown */}
+          {allTags.length > 0 && (
+            <div className="relative" ref={tagDropdownRef}>
+              <button
+                onClick={() => setShowTagDropdown(prev => !prev)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+                  tagFilters.size > 0
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
+                }`}
+              >
+                <i className="fas fa-tags text-[10px]"></i>
+                Tags{tagFilters.size > 0 ? ` (${tagFilters.size})` : ''}
+                <i className={`fas fa-chevron-down text-[8px] ml-0.5 transition-transform ${showTagDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
+              {showTagDropdown && (
+                <div className="absolute z-20 top-full mt-1 left-0 w-56 max-h-48 overflow-y-auto bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg p-2 space-y-0.5">
+                  {allTags.map(tag => (
+                    <label
+                      key={tag}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--surface-elevated)] cursor-pointer text-xs text-[var(--text-primary)]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={tagFilters.has(tag)}
+                        onChange={() => toggleTagFilter(tag)}
+                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      />
+                      {tag}
+                    </label>
+                  ))}
+                  {tagFilters.size > 0 && (
+                    <button
+                      onClick={() => setTagFilters(new Set())}
+                      className="w-full text-left px-2 py-1.5 text-xs text-blue-400 hover:text-blue-300"
+                    >
+                      Clear tags
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active filter summary + clear */}
+          {(scoreFilters.size > 0 || tagFilters.size > 0 || statusFilter !== 'all') && (
+            <div className="flex items-center gap-2 ml-auto text-xs text-[var(--text-secondary)]">
+              <span>{filteredLeads.length} of {leads.length} leads</span>
+              <button
+                onClick={() => {
+                  setScoreFilters(new Set());
+                  setTagFilters(new Set());
+                  setStatusFilter('all');
+                  setSearchQuery('');
+                }}
+                className="text-blue-400 hover:text-blue-300 cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}

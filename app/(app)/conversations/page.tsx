@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Message } from '@/app/lib/supabase/types';
 import { useToast } from '@/app/components/ToastProvider';
 import StatusBadge from '@/app/components/StatusBadge';
@@ -54,6 +55,8 @@ const CHANNEL_ICONS: Record<string, string> = {
 const POLL_INTERVAL = 15000; // 15 seconds
 
 export default function ConversationsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,13 +168,12 @@ export default function ConversationsPage() {
 
   // Check URL params for leadId
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const leadId = params.get('leadId');
+    const leadId = searchParams.get('leadId');
     if (leadId) {
       setSelectedId(leadId);
       setMobileView('thread');
     }
-  }, []);
+  }, [searchParams]);
 
   // Manual refresh
   const handleRefresh = async () => {
@@ -520,13 +522,13 @@ export default function ConversationsPage() {
             {/* Quick Actions */}
             <div className="pt-2 border-t border-[var(--border)] space-y-2">
               <button
-                onClick={() => window.location.href = `/leads`}
+                onClick={() => router.push('/leads')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
               >
                 <i className="fas fa-user"></i>View Full Profile
               </button>
               <button
-                onClick={() => window.location.href = `/campaigns`}
+                onClick={() => router.push('/campaigns')}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
               >
                 <i className="fas fa-paper-plane"></i>Send Campaign

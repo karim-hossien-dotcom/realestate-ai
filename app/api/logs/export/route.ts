@@ -1,36 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/app/lib/auth';
 import { rateLimitExport } from '@/app/lib/rate-limit';
-import fs from 'fs';
-import path from 'path';
-
-const logsFile = path.join(process.cwd(), 'tools', 'activity_logs.json');
-
-type LogEntry = {
-  id: string;
-  timestamp: string;
-  eventType: string;
-  description: string;
-  user: string;
-  status: string;
-  metadata?: Record<string, unknown>;
-};
-
-type LogsStore = {
-  logs: LogEntry[];
-  stats: Record<string, number>;
-};
-
-function loadLogs(): LogsStore {
-  if (!fs.existsSync(logsFile)) {
-    return { logs: [], stats: {} };
-  }
-  try {
-    return JSON.parse(fs.readFileSync(logsFile, 'utf-8'));
-  } catch {
-    return { logs: [], stats: {} };
-  }
-}
+import { createClient } from '@/app/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   const auth = await withAuth();
@@ -47,12 +18,9 @@ export async function GET(request: NextRequest) {
   const timeRange = searchParams.get('range') || '7d';
   const eventType = searchParams.get('type') || '';
 
-  const data = loadLogs();
-  let filteredLogs = [...data.logs];
-
-  // Filter by time range
+  // Calculate start date from time range
   const now = new Date();
-  let startDate = new Date();
+  const startDate = new Date();
   switch (timeRange) {
     case '24h':
       startDate.setDate(now.getDate() - 1);
@@ -66,12 +34,28 @@ export async function GET(request: NextRequest) {
     default:
       startDate.setDate(now.getDate() - 7);
   }
-  filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) >= startDate);
 
-  // Filter by event type
+  const supabase = await createClient();
+
+  // Build query scoped to this user
+  let query = supabase
+    .from('activity_logs')
+    .select('*')
+    .eq('user_id', auth.user.id)
+    .gte('created_at', startDate.toISOString())
+    .order('created_at', { ascending: false });
+
   if (eventType && eventType !== 'all') {
-    filteredLogs = filteredLogs.filter(log => log.eventType === eventType);
+    query = query.eq('event_type', eventType);
   }
+
+  const { data: logs, error } = await query;
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: 'Failed to fetch logs' }, { status: 500 });
+  }
+
+  const filteredLogs = logs || [];
 
   if (format === 'json') {
     return new NextResponse(JSON.stringify(filteredLogs, null, 2), {
@@ -83,18 +67,17 @@ export async function GET(request: NextRequest) {
   }
 
   // CSV format
-  const headers = ['Timestamp', 'Event Type', 'Description', 'User', 'Status', 'Phone', 'Additional Info'];
+  const headers = ['Timestamp', 'Event Type', 'Description', 'Status', 'Additional Info'];
   const csvRows = [headers.join(',')];
 
   for (const log of filteredLogs) {
+    const metadata = log.metadata as Record<string, unknown> | null;
     const row = [
-      `"${log.timestamp}"`,
-      `"${log.eventType}"`,
-      `"${log.description.replace(/"/g, '""')}"`,
-      `"${log.user}"`,
-      `"${log.status}"`,
-      `"${log.metadata?.phone || ''}"`,
-      `"${log.metadata ? JSON.stringify(log.metadata).replace(/"/g, '""') : ''}"`,
+      `"${log.created_at}"`,
+      `"${log.event_type || ''}"`,
+      `"${(log.description || '').replace(/"/g, '""')}"`,
+      `"${log.status || ''}"`,
+      `"${metadata ? JSON.stringify(metadata).replace(/"/g, '""') : ''}"`,
     ];
     csvRows.push(row.join(','));
   }

@@ -71,12 +71,20 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(1)
 
-      const { count } = await supabase
+      // Count only inbound messages created AFTER the lead's last_contacted
+      // timestamp — approximates "unread" (messages agent hasn't seen yet)
+      let unreadQuery = supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', auth.user.id)
         .eq('lead_id', lead.id)
         .eq('direction', 'inbound')
+
+      if (lead.last_contacted) {
+        unreadQuery = unreadQuery.gt('created_at', lead.last_contacted)
+      }
+
+      const { count } = await unreadQuery
 
       return {
         ...lead,

@@ -58,12 +58,29 @@ app.register_blueprint(sms_bp)
 _RATE_LIMIT_STORE: dict[str, list[float]] = {}
 _RATE_LIMIT_MAX = 60          # max requests per window
 _RATE_LIMIT_WINDOW = 60.0     # window in seconds (1 minute)
+_RATE_LIMIT_CLEANUP_INTERVAL = 60.0  # cleanup every 60 seconds
+_last_rate_cleanup: float = 0.0
 
 
 def _is_rate_limited(ip: str) -> bool:
     """Returns True if this IP has exceeded the rate limit."""
+    global _last_rate_cleanup
     import time
     now = time.time()
+
+    # Periodic cleanup: remove stale IPs from the store every 60 seconds
+    if now - _last_rate_cleanup > _RATE_LIMIT_CLEANUP_INTERVAL:
+        _last_rate_cleanup = now
+        stale_ips = []
+        for stored_ip, timestamps in _RATE_LIMIT_STORE.items():
+            fresh = [t for t in timestamps if now - t < _RATE_LIMIT_WINDOW]
+            if not fresh:
+                stale_ips.append(stored_ip)
+            else:
+                _RATE_LIMIT_STORE[stored_ip] = fresh
+        for stale_ip in stale_ips:
+            del _RATE_LIMIT_STORE[stale_ip]
+
     hits = _RATE_LIMIT_STORE.get(ip, [])
     # Remove timestamps outside the window
     hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
@@ -75,15 +92,18 @@ def _is_rate_limited(ip: str) -> bool:
     return False
 
 
-# Message deduplication: track processed message IDs (in-memory LRU cache)
+# Message deduplication: track processed message IDs (in-memory cache)
 # Meta retries webhook delivery, which can cause duplicate processing
 _PROCESSED_MSG_IDS: dict[str, float] = {}
-_MAX_CACHED_IDS = 10000
+_MAX_CACHED_IDS = 1000
 _DEDUP_WINDOW_SECONDS = 3600  # 1 hour
+_DEDUP_INSERT_COUNT: int = 0
+_DEDUP_CLEANUP_INTERVAL = 100  # cleanup every 100 new entries
 
 
 def _is_duplicate_message(msg_id: str) -> bool:
     """Check if we've already processed this message_id. Returns True if duplicate."""
+    global _DEDUP_INSERT_COUNT
     import time
 
     if not msg_id:
@@ -91,8 +111,13 @@ def _is_duplicate_message(msg_id: str) -> bool:
 
     now = time.time()
 
-    # Clean old entries if cache is too large
-    if len(_PROCESSED_MSG_IDS) > _MAX_CACHED_IDS:
+    # Periodic cleanup: every 100 new entries OR when cache exceeds threshold,
+    # remove ALL entries older than 1 hour
+    if (
+        _DEDUP_INSERT_COUNT >= _DEDUP_CLEANUP_INTERVAL
+        or len(_PROCESSED_MSG_IDS) > _MAX_CACHED_IDS
+    ):
+        _DEDUP_INSERT_COUNT = 0
         cutoff = now - _DEDUP_WINDOW_SECONDS
         expired = [k for k, v in _PROCESSED_MSG_IDS.items() if v < cutoff]
         for k in expired:
@@ -102,6 +127,7 @@ def _is_duplicate_message(msg_id: str) -> bool:
         return True
 
     _PROCESSED_MSG_IDS[msg_id] = now
+    _DEDUP_INSERT_COUNT += 1
     return False
 
 # ---------- Message Batching (Multi-texter Debounce) ----------
