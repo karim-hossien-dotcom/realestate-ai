@@ -58,7 +58,7 @@ export const campaignSendSchema = z.object({
   leads: z.array(z.object({
     id: z.string().uuid().optional(),
     phone: z.string().max(20).optional(),
-    email: z.string().email().max(254).optional(),
+    email: z.string().email().max(254).nullish().or(z.literal('')),
     sms_text: z.string().max(1600).optional(),
     email_text: z.string().max(5000).optional(),
     owner_name: z.string().max(200).optional(),

@@ -156,9 +156,11 @@ export default function CampaignsPage() {
         if (!res.ok) {
           const errMsg = data.error === 'no_subscription'
             ? 'No active subscription. Please subscribe to a plan first.'
-            : data.error === 'limit_exceeded'
+            : data.error === 'feature_blocked'
               ? data.message
-              : data.message || `Failed to send ${ch} campaign`;
+              : data.error === 'limit_exceeded'
+                ? data.message
+                : data.message || data.error || `Failed to send ${ch} campaign`;
           showToast(errMsg, 'error');
           totalFailed += selectedLeads.length;
           continue;

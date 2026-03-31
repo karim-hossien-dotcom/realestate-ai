@@ -40,7 +40,7 @@ export async function GET() {
     phone: l.phone || '',
     property_address: l.property_address || '',
     sms_text: l.sms_text || '',
-    email: l.email || '',
+    email: l.email || null,
     score: l.score || 50,
     score_category: l.score_category || 'Warm',
   }))
