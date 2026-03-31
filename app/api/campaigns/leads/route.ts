@@ -23,6 +23,7 @@ export async function GET() {
   const { data: leads, error } = await supabase
     .from('leads')
     .select('id, owner_name, phone, property_address, sms_text, email, score, score_category')
+    .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
     .not('phone', 'is', null)
     .order('score', { ascending: false })

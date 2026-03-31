@@ -20,7 +20,8 @@ type CampaignLead = {
 };
 
 type SendResult = {
-  contact: string;
+  phone?: string;
+  contact?: string;
   ok: boolean;
   channel: string;
   skipped?: string;
@@ -636,7 +637,7 @@ export default function CampaignsPage() {
                       <tbody>
                         {sendResults.map((r, i) => (
                           <tr key={i} className="border-b border-[var(--border)] hover:bg-[var(--surface-elevated)]">
-                            <td className="px-4 py-2 text-sm text-[var(--text-primary)]">{r.contact}</td>
+                            <td className="px-4 py-2 text-sm text-[var(--text-primary)]">{r.contact || r.phone}</td>
                             <td className="px-4 py-2 text-sm text-[var(--text-secondary)] capitalize">{r.channel}</td>
                             <td className="px-4 py-2">
                               {r.ok ? (

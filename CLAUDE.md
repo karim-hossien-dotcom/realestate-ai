@@ -48,12 +48,19 @@ middleware.ts       -> Supabase session management
 - Auth: Every API route must call `withAuth()` first (except health, webhooks, cron)
 - Activity logging: Use `logActivity()` for audit trail
 - Input validation: Use Zod schemas at API boundaries (defined in `app/lib/schemas.ts`)
+- Null handling: DB nullable columns → use `.nullish()` or `.or(z.literal(''))` in Zod. NEVER convert null to `""` for string fields.
 - API responses: Use `{ ok, ...data }` envelope — return properties flat at the top level, not nested under `data`
+- API field names: Response field names MUST match what the frontend reads (e.g., don't return `phone` if UI reads `contact`)
 - Body parsing: Use `parseBody(request, schema)` from `app/lib/api.ts`
+- Frontend-API contract: Every field the UI collects/selects MUST be included in the fetch() body
+- DB inserts: Column names MUST match the actual table schema (e.g., `message_text` not `message`)
+- User isolation: Every Supabase query MUST filter by `.eq('user_id', auth.user.id)` or use RLS-respecting `createClient()`
+- Sort order: List endpoints must ORDER BY business-relevant column with a comment explaining why
 - Immutability: Create new objects, never mutate existing ones
 - File size: Keep under 400 lines (800 max)
 - Functions: Keep under 50 lines
-- Error handling: Explicit try/catch on every API route, log with context
+- Error handling: Explicit try/catch on every API route, log with context. Show actual error to user, not generic "failed".
+- Testing: Run `npm test` before committing. `npm run test:all` for full suite including E2E.
 
 ## Database Tables (23)
 profiles, leads, messages, campaigns, campaign_leads, follow_ups,

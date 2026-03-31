@@ -405,7 +405,7 @@ def is_on_dnc_list(user_id: str, phone: str) -> bool:
         return bool(result.data)
     except Exception as e:
         logger.error(f"Error checking DNC list: {e}")
-        return False
+        return True  # TCPA compliance: block sending when unsure
 
 
 def remove_from_dnc_list(user_id: str, phone: str) -> bool:

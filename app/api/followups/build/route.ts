@@ -13,6 +13,7 @@ export async function POST() {
   const { data: leads, error: leadsError } = await supabase
     .from('leads')
     .select('id, owner_name, property_address, phone, sms_text')
+    .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
     .not('phone', 'is', null)
 

@@ -14,6 +14,7 @@ export async function POST() {
   const { data: leads, error: leadsError } = await supabase
     .from('leads')
     .select('*')
+    .eq('user_id', auth.user.id)
     .is('sms_text', null)
     .order('created_at', { ascending: false })
 

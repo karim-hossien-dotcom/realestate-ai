@@ -465,6 +465,7 @@ MEETING RULES:
         temperature=0.3,
         messages=messages,
         response_format={"type": "json_object"},
+        timeout=30,
     )
 
     raw = response.choices[0].message.content.strip()

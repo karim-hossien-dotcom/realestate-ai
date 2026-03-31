@@ -69,10 +69,9 @@ export async function GET(request: Request) {
           user_id: userId,
           lead_id: lead.id,
           channel: lead.phone ? 'whatsapp' : 'email',
-          message: `Hi ${lead.owner_name || 'there'}, just checking in — are you still thinking about ${lead.property_address || 'your property'}? Happy to help whenever you're ready.`,
+          message_text: `Hi ${lead.owner_name || 'there'}, just checking in — are you still thinking about ${lead.property_address || 'your property'}? Happy to help whenever you're ready.`,
           status: 'pending',
-          scheduled_for: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-          source: 'stale_lead_detection',
+          scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
         }))
 
       if (newFollowUps.length > 0) {

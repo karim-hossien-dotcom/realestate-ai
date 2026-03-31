@@ -21,6 +21,7 @@ export async function GET(request: Request) {
         follow_ups (*)
       `)
       .eq('id', leadId)
+      .eq('user_id', auth.user.id)
       .single()
 
     if (error) {
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
   const { data: leads, error } = await supabase
     .from('leads')
     .select('id, owner_name, phone, tags, notes')
+    .eq('user_id', auth.user.id)
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
@@ -165,6 +167,7 @@ export async function POST(request: Request) {
         .from('leads')
         .update({ tags })
         .eq('id', leadId)
+        .eq('user_id', auth.user.id)
 
       if (error) {
         return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
@@ -180,6 +183,7 @@ export async function POST(request: Request) {
         .from('leads')
         .update({ notes: notes || '' })
         .eq('id', leadId)
+        .eq('user_id', auth.user.id)
 
       if (error) {
         return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
@@ -195,6 +199,7 @@ export async function POST(request: Request) {
         .from('leads')
         .update({ status })
         .eq('id', leadId)
+        .eq('user_id', auth.user.id)
 
       if (error) {
         return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
@@ -209,6 +214,7 @@ export async function POST(request: Request) {
         .from('leads')
         .select('phone')
         .eq('id', leadId)
+        .eq('user_id', auth.user.id)
         .single()
 
       if (!lead?.phone) {
@@ -232,6 +238,7 @@ export async function POST(request: Request) {
         .from('leads')
         .update({ status: 'do_not_contact' })
         .eq('id', leadId)
+        .eq('user_id', auth.user.id)
 
       await logActivity(
         auth.user.id,

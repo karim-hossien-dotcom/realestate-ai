@@ -40,6 +40,7 @@ export async function GET() {
       last_contacted,
       last_response
     `)
+    .eq('user_id', auth.user.id)
     .not('last_contacted', 'is', null)
     .order('last_contacted', { ascending: false })
 
@@ -64,6 +65,7 @@ export async function GET() {
   const { data: messages } = await supabase
     .from('messages')
     .select('lead_id, direction, body, created_at, status')
+    .eq('user_id', auth.user.id)
     .in('lead_id', leads.map(l => l.id))
     .order('created_at', { ascending: false })
 

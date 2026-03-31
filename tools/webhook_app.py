@@ -693,16 +693,14 @@ def _process_whatsapp_message(
             if client_sb:
                 today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 # Dedup by title + date
-                existing = client_sb.table("follow_ups").select("id").eq("user_id", user_id).eq("source", "valuation_request").like("message", f"%{wa_id}%").eq("status", "pending").limit(1).execute()
+                existing = client_sb.table("follow_ups").select("id").eq("user_id", user_id).like("message_text", f"%{wa_id}%").eq("status", "pending").limit(1).execute()
                 if not (existing.data and len(existing.data) > 0):
                     client_sb.table("follow_ups").insert({
                         "user_id": user_id,
                         "lead_id": (lead or {}).get("id"),
-                        "channel": "email",
-                        "message": f"Send full CMA to {lead_name} ({wa_id}) for {prop_addr}. Lead requested valuation via WhatsApp.",
+                        "message_text": f"Send full CMA to {lead_name} ({wa_id}) for {prop_addr}. Lead requested valuation via WhatsApp.",
                         "status": "pending",
-                        "scheduled_for": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
-                        "source": "valuation_request",
+                        "scheduled_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                     }).execute()
                     log_activity(
                         user_id, "valuation_request",
