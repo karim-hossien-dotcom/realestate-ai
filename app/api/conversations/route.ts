@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       budget_max
     `)
     .eq('user_id', auth.user.id)
-    .order('last_response', { ascending: false, nullsFirst: false })
+    .order('last_contacted', { ascending: false, nullsFirst: false })
     .limit(50)
 
   if (leadsError) {
