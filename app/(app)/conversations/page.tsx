@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Message } from '@/app/lib/supabase/types';
 import { useToast } from '@/app/components/ToastProvider';
@@ -54,7 +54,15 @@ const CHANNEL_ICONS: Record<string, string> = {
 
 const POLL_INTERVAL = 15000; // 15 seconds
 
-export default function ConversationsPage() {
+export default function ConversationsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[var(--text-secondary)]">Loading conversations...</div>}>
+      <ConversationsPage />
+    </Suspense>
+  );
+}
+
+function ConversationsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();

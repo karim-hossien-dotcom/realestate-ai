@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   type Profile,
@@ -48,7 +48,15 @@ const VALID_SECTIONS: SettingsSection[] = [
   'profile', 'integrations', 'ai-personality', 'messaging', 'email', 'team', 'auto-reply', 'billing',
 ];
 
-export default function SettingsPage() {
+export default function SettingsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[var(--text-secondary)]">Loading settings...</div>}>
+      <SettingsPage />
+    </Suspense>
+  );
+}
+
+function SettingsPage() {
   const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [profile, setProfile] = useState<Profile | null>(null);

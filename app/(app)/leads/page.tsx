@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Lead } from '@/app/lib/supabase/types';
 import { DndContext, DragOverlay, closestCorners, useDroppable, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
@@ -26,7 +26,15 @@ const ALL_STATUSES = [
   'hot', 'not_interested', 'do_not_contact', 'dead',
 ];
 
-export default function LeadsPage() {
+export default function LeadsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[var(--text-secondary)]">Loading leads...</div>}>
+      <LeadsPage />
+    </Suspense>
+  );
+}
+
+function LeadsPage() {
   const { showToast } = useToast();
   const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);

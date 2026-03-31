@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/app/components/ToastProvider';
 import StatusBadge from '@/app/components/StatusBadge';
@@ -41,7 +41,15 @@ type CampaignRecord = {
   completed_at: string | null;
 };
 
-export default function CampaignsPage() {
+export default function CampaignsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[var(--text-secondary)]">Loading campaigns...</div>}>
+      <CampaignsPage />
+    </Suspense>
+  );
+}
+
+function CampaignsPage() {
   const { showToast } = useToast();
   const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
