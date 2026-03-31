@@ -11,6 +11,7 @@ import { checkUsageLimits, limitExceededPayload, isUsageLimitResult } from '@/ap
 import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/feature-gate'
 import { recordOverage } from '@/app/lib/billing/overage'
 import { generateOutreachMessage } from '@/app/lib/messaging/outreach-messages'
+import { fillTemplate } from '@/app/lib/messaging/campaign-templates'
 
 type SendResult = {
   phone: string
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient()
 
-  const { leads, channel, campaignName: rawName } = parsed.data
+  const { leads, channel, campaignName: rawName, messageTemplate } = parsed.data
   const channelLabel = channel === 'email' ? 'Email' : channel === 'sms' ? 'SMS' : 'WhatsApp'
   const campaignName = rawName || `${channelLabel} Campaign ${new Date().toISOString().slice(0, 10)}`
 
@@ -65,6 +66,21 @@ export async function POST(request: Request) {
   const agentName = profile?.full_name || 'Real Estate Agent'
   const agentEmail = profile?.email || ''
   const agentPhone = profile?.phone || ''
+  const agentCompany = profile?.company || 'Our Team'
+
+  // Helper: resolve the message body for a lead, preferring the user's template
+  const resolveMessageBody = (lead: typeof leadsToSend[number]): string | null => {
+    if (messageTemplate) {
+      return fillTemplate(messageTemplate, {
+        firstName: lead.owner_name?.split(' ')[0] || 'there',
+        address: lead.property_address || 'your property',
+        area: lead.property_address?.split(',')[1]?.trim() || 'your area',
+        agentName,
+        brokerage: agentCompany,
+      })
+    }
+    return null // no template — let each channel use its default logic
+  }
 
   // Check channel configuration
   const hasWhatsAppConfig =
@@ -192,14 +208,14 @@ export async function POST(request: Request) {
     let sendResult: { ok: boolean; messageId?: string; error?: string }
 
     if (channel === 'email') {
-      // Send email
+      // Send email — prefer user template, then lead's pre-generated text
       const emailContent = generateOutreachEmail({
         recipientName: lead.owner_name || 'Property Owner',
         propertyAddress: lead.property_address || 'your property',
         agentName,
         agentPhone,
         agentEmail,
-        customMessage: lead.email_text,
+        customMessage: resolveMessageBody(lead) || lead.email_text,
         userId: auth.user.id,
       })
 
@@ -212,8 +228,8 @@ export async function POST(request: Request) {
         fromName: agentName, // Shows as "Agent Name <outreach@domain.com>"
       })
     } else if (channel === 'sms') {
-      // Send SMS
-      const smsBody = lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
+      // Send SMS — prefer user template, then lead's pre-generated text, then fallback
+      const smsBody = resolveMessageBody(lead) || lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
       // WhatsApp send strategy (3 tiers):
@@ -221,8 +237,8 @@ export async function POST(request: Request) {
       // 2. property_inquiry template (UTILITY) — no WABA payment needed
       // 3. realestate_outreach template (MARKETING) — needs WABA payment
 
-      // Fetch full lead data for smart personalization (if we have a lead ID)
-      let outreachBody = lead.sms_text || ''
+      // Prefer user template, then lead's pre-generated text, then smart personalization
+      let outreachBody = resolveMessageBody(lead) || lead.sms_text || ''
       if (!outreachBody && lead.id) {
         const { data: fullLead } = await supabase
           .from('leads')
@@ -279,7 +295,7 @@ export async function POST(request: Request) {
       direction: 'outbound',
       channel,
       to_number: contact,
-      body: channel === 'email' ? (lead.email_text || '[Email sent]') : (lead.sms_text || '[Template message]'),
+      body: resolveMessageBody(lead) || (channel === 'email' ? (lead.email_text || '[Email sent]') : (lead.sms_text || '[Template message]')),
       status: sendResult.ok ? 'sent' : 'failed',
       external_id: sendResult.messageId || null,
       error_message: sendResult.error || null,

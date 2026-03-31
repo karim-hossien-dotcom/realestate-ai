@@ -66,6 +66,7 @@ export const campaignSendSchema = z.object({
   })).min(1, 'At least one lead is required'),
   channel: z.enum(['whatsapp', 'email', 'sms']).default('whatsapp'),
   campaignName: z.string().max(200).optional(),
+  messageTemplate: z.string().max(2000).optional(),
 })
 
 // ===== PROJECT TASKS =====

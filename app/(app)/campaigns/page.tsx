@@ -150,6 +150,9 @@ export default function CampaignsPage() {
             leads: selectedLeads,
             channel: ch,
             campaignName: campaignName || `Campaign ${new Date().toLocaleDateString()}`,
+            messageTemplate: selectedTemplate
+              ? (ch === 'email' ? selectedTemplate.emailBody : selectedTemplate.smsBody)
+              : customMessage || undefined,
           }),
         });
         const data = await res.json();
