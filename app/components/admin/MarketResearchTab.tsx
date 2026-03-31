@@ -90,8 +90,12 @@ export default function MarketResearchTab({ tasks, onToggle }: MarketResearchTab
         )}
       </Card>
 
-      {/* Competitor comparison matrix */}
+      {/* Competitor comparison matrix — hardcoded point-in-time snapshot */}
       <Card title="Competitor Feature Matrix" accent="#4488FF">
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <Badge text="Point-in-time snapshot" variant="amber" />
+          <span className="text-[11px] text-[var(--text-secondary)]">Last updated: Mar 2026 &middot; Run <code className="bg-[var(--surface-elevated)] px-1 rounded text-[10px]">/market-research:competitors</code> to refresh findings</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

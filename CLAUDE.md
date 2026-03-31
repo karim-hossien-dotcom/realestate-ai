@@ -6,7 +6,7 @@ AI-powered real estate CRM that automates lead outreach, follow-ups, and convers
 ## Tech Stack
 - **Framework:** Next.js 16 App Router + TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4
-- **Database/Auth:** Supabase (18+ tables, RLS enabled on all)
+- **Database/Auth:** Supabase (24 tables, RLS enabled on all)
 - **AI:** OpenAI GPT-4o-mini (lead scoring, follow-up generation, inbound agent)
 - **Messaging:** Meta WhatsApp Business API v21.0 + Twilio SMS + Resend Email
 - **Payments:** Stripe (3 tiers: Starter $99, Pro $249, Agency $499)
@@ -18,8 +18,8 @@ AI-powered real estate CRM that automates lead outreach, follow-ups, and convers
 ## Architecture
 ```
 app/
-  api/              -> 60 API routes (Next.js Route Handlers)
-  components/       -> 17 React components (inc. admin/ subdir)
+  api/              -> 62 API routes (Next.js Route Handlers)
+  components/       -> 38 React components (inc. admin/ subdir)
   lib/
     ai/             -> Lead scorer, follow-up generator, listing agent, prompt builder
     billing/        -> stripe.ts, overage.ts, usage.ts, feature-gate.ts
@@ -33,12 +33,12 @@ app/
     maps.ts         -> Google Maps integration
     system-checks.ts-> Service health checks
     ai-audit.ts     -> AI audit utilities
-  (app)/            -> 14 pages (dashboard, leads, campaigns, conversations, etc.)
+  (app)/            -> 21 pages (dashboard, leads, campaigns, conversations, etc.)
 tools/              -> Python backend (Flask webhooks, AI agents)
 scripts/            -> Migration scripts
 planning/           -> PLAN.md, task_plan.md, progress.md, findings.md
 supabase/           -> Schema + 16 migrations
-__tests__/          -> 3 test files (Vitest)
+__tests__/          -> 11 test files (Vitest + Playwright)
 middleware.ts       -> Supabase session management
 ```
 
@@ -62,12 +62,12 @@ middleware.ts       -> Supabase session management
 - Error handling: Explicit try/catch on every API route, log with context. Show actual error to user, not generic "failed".
 - Testing: Run `npm test` before committing. `npm run test:all` for full suite including E2E.
 
-## Database Tables (23)
+## Database Tables (24)
 profiles, leads, messages, campaigns, campaign_leads, follow_ups,
 plans, subscriptions, usage_records, activity_logs, dnc_list,
 consent_records, crm_connections, research_findings, daily_reports,
 ai_config, nps_responses, ai_audits, project_tasks, meetings,
-custom_templates, system_alerts, ai_improvements
+custom_templates, system_alerts, ai_improvements, google_tokens
 
 ## Key Patterns
 
@@ -161,7 +161,7 @@ See `.env.example` for full list. Critical:
 - Run: `npm test`
 - Coverage: `npm run test:coverage`
 - Tests live in `__tests__/` directory
-- Current: 3 test files (api-helpers, lead-scorer, schemas)
+- Current: 11 test files, 218 tests (api-helpers, lead-scorer, schemas, billing, messaging, campaign-send, outreach-messages, dnc-registry, csv-mapper, conversations + 1 E2E)
 - Test critical paths: Stripe webhook, WhatsApp webhook, lead scoring, API validation
 
 ## Skills Reference

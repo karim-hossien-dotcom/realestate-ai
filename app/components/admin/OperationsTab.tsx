@@ -109,8 +109,8 @@ const CRON_SCHEDULES = [
   { name: 'cost-report', frequency: 'Monthly (1st)', endpoint: '/api/cron/cost-report', desc: 'MRR, message volume, cost breakdown, margins', status: 'active', agent: 'Finance Ops' },
 ]
 
-const MANUAL_TASKS = [
-  { name: 'NAR REACH application', deadline: '2026-03-31', frequency: 'One-time', desc: 'Submit MLS data access application', priority: 'P0' },
+const MANUAL_TASKS: Array<{ name: string; deadline?: string; frequency: string; desc: string; priority: string }> = [
+  { name: 'NAR REACH application', frequency: 'One-time', desc: 'Submit MLS data access application (overdue)', priority: 'P0' },
   { name: 'UX review', frequency: 'Monthly (1st)', desc: 'Full UX checklist — core flows, mobile, dark mode', priority: 'P2' },
   { name: '10DLC follow-up', frequency: 'Weekly (check)', desc: 'Check Twilio 10DLC registration status', priority: 'P1' },
   { name: 'E&O insurance', frequency: 'One-time', desc: 'Get quotes and activate professional liability insurance', priority: 'P1' },
@@ -127,17 +127,17 @@ const INFRA = [
   { label: 'Node.js Service', value: 'Render (free)', status: 'live' },
   { label: 'Python Webhook', value: 'Render (starter)', status: 'live' },
   { label: 'Database', value: 'Supabase (free)', status: 'live' },
-  { label: 'AI Model', value: 'GPT-4o', status: 'live' },
+  { label: 'AI Model', value: 'GPT-4o-mini', status: 'live' },
   { label: 'Domain', value: 'realestate-ai.app', status: 'live' },
   { label: 'WhatsApp', value: 'Meta Business API v21.0', status: 'live' },
   { label: 'SMS', value: 'Twilio (10DLC pending)', status: 'pending' },
   { label: 'Email', value: 'Resend', status: 'live' },
   { label: 'Payments', value: 'Stripe (3 tiers)', status: 'live' },
-  { label: 'Monthly Burn', value: '$25.54', status: 'info' },
+  { label: 'Monthly Burn (est.)', value: '~$25', status: 'info' },
 ]
 
 const MCPS = [
-  { name: 'Supabase', status: 'connected', desc: '23 tables, RLS, PostgREST' },
+  { name: 'Supabase', status: 'connected', desc: '24 tables, RLS, PostgREST' },
   { name: 'Sentry', status: 'disconnected', desc: 'Error tracking (not configured)' },
 ]
 

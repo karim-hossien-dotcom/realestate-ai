@@ -35,13 +35,13 @@ export default function EngineeringTab({ tasks, onToggle, alerts, alertsLoading 
         </Card>
         <Card title="Codebase" accent="var(--primary)">
           <div className="text-center py-2">
-            <div className="text-5xl font-bold text-[var(--primary)]">60</div>
-            <div className="text-xs text-[var(--text-secondary)] mt-1">API Routes {'\u00B7'} 23 Tables {'\u00B7'} 3 Channels</div>
+            <div className="text-5xl font-bold text-[var(--primary)]">62</div>
+            <div className="text-xs text-[var(--text-secondary)] mt-1">API Routes {'\u00B7'} 24 Tables {'\u00B7'} 3 Channels</div>
           </div>
           <div className="mt-3">
             <div className="flex justify-between mb-1">
               <span className="text-[11px] text-[var(--text-secondary)]">Test Coverage</span>
-              <span className="text-[11px] text-emerald-400">197 tests / 8 files</span>
+              <span className="text-[11px] text-emerald-400">218 tests / 11 files</span>
             </div>
             <div className="h-1.5 rounded-full bg-[var(--surface-elevated)]">
               <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-blue-400" style={{ width: '65%' }} />

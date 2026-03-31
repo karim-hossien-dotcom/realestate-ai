@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/app/components/ToastProvider';
 import StatusBadge from '@/app/components/StatusBadge';
 import ScoreBadge from '@/app/components/ScoreBadge';
@@ -42,6 +43,7 @@ type CampaignRecord = {
 
 export default function CampaignsPage() {
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [leads, setLeads] = useState<CampaignLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +105,23 @@ export default function CampaignsPage() {
     fetchCampaignHistory();
     fetchCustomTemplates();
   }, [fetchLeads, fetchCampaignHistory, fetchCustomTemplates]);
+
+  // Auto-select template from URL params (e.g. ?template=commercial-prospecting from onboarding)
+  useEffect(() => {
+    const templateId = searchParams.get('template');
+    if (!templateId) return;
+    const match = CAMPAIGN_TEMPLATES.find(t => t.id === templateId);
+    if (match) {
+      setSelectedTemplate(match);
+      const preview = channel === 'email' ? match.emailBody : match.smsBody;
+      setCustomMessage(fillTemplate(preview, {
+        firstName: 'there',
+        address: 'your property',
+        area: 'your area',
+      }));
+      setStep(2);
+    }
+  }, [searchParams, channel]);
 
   const toggleScoreFilter = (category: string) => {
     setScoreFilters(prev => {

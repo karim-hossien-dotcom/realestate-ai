@@ -9,11 +9,11 @@ interface SecurityTabProps {
 const SECURITY_CHECKS = [
   { label: 'Middleware Rate Limiting', status: 'active', detail: 'Auth: 5/15min, API: 60/min, Public: 20/min' },
   { label: 'CSP Headers', status: 'active', detail: 'X-Frame-Options, CSP, nosniff, Referrer-Policy' },
-  { label: 'Auth on All Routes', status: 'active', detail: 'withAuth() on 47/54 routes (7 public by design)' },
+  { label: 'Auth on All Routes', status: 'active', detail: 'withAuth() on 47/62 routes (15 public by design)' },
   { label: 'CRM Key Encryption', status: 'active', detail: 'AES-256-GCM via ENCRYPTION_KEY env var' },
   { label: 'Input Sanitization', status: 'active', detail: 'Zod schemas + safeParseBody + UUID validation' },
   { label: 'DNC Enforcement', status: 'active', detail: 'Checked before every outbound send' },
-  { label: 'Supabase RLS', status: 'active', detail: 'Enabled on all 18+ tables' },
+  { label: 'Supabase RLS', status: 'active', detail: 'Enabled on all 24 tables' },
   { label: 'Stripe Signature', status: 'active', detail: 'HMAC verification on webhook' },
   { label: 'WhatsApp Signature', status: 'pending', detail: 'META_APP_SECRET not set yet' },
   { label: 'STOP Keyword Verification', status: 'active', detail: 'AI stop intent confirmed by keyword checker' },

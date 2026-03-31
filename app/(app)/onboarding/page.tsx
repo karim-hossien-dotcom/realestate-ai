@@ -288,11 +288,11 @@ export default function OnboardingPage() {
 
               <div className="space-y-3">
                 {[
-                  { name: 'Commercial Prospecting', desc: 'Cold outreach to property owners — "We have buyers looking in your area"', icon: 'fa-building' },
-                  { name: 'Free Property Valuation', desc: 'Offer a CMA — great lead magnet for any owner', icon: 'fa-chart-line' },
-                  { name: 'Circle Prospecting', desc: 'Ask neighbors for referrals — "Who do you know thinking of moving?"', icon: 'fa-street-view' },
+                  { name: 'Commercial Prospecting', desc: 'Cold outreach to property owners — "We have buyers looking in your area"', icon: 'fa-building', templateId: 'commercial-prospecting' },
+                  { name: 'Free Property Valuation', desc: 'Offer a CMA — great lead magnet for any owner', icon: 'fa-chart-line', templateId: 'free-valuation' },
+                  { name: 'Circle Prospecting', desc: 'Ask neighbors for referrals — "Who do you know thinking of moving?"', icon: 'fa-street-view', templateId: 'circle-prospecting' },
                 ].map(t => (
-                  <button key={t.name} onClick={() => router.push('/campaigns')}
+                  <button key={t.name} onClick={() => router.push(`/campaigns?template=${t.templateId}`)}
                     className="w-full p-4 bg-[var(--surface-elevated)] border border-[var(--border)] rounded-xl hover:border-blue-500 transition-all text-left cursor-pointer flex items-center gap-4">
                     <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <i className={`fas ${t.icon} text-blue-500`}></i>
