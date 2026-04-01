@@ -18,6 +18,7 @@ type CampaignLead = {
   sms_text: string | null;
   score: number;
   score_category: string;
+  last_contacted: string | null;
 };
 
 type SendResult = {
@@ -66,6 +67,7 @@ function CampaignsPage() {
   const [scoreFilters, setScoreFilters] = useState<Set<string>>(new Set());
   const [hasPhoneOnly, setHasPhoneOnly] = useState(false);
   const [hasEmailOnly, setHasEmailOnly] = useState(false);
+  const [hideContacted, setHideContacted] = useState(false);
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'address'>('score');
   const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
@@ -144,6 +146,7 @@ function CampaignsPage() {
       if (scoreFilters.size > 0 && !scoreFilters.has(lead.score_category)) return false;
       if (hasPhoneOnly && !lead.phone) return false;
       if (hasEmailOnly && !lead.email) return false;
+      if (hideContacted && lead.last_contacted) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
@@ -380,6 +383,16 @@ function CampaignsPage() {
                   }`}
                 >
                   <i className="fas fa-envelope text-[10px]"></i>Has Email
+                </button>
+                <button
+                  onClick={() => setHideContacted(prev => !prev)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+                    hideContacted
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
+                  }`}
+                >
+                  <i className="fas fa-user-clock text-[10px]"></i>Not Yet Contacted
                 </button>
               </div>
 

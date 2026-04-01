@@ -11,6 +11,7 @@ type Lead = {
   email: string
   score: number
   score_category: string
+  last_contacted: string | null
 }
 
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
   // Get leads that have generated messages (sms_text)
   const { data: leads, error } = await supabase
     .from('leads')
-    .select('id, owner_name, phone, property_address, sms_text, email, score, score_category')
+    .select('id, owner_name, phone, property_address, sms_text, email, score, score_category, last_contacted')
     .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
     .not('phone', 'is', null)
@@ -44,6 +45,7 @@ export async function GET() {
     email: l.email || null,
     score: l.score || 50,
     score_category: l.score_category || 'Warm',
+    last_contacted: l.last_contacted || null,
   }))
 
   return NextResponse.json({
