@@ -11,6 +11,17 @@ type WhatsAppSendTextResult = {
   messageId?: string;
 };
 
+/**
+ * Normalize a phone number for WhatsApp (must include country code).
+ * 10-digit US numbers get '1' prepended. Strips +, spaces, dashes, parens.
+ */
+function normalizeForWhatsApp(phone: string): string {
+  const digits = phone.replace(/[^\d]/g, '');
+  // 10-digit US number → prepend country code 1
+  if (digits.length === 10) return `1${digits}`;
+  return digits;
+}
+
 export async function sendWhatsAppText(
   params: WhatsAppTextParams
 ): Promise<WhatsAppSendTextResult> {
@@ -26,7 +37,7 @@ export async function sendWhatsAppText(
     };
   }
 
-  const toNumber = params.to.replace(/^\+/, '');
+  const toNumber = normalizeForWhatsApp(params.to);
 
   const payload = {
     messaging_product: 'whatsapp',
@@ -117,7 +128,7 @@ export async function sendWhatsAppTemplate(
     ];
   }
 
-  const toNumber = params.to.replace(/^\+/, '');
+  const toNumber = normalizeForWhatsApp(params.to);
 
   const payload = {
     messaging_product: 'whatsapp',

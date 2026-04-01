@@ -22,7 +22,10 @@ export async function sendSms(params: SmsParams): Promise<SmsSendResult> {
     return { ok: true, messageId: `demo-sms-${Date.now()}` };
   }
 
-  const toNumber = params.to.startsWith('+') ? params.to : `+${params.to}`;
+  // Normalize: strip non-digits, add country code for 10-digit US numbers, add +
+  const digits = params.to.replace(/[^\d]/g, '');
+  const withCountry = digits.length === 10 ? `1${digits}` : digits;
+  const toNumber = `+${withCountry}`;
 
   const formData = new URLSearchParams({
     To: toNumber,

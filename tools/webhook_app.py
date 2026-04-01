@@ -262,14 +262,24 @@ def _extract_messages(payload: dict) -> list[dict]:
     return messages_out
 
 
+def _normalize_phone_for_whatsapp(phone: str) -> str:
+    """Normalize phone for WhatsApp: strip non-digits, add US country code if 10 digits."""
+    import re
+    digits = re.sub(r"[^\d]", "", phone)
+    if len(digits) == 10:
+        return f"1{digits}"
+    return digits
+
+
 def _send_whatsapp_message(to_number: str, body: str) -> dict:
     if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
         return {"ok": True, "demo": True}
 
+    normalized = _normalize_phone_for_whatsapp(to_number)
     url = f"https://graph.facebook.com/v21.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
     payload = {
         "messaging_product": "whatsapp",
-        "to": to_number,
+        "to": normalized,
         "type": "text",
         "text": {"body": body},
     }
