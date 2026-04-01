@@ -8,6 +8,13 @@ type NormalizedInbound = {
   timestamp?: string;
 };
 
+type WhatsAppStatus = {
+  id: string;
+  status: 'sent' | 'delivered' | 'read' | 'failed';
+  timestamp?: string;
+  errors?: Array<{ code: number; title: string }>;
+};
+
 type WhatsAppWebhookPayload = {
   entry?: Array<{
     changes?: Array<{
@@ -19,6 +26,7 @@ type WhatsAppWebhookPayload = {
           id?: string;
           timestamp?: string;
         }>;
+        statuses?: WhatsAppStatus[];
         metadata?: {
           display_phone_number?: string;
           phone_number_id?: string;
@@ -27,6 +35,51 @@ type WhatsAppWebhookPayload = {
     }>;
   }>;
 };
+
+function extractStatuses(payload: unknown): WhatsAppStatus[] {
+  const data = payload as WhatsAppWebhookPayload | null;
+  const entries = Array.isArray(data?.entry) ? data.entry : [];
+  const statuses: WhatsAppStatus[] = [];
+
+  for (const entry of entries) {
+    const changes = Array.isArray(entry?.changes) ? entry.changes : [];
+    for (const change of changes) {
+      const value = change?.value;
+      const statusList = Array.isArray(value?.statuses) ? value.statuses : [];
+      for (const s of statusList) {
+        if (s?.id && s?.status) {
+          statuses.push(s);
+        }
+      }
+    }
+  }
+  return statuses;
+}
+
+async function updateMessageStatuses(statuses: WhatsAppStatus[]) {
+  if (statuses.length === 0) return;
+
+  const { createServiceClient } = await import('@/app/lib/supabase/server');
+  const supabase = createServiceClient();
+
+  for (const s of statuses) {
+    const update: Record<string, string> = { status: s.status };
+    if (s.errors?.length) {
+      update.error_message = s.errors.map(e => `${e.code}: ${e.title}`).join('; ');
+    }
+
+    const { error } = await supabase
+      .from('messages')
+      .update(update)
+      .eq('external_id', s.id);
+
+    if (error) {
+      console.error(`[whatsapp/webhook] status update failed for ${s.id}:`, error.message);
+    } else {
+      console.log(`[whatsapp/webhook] status=${s.status} for ${s.id}`);
+    }
+  }
+}
 
 function normalizePhone(input?: string | null) {
   const trimmed = String(input || '').trim();
@@ -141,11 +194,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Invalid JSON.' }, { status: 400 });
     }
 
+    // Process delivery status updates (sent → delivered → read → failed)
+    const statuses = extractStatuses(payload);
+    if (statuses.length > 0) {
+      await updateMessageStatuses(statuses);
+    }
+
     const inbound = extractInboundMessages(payload);
-    console.log(`[whatsapp/webhook] inbound_count=${inbound.length} (signature verified)`);
+    console.log(`[whatsapp/webhook] inbound_count=${inbound.length} statuses=${statuses.length} (signature verified)`);
 
     if (inbound.length === 0) {
-      return NextResponse.json({ ok: true, message: 'No inbound messages.', data: null });
+      return NextResponse.json({ ok: true, message: statuses.length > 0 ? `Processed ${statuses.length} status update(s).` : 'No inbound messages.', data: null });
     }
 
     try {
@@ -167,11 +226,17 @@ export async function POST(request: Request) {
     );
   }
 
+  // Process delivery status updates (sent → delivered → read → failed)
+  const statuses2 = extractStatuses(payload);
+  if (statuses2.length > 0) {
+    await updateMessageStatuses(statuses2);
+  }
+
   const inbound = extractInboundMessages(payload);
-  console.log(`[whatsapp/webhook] inbound_count=${inbound.length}`);
+  console.log(`[whatsapp/webhook] inbound_count=${inbound.length} statuses=${statuses2.length}`);
 
   if (inbound.length === 0) {
-    return NextResponse.json({ ok: true, message: 'No inbound messages.', data: null });
+    return NextResponse.json({ ok: true, message: statuses2.length > 0 ? `Processed ${statuses2.length} status update(s).` : 'No inbound messages.', data: null });
   }
 
   try {
