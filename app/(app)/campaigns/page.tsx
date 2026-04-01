@@ -213,7 +213,7 @@ function CampaignsPage() {
             campaignName: campaignName || `Campaign ${new Date().toLocaleDateString()}`,
             messageTemplate: selectedTemplate
               ? (ch === 'email' ? selectedTemplate.emailBody : selectedTemplate.smsBody)
-              : customMessage || undefined,
+              : undefined,
           }),
         });
         const data = await res.json();
