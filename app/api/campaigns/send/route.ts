@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendWhatsAppText, sendWhatsAppTemplate } from '@/app/lib/messaging/whatsapp'
+import { sendWhatsAppText, sendWhatsAppTemplate, checkWhatsAppNumber } from '@/app/lib/messaging/whatsapp'
 import { sendEmail, generateOutreachEmail } from '@/app/lib/messaging/email'
 import { sendSms } from '@/app/lib/messaging/sms'
 import { isOnNationalDnc } from '@/app/lib/messaging/dnc-registry'
@@ -232,6 +232,19 @@ export async function POST(request: Request) {
       const smsBody = resolveMessageBody(lead) || lead.sms_text || `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I'm reaching out about your property. Reply for more info.`
       sendResult = await sendSms({ to: contact, body: smsBody })
     } else {
+      // WhatsApp: validate number first — skip if not on WhatsApp
+      const waCheck = await checkWhatsAppNumber(contact)
+      if (!waCheck.valid) {
+        results.push({
+          phone: contact,
+          leadId: lead.id,
+          ok: false,
+          skipped: `Not on WhatsApp${waCheck.reason ? ` (${waCheck.reason})` : ''}`,
+        })
+        skipped++
+        continue
+      }
+
       // WhatsApp send strategy (3 tiers):
       // 1. Plain text — free, works within 24h conversation window
       // 2. property_inquiry template (UTILITY) — no WABA payment needed

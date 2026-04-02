@@ -79,6 +79,67 @@ export async function sendWhatsAppText(
   };
 }
 
+/**
+ * Check if a phone number is likely reachable on WhatsApp.
+ * Quick heuristics (toll-free, short numbers) + Meta contacts API.
+ * Returns { valid: true, waId } or { valid: false, reason }.
+ */
+export async function checkWhatsAppNumber(
+  phone: string
+): Promise<{ valid: boolean; waId?: string; reason?: string }> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const normalized = normalizeForWhatsApp(phone);
+
+  // Quick reject: toll-free numbers
+  if (/^1(800|888|877|866|855|844|833)\d{7}$/.test(normalized)) {
+    return { valid: false, reason: 'Toll-free number' };
+  }
+
+  // Quick reject: too short
+  if (normalized.length < 10) {
+    return { valid: false, reason: 'Number too short' };
+  }
+
+  if (!phoneNumberId || !accessToken) {
+    return { valid: true };
+  }
+
+  try {
+    // Meta Cloud API: send a contacts check
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/contacts`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          blocking: 'wait',
+          contacts: [`+${normalized}`],
+          force_check: true,
+        }),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    const contact = data?.contacts?.[0];
+
+    if (contact?.status === 'valid' && contact?.wa_id) {
+      return { valid: true, waId: contact.wa_id };
+    }
+    if (contact?.status === 'invalid') {
+      return { valid: false, reason: 'Not on WhatsApp' };
+    }
+
+    // Contacts API may not be available on all tiers — assume valid
+    return { valid: true };
+  } catch {
+    return { valid: true }; // Don't block on network errors
+  }
+}
+
 export type WhatsAppTemplateParams = {
   to: string;
   templateName?: string;
