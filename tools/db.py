@@ -721,3 +721,22 @@ def check_messaging_quota(user_id: str) -> dict:
         logger.error(f"Error checking messaging quota: {e}")
         # On error, allow (don't block inbound responses)
         return {"allowed": True, "remaining": 999, "limit": -1, "current": 0}
+
+
+def update_message_status(external_id: str, status: str, error_message: Optional[str] = None) -> bool:
+    """Update a message's delivery status by its WhatsApp external_id (wamid)."""
+    client = get_supabase_client()
+    if not client or not external_id:
+        return False
+
+    try:
+        update_data: dict = {"status": status}
+        if error_message:
+            update_data["error_message"] = error_message
+
+        client.table("messages").update(update_data).eq("external_id", external_id).execute()
+        logger.info(f"Message status updated: {external_id} -> {status}")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating message status for {external_id}: {e}")
+        return False

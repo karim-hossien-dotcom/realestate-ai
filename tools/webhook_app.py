@@ -41,6 +41,7 @@ try:
         check_messaging_quota,
         get_user_plan_slug,
         record_overage,
+        update_message_status,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -228,6 +229,39 @@ def _write_csv_row(path: str, headers: Iterable[str], row: dict) -> None:
         f.flush()
         os.fsync(f.fileno())
         fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def _process_status_updates(payload: dict) -> None:
+    """Extract and process WhatsApp delivery status updates from the webhook payload."""
+    if not SUPABASE_AVAILABLE:
+        return
+
+    entries = payload.get("entry") or []
+    for entry in entries:
+        changes = entry.get("changes") or []
+        for change in changes:
+            value = change.get("value") or {}
+            statuses = value.get("statuses") or []
+            for s in statuses:
+                msg_id = s.get("id")
+                status = s.get("status")  # sent, delivered, read, failed
+                if not msg_id or not status:
+                    continue
+
+                error_msg = None
+                errors = s.get("errors") or []
+                if errors:
+                    error_msg = "; ".join(f"{e.get('code', '?')}: {e.get('title', '?')}" for e in errors)
+
+                update_message_status(msg_id, status, error_msg)
+
+    count = sum(
+        len(change.get("value", {}).get("statuses") or [])
+        for entry in entries
+        for change in (entry.get("changes") or [])
+    )
+    if count > 0:
+        logger.info(f"[webhook] Processed {count} delivery status update(s)")
 
 
 def _extract_messages(payload: dict) -> list[dict]:
@@ -963,6 +997,10 @@ def webhook_inbound():
         return Response("Rate limit exceeded", status=429)
 
     payload = request.get_json(silent=True) or {}
+
+    # Process delivery status updates (sent → delivered → read → failed)
+    _process_status_updates(payload)
+
     messages = _extract_messages(payload)
 
     now = datetime.now(timezone.utc).isoformat()
