@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import Script from 'next/script';
+// Script import removed — switched FA from JS to CSS to fix React DOM conflict
 import { CookieConsent } from './components/CookieConsent';
 
 const dmSans = DM_Sans({
@@ -60,10 +60,12 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       </head>
       <body className="bg-[var(--background)] text-[var(--foreground)] transition-colors">
-        {/* Font Awesome JS */}
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
-          integrity="sha384-Y7LSKwoY+C2iyfu/oupNnkGEN3EgA6skmJeVg5AyQk7ttcjX0XsLREmmuJW/SdbU"
+        {/* Font Awesome CSS — using CSS version (not JS) to avoid React DOM conflicts.
+            FA JS replaces <i> with <svg>, which breaks React's removeChild during re-renders. */}
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl0CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />

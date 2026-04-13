@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Card, StatCard } from './AdminShared'
 
 // ── Org Chart Data ──
+// Reflects the actual 16-agent structure with schedule frequencies
 const ORG = {
   ceo: { name: 'Karim Hossien', title: 'CEO — EYWA Consulting', color: '#F59E0B' },
   ai: { name: 'Claude Opus 4.6', title: 'AI CTO — Orchestrates all agents', color: '#3B82F6' },
@@ -12,48 +13,73 @@ const ORG = {
       name: 'Engineering',
       color: '#3B82F6',
       agents: [
-        { name: 'Architect', type: 'on-demand' },
+        { name: 'Eng Ops', type: 'daily', schedule: 'Daily' },
+        { name: 'Delivery Monitor', type: '30min', schedule: 'Every 30 min' },
         { name: 'Planner', type: 'on-demand' },
+        { name: 'Architect', type: 'on-demand' },
         { name: 'TDD Guide', type: 'on-demand' },
         { name: 'Code Reviewer', type: 'on-demand' },
         { name: 'Build Resolver', type: 'on-demand' },
-        { name: 'Refactor', type: 'on-demand' },
-        { name: 'E2E Runner', type: 'on-demand' },
+        { name: 'Refactor Cleaner', type: 'monthly', schedule: 'Monthly (15th)' },
+        { name: 'E2E Runner', type: 'weekly', schedule: 'Weekly (Sat)' },
         { name: 'Doc Updater', type: 'on-demand' },
-        { name: 'Eng Ops', type: 'automated' },
-        { name: 'AI Improver', type: 'automated' },
       ],
     },
     {
       name: 'Security',
       color: '#EF4444',
       agents: [
-        { name: 'Security Reviewer', type: 'automated' },
+        { name: 'Security Reviewer', type: 'weekly', schedule: 'Weekly (Fri)' },
+      ],
+    },
+    {
+      name: 'AI Quality',
+      color: '#0EA5E9',
+      agents: [
+        { name: 'AI Improver', type: 'weekly', schedule: 'Weekly (Sun)' },
       ],
     },
     {
       name: 'Finance',
       color: '#22C55E',
       agents: [
-        { name: 'Finance Ops', type: 'on-demand' },
+        { name: 'Finance Ops', type: 'weekly', schedule: 'Weekly (Mon)' },
       ],
     },
     {
       name: 'Legal',
       color: '#F59E0B',
       agents: [
-        { name: 'Legal Ops', type: 'on-demand' },
+        { name: 'Legal Ops', type: 'monthly', schedule: 'Monthly (1st)' },
       ],
     },
     {
       name: 'Marketing',
       color: '#A855F7',
       agents: [
-        { name: 'Marketing Ops', type: 'on-demand' },
-        { name: 'Market Research', type: 'on-demand' },
+        { name: 'Marketing Ops', type: 'weekly', schedule: 'Weekly (Wed)' },
+      ],
+    },
+    {
+      name: 'Research',
+      color: '#EC4899',
+      agents: [
+        { name: 'Market Research', type: 'biweekly', schedule: 'Biweekly (1st & 15th)' },
       ],
     },
   ],
+}
+
+// Schedule type badge styling
+function scheduleStyle(type: string): { bg: string; text: string; label: string } {
+  switch (type) {
+    case '30min': return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: '30m' }
+    case 'daily': return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Daily' }
+    case 'weekly': return { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Weekly' }
+    case 'biweekly': return { bg: 'bg-purple-500/10', text: 'text-purple-400', label: '2-Week' }
+    case 'monthly': return { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Monthly' }
+    default: return { bg: 'bg-[var(--surface-elevated)]', text: 'text-[var(--text-secondary)]', label: 'On-demand' }
+  }
 }
 
 // Helper to calculate next run time
@@ -67,22 +93,13 @@ function getNextRun(schedule: string): string {
     return `${pad(next.getHours())}:${pad(next.getMinutes())}`
   }
   if (schedule.includes('Daily')) {
-    const match = schedule.match(/(\d+)(am|pm)/)
-    if (match) {
-      let hour = parseInt(match[1])
-      if (match[2] === 'pm' && hour !== 12) hour += 12
-      const next = new Date(now)
-      next.setHours(hour, 0, 0, 0)
-      if (next <= now) next.setDate(next.getDate() + 1)
-      return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    }
     const next = new Date(now)
     next.setDate(next.getDate() + 1)
     next.setHours(0, 0, 0, 0)
     return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
   if (schedule.includes('Weekly')) {
-    const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
     const dayName = schedule.match(/\((\w+)\)/)?.[1] || 'Monday'
     const targetDay = dayMap[dayName] ?? 1
     const next = new Date(now)
@@ -90,24 +107,49 @@ function getNextRun(schedule: string): string {
     next.setDate(now.getDate() + daysUntil)
     return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
+  if (schedule.includes('Biweekly')) {
+    const day = now.getDate()
+    const next = day < 15
+      ? new Date(now.getFullYear(), now.getMonth(), 15)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
   if (schedule.includes('Monthly')) {
-    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const dayMatch = schedule.match(/(\d+)\w{0,2}\)/)
+    const targetDay = dayMatch ? parseInt(dayMatch[1]) : 1
+    const next = now.getDate() >= targetDay
+      ? new Date(now.getFullYear(), now.getMonth() + 1, targetDay)
+      : new Date(now.getFullYear(), now.getMonth(), targetDay)
     return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
   return '—'
 }
 
+// Cron jobs (infrastructure-level automation)
 const CRON_SCHEDULES = [
-  { name: 'send-followups', frequency: 'Every 5 min', endpoint: '/api/cron/send-followups', desc: 'Send scheduled follow-up messages', status: 'active', agent: 'Eng Ops' },
-  { name: 'check-alerts', frequency: 'Every 30 min', endpoint: '/api/cron/check-alerts', desc: 'Monitor services + email on critical', status: 'active', agent: 'Eng Ops' },
-  { name: 'delivery-monitor', frequency: 'Every 30 min', endpoint: '/api/cron/delivery-monitor', desc: 'Verify WhatsApp/SMS delivery statuses', status: 'active', agent: 'Eng Ops' },
-  { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports + auto-create tasks', status: 'active', agent: 'Eng Ops' },
-  { name: 'refresh-lead-scores', frequency: 'Daily (3am)', endpoint: '/api/cron/refresh-lead-scores', desc: 'Recalculate all lead scores — time decay + activity', status: 'active', agent: 'Eng Ops' },
-  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'AI Improver' },
-  { name: 'ai-improvement-report', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/ai-improvement-report', desc: 'Analyze low-scoring convos, propose AI prompt improvements', status: 'active', agent: 'AI Improver' },
-  { name: 'stale-lead-detection', frequency: 'Weekly (Monday)', endpoint: '/api/cron/stale-lead-detection', desc: 'Flag stale hot/warm leads, auto-create follow-ups', status: 'active', agent: 'Eng Ops' },
-  { name: 'competitor-pricing', frequency: 'Biweekly (1st & 15th)', endpoint: '/api/cron/competitor-pricing', desc: 'Competitor pricing + research findings for review', status: 'active', agent: 'Market Research' },
-  { name: 'cost-report', frequency: 'Monthly (1st)', endpoint: '/api/cron/cost-report', desc: 'MRR, message volume, cost breakdown, margins', status: 'active', agent: 'Finance Ops' },
+  { name: 'send-followups', frequency: 'Every 5 min', desc: 'Send scheduled follow-up messages', agent: 'Eng Ops' },
+  { name: 'check-alerts', frequency: 'Every 30 min', desc: 'Monitor services + email on critical', agent: 'Eng Ops' },
+  { name: 'delivery-monitor', frequency: 'Every 30 min', desc: 'Verify WhatsApp/SMS delivery statuses', agent: 'Delivery Monitor' },
+  { name: 'daily-ops', frequency: 'Daily (midnight)', desc: 'System health checks + daily reports + auto-create tasks', agent: 'Eng Ops' },
+  { name: 'refresh-lead-scores', frequency: 'Daily (3am)', desc: 'Recalculate all lead scores — time decay + activity', agent: 'Eng Ops' },
+  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', desc: 'AI conversation quality + ops health metrics', agent: 'AI Improver' },
+  { name: 'ai-improvement-report', frequency: 'Weekly (Sunday)', desc: 'Analyze low-scoring convos, propose AI prompt improvements', agent: 'AI Improver' },
+  { name: 'stale-lead-detection', frequency: 'Weekly (Monday)', desc: 'Flag stale hot/warm leads, auto-create follow-ups', agent: 'Eng Ops' },
+  { name: 'competitor-pricing', frequency: 'Biweekly (1st & 15th)', desc: 'Competitor pricing + capabilities + research findings', agent: 'Market Research' },
+  { name: 'cost-report', frequency: 'Monthly (1st)', desc: 'MRR, message volume, cost breakdown, margins', agent: 'Finance Ops' },
+]
+
+// Agent schedules (intelligence-level automation)
+const AGENT_SCHEDULES = [
+  { name: 'Engineering Ops', frequency: 'Daily', desc: 'Health checks, error scans, delivery rates, test suite', dept: 'Engineering', color: '#3B82F6' },
+  { name: 'Finance Ops', frequency: 'Weekly (Mon)', desc: 'Cost tracking, revenue monitoring, vendor management', dept: 'Finance', color: '#22C55E' },
+  { name: 'Marketing Ops', frequency: 'Weekly (Wed)', desc: 'Content calendar, campaign performance, landing page audit', dept: 'Marketing', color: '#A855F7' },
+  { name: 'Security Reviewer', frequency: 'Weekly (Fri)', desc: 'Vulnerability scan, auth audit, secrets check', dept: 'Security', color: '#EF4444' },
+  { name: 'E2E Runner', frequency: 'Weekly (Sat)', desc: 'Critical user flow regression tests', dept: 'Engineering', color: '#3B82F6' },
+  { name: 'AI Improver', frequency: 'Weekly (Sun)', desc: 'Conversation quality analysis, prompt improvement proposals', dept: 'AI Quality', color: '#0EA5E9' },
+  { name: 'Market Research', frequency: 'Biweekly (1st & 15th)', desc: 'Pricing, capabilities, feature gaps, trend tracking', dept: 'Research', color: '#EC4899' },
+  { name: 'Legal Ops', frequency: 'Monthly (1st)', desc: 'TCPA/CAN-SPAM/CCPA compliance, DNC enforcement', dept: 'Legal', color: '#F59E0B' },
+  { name: 'Refactor Cleaner', frequency: 'Monthly (15th)', desc: 'Dead code audit, oversized file split, dependency cleanup', dept: 'Engineering', color: '#3B82F6' },
 ]
 
 const MANUAL_TASKS: Array<{ name: string; deadline?: string; frequency: string; desc: string; priority: string }> = [
@@ -127,14 +169,14 @@ const SKILLS = [
 const INFRA = [
   { label: 'Node.js Service', value: 'Render (free)', status: 'live' },
   { label: 'Python Webhook', value: 'Render (starter)', status: 'live' },
-  { label: 'Database', value: 'Supabase (free)', status: 'live' },
-  { label: 'AI Model', value: 'GPT-4o-mini', status: 'live' },
+  { label: 'Database', value: 'Supabase (24 tables)', status: 'live' },
+  { label: 'AI Model', value: 'GPT-4o', status: 'live' },
   { label: 'Domain', value: 'realestate-ai.app', status: 'live' },
   { label: 'WhatsApp', value: 'Meta Business API v21.0', status: 'live' },
   { label: 'SMS', value: 'Twilio (10DLC pending)', status: 'pending' },
   { label: 'Email', value: 'Resend', status: 'live' },
   { label: 'Payments', value: 'Stripe (3 tiers)', status: 'live' },
-  { label: 'Monthly Burn (est.)', value: '~$25', status: 'info' },
+  { label: 'Monthly Burn', value: '~$25.54', status: 'info' },
 ]
 
 const MCPS = [
@@ -143,23 +185,22 @@ const MCPS = [
 ]
 
 export default function OperationsTab() {
-  const [showOrgChart, setShowOrgChart] = useState(true)
-
   const totalAgents = ORG.departments.reduce((s, d) => s + d.agents.length, 0)
-  const automatedAgents = ORG.departments.reduce((s, d) => s + d.agents.filter(a => a.type === 'automated').length, 0)
+  const scheduledAgents = ORG.departments.reduce((s, d) => s + d.agents.filter(a => a.type !== 'on-demand').length, 0)
+  const onDemandAgents = totalAgents - scheduledAgents
 
   return (
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Total Agents" value={totalAgents} sub={`${automatedAgents} automated`} />
-        <StatCard label="Cron Jobs" value={CRON_SCHEDULES.filter(c => c.status === 'active').length} sub={`${CRON_SCHEDULES.length} total`} />
+        <StatCard label="Total Agents" value={totalAgents} sub={`${scheduledAgents} scheduled, ${onDemandAgents} on-demand`} />
+        <StatCard label="Cron Jobs" value={CRON_SCHEDULES.length} sub="infrastructure automation" />
         <StatCard label="Services" value={INFRA.filter(i => i.status === 'live').length} sub="operational" />
-        <StatCard label="Skill Packs" value={SKILLS.length} sub={`${SKILLS.reduce((s, sk) => s + sk.count, 0)} skills`} />
+        <StatCard label="Departments" value={ORG.departments.length} sub={`${SKILLS.reduce((s, sk) => s + sk.count, 0)} skills loaded`} />
       </div>
 
       {/* Org Chart */}
-      <Card title="Organization Chart" accent="var(--primary)">
+      <Card title="Organization Chart — 16 Agents, 7 Departments" accent="var(--primary)">
         <div className="space-y-4 py-2">
           {/* CEO */}
           <div className="flex justify-center">
@@ -181,31 +222,30 @@ export default function OperationsTab() {
 
           {/* Connector line */}
           <div className="flex justify-center">
-            <div className="w-3/4 h-px bg-[var(--border)]" />
+            <div className="w-[90%] h-px bg-[var(--border)]" />
           </div>
 
-          {/* Departments */}
-          <div className="grid grid-cols-5 gap-3">
+          {/* Departments — 2 rows for 7 depts */}
+          <div className="grid grid-cols-4 gap-3">
             {ORG.departments.map(dept => (
-              <div key={dept.name} className="rounded-xl border p-4" style={{ borderColor: `${dept.color}30` }}>
-                <div className="flex items-center gap-2 mb-3">
+              <div key={dept.name} className="rounded-xl border p-3" style={{ borderColor: `${dept.color}30` }}>
+                <div className="flex items-center gap-2 mb-2.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: dept.color }} />
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: dept.color }}>{dept.name}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: dept.color }}>{dept.name}</span>
                   <span className="text-[9px] text-[var(--text-secondary)] ml-auto">{dept.agents.length}</span>
                 </div>
-                <div className="space-y-1.5">
-                  {dept.agents.map(agent => (
-                    <div key={agent.name} className="flex items-center justify-between text-xs py-1">
-                      <span className="text-[var(--text-primary)]">{agent.name}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
-                        agent.type === 'automated'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
-                      }`}>
-                        {agent.type === 'automated' ? '⚡ Auto' : 'On-demand'}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-1">
+                  {dept.agents.map(agent => {
+                    const style = scheduleStyle(agent.type)
+                    return (
+                      <div key={agent.name} className="flex items-center justify-between text-xs py-0.5">
+                        <span className="text-[var(--text-primary)] text-[11px]">{agent.name}</span>
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${style.bg} ${style.text}`}>
+                          {style.label}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}
@@ -213,20 +253,44 @@ export default function OperationsTab() {
         </div>
       </Card>
 
-      {/* Automated Schedules */}
-      <Card title={`Automated Schedules — ${CRON_SCHEDULES.length} Active`} accent="#22C55E">
+      {/* Agent Schedules — the intelligence layer */}
+      <Card title={`Agent Schedules — ${AGENT_SCHEDULES.length} Automated`} accent="#0EA5E9">
+        <div className="space-y-0">
+          {AGENT_SCHEDULES.map(agent => (
+            <div key={agent.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full" style={{ background: agent.color }} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{agent.name}</p>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)]">{agent.dept}</span>
+                  </div>
+                  <p className="text-[10px] text-[var(--text-secondary)]">{agent.desc}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-[var(--text-primary)]">{agent.frequency}</span>
+                <p className="text-[9px] text-blue-400">Next: {getNextRun(agent.frequency)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Cron Jobs — the infrastructure layer */}
+      <Card title={`Cron Jobs — ${CRON_SCHEDULES.length} Active`} accent="#22C55E">
         <div className="space-y-0">
           {CRON_SCHEDULES.map(cron => (
-            <div key={cron.name} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+            <div key={cron.name} className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{cron.name}</p>
+                  <p className="text-[13px] font-medium text-[var(--text-primary)]">{cron.name}</p>
                   <p className="text-[10px] text-[var(--text-secondary)]">{cron.desc}</p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xs font-medium text-[var(--text-primary)]">{cron.frequency}</span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)]">{cron.frequency}</span>
                 <p className="text-[9px] text-emerald-400">Next: {getNextRun(cron.frequency)}</p>
                 <p className="text-[9px] text-[var(--text-secondary)]">{cron.agent}</p>
               </div>
