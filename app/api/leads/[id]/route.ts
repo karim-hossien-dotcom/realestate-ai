@@ -54,7 +54,8 @@ export async function PATCH(
     'budget_min',
     'budget_max',
     'property_type',
-    'location_preference'
+    'location_preference',
+    'lead_type'
   ]
 
   const updates: Record<string, unknown> = {}

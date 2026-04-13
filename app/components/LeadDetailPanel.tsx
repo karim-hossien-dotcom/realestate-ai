@@ -28,6 +28,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
     email: lead.email || '',
     property_address: lead.property_address || '',
     contact_preference: lead.contact_preference || 'sms',
+    lead_type: lead.lead_type || '',
   });
 
   // Sync form when lead prop changes
@@ -40,17 +41,22 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
       email: lead.email || '',
       property_address: lead.property_address || '',
       contact_preference: lead.contact_preference || 'sms',
+      lead_type: lead.lead_type || '',
     });
     setEditMode(false);
-  }, [lead.id, lead.status, lead.notes, lead.owner_name, lead.phone, lead.email, lead.property_address, lead.contact_preference]);
+  }, [lead.id, lead.status, lead.notes, lead.owner_name, lead.phone, lead.email, lead.property_address, lead.contact_preference, lead.lead_type]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const payload = {
+        ...form,
+        lead_type: form.lead_type || null,
+      };
       const res = await fetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.ok) {
@@ -187,6 +193,26 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 <option key={s} value={s}>{STATUS_LABELS[s]}</option>
               ))}
             </select>
+          </div>
+
+          {/* Lead Type */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Lead Type</label>
+            {editMode ? (
+              <select
+                value={form.lead_type}
+                onChange={(e) => setForm(prev => ({ ...prev, lead_type: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Not Set</option>
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
+                <option value="investor">Investor</option>
+                <option value="landlord">Landlord</option>
+              </select>
+            ) : (
+              <span className="text-sm text-gray-900 dark:text-gray-100 capitalize">{lead.lead_type || 'Not Set'}</span>
+            )}
           </div>
 
           {/* Contact Info */}
