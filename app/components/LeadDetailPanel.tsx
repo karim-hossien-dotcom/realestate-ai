@@ -60,7 +60,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
       });
       const data = await res.json();
       if (data.ok) {
-        onUpdate({ ...lead, ...form });
+        onUpdate({ ...lead, ...form, lead_type: (form.lead_type || null) as Lead['lead_type'] });
         showToast('Lead updated', 'success');
         setEditMode(false);
       } else {
