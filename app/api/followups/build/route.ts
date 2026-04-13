@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 import { withAuth, logActivity } from '@/app/lib/auth'
-import { generateFollowUpsForLead, buildFollowUpSchedule } from '@/app/lib/ai/followup-generator'
+import { buildSchedule, resolveProfile } from '@/app/lib/cadence/scheduler'
 
 export async function POST() {
   const auth = await withAuth()
@@ -9,10 +9,19 @@ export async function POST() {
 
   const supabase = await createClient()
 
-  // Get leads with sms_text but no follow-ups scheduled (phone OR email)
+  // Fetch user's automation profile (followup_* columns)
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('followup_automation_mode, followup_approval_window_hours, followup_default_template, followup_template_by_lead_type, followup_quiet_hours_start, followup_quiet_hours_end, followup_tcpa_enabled, followup_skip_weekends, followup_max_touches')
+    .eq('id', auth.user.id)
+    .single()
+
+  const profile = resolveProfile(profileRow)
+
+  // Get leads with sms_text (phone OR email, with lead_type for template resolution)
   const { data: allLeads, error: leadsError } = await supabase
     .from('leads')
-    .select('id, owner_name, property_address, phone, email, sms_text')
+    .select('id, owner_name, property_address, phone, email, sms_text, lead_type')
     .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
 
@@ -34,13 +43,14 @@ export async function POST() {
     }, { status: 400 })
   }
 
-  // Check which leads already have follow-ups
+  // Dedup check: skip leads that already have follow-ups in the last 30 days
   const leadIds = leads.map(l => l.id)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const { data: existingFollowUps } = await supabase
     .from('follow_ups')
     .select('lead_id')
     .in('lead_id', leadIds)
-    .eq('status', 'pending')
+    .gte('created_at', thirtyDaysAgo)
 
   const leadsWithFollowUps = new Set((existingFollowUps || []).map(f => f.lead_id))
   const leadsNeedingFollowUps = leads.filter(l => !leadsWithFollowUps.has(l.id))
@@ -69,45 +79,37 @@ export async function POST() {
 
   for (const lead of leadsNeedingFollowUps) {
     try {
-      // Generate follow-up messages
-      const followUpMessages = await generateFollowUpsForLead(
-        {
-          owner_name: lead.owner_name || undefined,
-          property_address: lead.property_address || undefined,
+      // Build the full schedule using the new cadence scheduler
+      const rows = await buildSchedule({
+        userId: auth.user.id,
+        lead: {
+          id: lead.id,
+          owner_name: lead.owner_name,
+          property_address: lead.property_address,
+          phone: lead.phone,
+          email: lead.email,
+          lead_type: lead.lead_type as Parameters<typeof buildSchedule>[0]['lead']['lead_type'],
         },
-        lead.sms_text || '',
-        { contactEmail }
-      )
+        firstSms: lead.sms_text || '',
+        profile,
+        contactEmail,
+      })
 
-      // Build schedule
-      const schedule = buildFollowUpSchedule(
-        lead.id,
-        {
-          owner_name: lead.owner_name || undefined,
-          property_address: lead.property_address || undefined,
-          phone: lead.phone || undefined,
-        },
-        followUpMessages
-      )
-
-      // Insert follow-ups into database
-      const followUpsToInsert = schedule.map(s => ({
-        user_id: auth.user.id,
-        lead_id: s.leadId,
-        message_text: s.messageText,
-        scheduled_at: s.scheduledAt.toISOString(),
-        status: 'pending',
-      }))
+      if (rows.length === 0) {
+        // Manual mode or no rows generated — count as processed but skip insert
+        processed++
+        continue
+      }
 
       const { error: insertError } = await supabase
         .from('follow_ups')
-        .insert(followUpsToInsert)
+        .insert(rows)
 
       if (insertError) {
         errors.push(`Lead ${lead.id}: ${insertError.message}`)
       } else {
         processed++
-        followUpsCreated += schedule.length
+        followUpsCreated += rows.length
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'

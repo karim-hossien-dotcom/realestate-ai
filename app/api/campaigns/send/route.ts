@@ -12,7 +12,7 @@ import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/fea
 import { recordOverage } from '@/app/lib/billing/overage'
 import { generateOutreachMessage } from '@/app/lib/messaging/outreach-messages'
 import { fillTemplate } from '@/app/lib/messaging/campaign-templates'
-import { generateFollowUpsForLead, buildFollowUpSchedule } from '@/app/lib/ai/followup-generator'
+import { buildSchedule, resolveProfile } from '@/app/lib/cadence/scheduler'
 
 type SendResult = {
   phone: string
@@ -57,12 +57,15 @@ export async function POST(request: Request) {
     leadsToSend = leads.slice(0, usage.remaining)
   }
 
-  // Get user profile for agent info (used in emails)
-  const { data: profile } = await supabase
+  // Get user profile for agent info (used in emails) and automation preferences
+  const { data: profileRow } = await supabase
     .from('profiles')
-    .select('full_name, email, phone, company')
+    .select('full_name, email, phone, company, followup_automation_mode, followup_approval_window_hours, followup_default_template, followup_template_by_lead_type, followup_quiet_hours_start, followup_quiet_hours_end, followup_tcpa_enabled, followup_skip_weekends, followup_max_touches')
     .eq('id', auth.user.id)
     .single()
+
+  const profile = profileRow
+  const automationProfile = resolveProfile(profileRow)
 
   const agentName = profile?.full_name || 'Real Estate Agent'
   const agentEmail = profile?.email || ''
@@ -349,73 +352,67 @@ export async function POST(request: Request) {
   // Auto-create follow-ups for successfully sent leads
   let followUpsCreated = 0
   try {
-    // Collect lead IDs that were successfully sent and have a phone or email
-    const successLeadIds = results
-      .filter(r => r.ok && r.leadId)
-      .map(r => r.leadId as string)
+    // Skip auto-creation entirely if the user has chosen manual mode
+    if (automationProfile.followup_automation_mode !== 'manual') {
+      // Collect lead IDs that were successfully sent and have a phone or email
+      const successLeadIds = results
+        .filter(r => r.ok && r.leadId)
+        .map(r => r.leadId as string)
 
-    if (successLeadIds.length > 0) {
-      // Fetch full lead data for successful leads (need phone/email/name/address)
-      const { data: successLeads } = await supabase
-        .from('leads')
-        .select('id, owner_name, property_address, phone, email')
-        .in('id', successLeadIds)
-        .eq('user_id', auth.user.id)
+      if (successLeadIds.length > 0) {
+        // Fetch full lead data for successful leads (need phone/email/name/address/lead_type)
+        const { data: successLeads } = await supabase
+          .from('leads')
+          .select('id, owner_name, property_address, phone, email, lead_type')
+          .in('id', successLeadIds)
+          .eq('user_id', auth.user.id)
 
-      // Check which leads already have pending follow-ups (dedup)
-      const { data: existingFollowUps } = await supabase
-        .from('follow_ups')
-        .select('lead_id')
-        .in('lead_id', successLeadIds)
-        .eq('status', 'pending')
+        // Dedup: skip leads that already have follow-ups in the last 30 days
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        const { data: existingFollowUps } = await supabase
+          .from('follow_ups')
+          .select('lead_id')
+          .in('lead_id', successLeadIds)
+          .gte('created_at', thirtyDaysAgo)
 
-      const leadsWithPendingFollowUps = new Set(
-        (existingFollowUps || []).map(f => f.lead_id)
-      )
-
-      // Only process leads without pending follow-ups and that have phone OR email
-      const leadsToSchedule = (successLeads || []).filter(
-        lead =>
-          !leadsWithPendingFollowUps.has(lead.id) &&
-          (lead.phone != null || lead.email != null)
-      )
-
-      for (const lead of leadsToSchedule) {
-        const firstSms = resolveMessageBody(lead as typeof leadsToSend[number]) ||
-          `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I reached out about your property at ${lead.property_address || 'your area'}.`
-
-        const followUpMessages = await generateFollowUpsForLead(
-          { owner_name: lead.owner_name ?? undefined, property_address: lead.property_address ?? undefined },
-          firstSms,
-          { contactEmail: lead.email ?? undefined }
+        const leadsWithRecentFollowUps = new Set(
+          (existingFollowUps || []).map(f => f.lead_id)
         )
 
-        const schedule = buildFollowUpSchedule(
-          lead.id,
-          {
-            owner_name: lead.owner_name ?? undefined,
-            property_address: lead.property_address ?? undefined,
-            phone: lead.phone ?? undefined,
-          },
-          followUpMessages
+        // Only process leads without recent follow-ups that have phone OR email
+        const leadsToSchedule = (successLeads || []).filter(
+          lead =>
+            !leadsWithRecentFollowUps.has(lead.id) &&
+            (lead.phone != null || lead.email != null)
         )
 
-        if (schedule.length > 0) {
-          const rows = schedule.map(item => ({
-            user_id: auth.user.id,
-            lead_id: item.leadId,
-            scheduled_at: item.scheduledAt.toISOString(),
-            message_text: item.messageText,
-            status: 'pending',
-            day_offset: item.dayOffset,
-          }))
+        for (const lead of leadsToSchedule) {
+          const firstSms = resolveMessageBody(lead as typeof leadsToSend[number]) ||
+            `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I reached out about your property at ${lead.property_address || 'your area'}.`
 
-          const { error: insertError } = await supabase
-            .from('follow_ups')
-            .insert(rows)
+          const rows = await buildSchedule({
+            userId: auth.user.id,
+            lead: {
+              id: lead.id,
+              owner_name: lead.owner_name,
+              property_address: lead.property_address,
+              phone: lead.phone,
+              email: lead.email,
+              lead_type: lead.lead_type as Parameters<typeof buildSchedule>[0]['lead']['lead_type'],
+            },
+            firstSms,
+            profile: automationProfile,
+            contactEmail: lead.email ?? undefined,
+          })
 
-          if (!insertError) {
-            followUpsCreated += rows.length
+          if (rows.length > 0) {
+            const { error: insertError } = await supabase
+              .from('follow_ups')
+              .insert(rows)
+
+            if (!insertError) {
+              followUpsCreated += rows.length
+            }
           }
         }
       }

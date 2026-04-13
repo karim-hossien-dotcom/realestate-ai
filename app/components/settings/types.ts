@@ -20,6 +20,7 @@ export type SettingsSection =
   | 'profile'
   | 'integrations'
   | 'ai-personality'
+  | 'automation'
   | 'messaging'
   | 'email'
   | 'team'
@@ -87,5 +88,6 @@ export const settingsSections = [
   { id: 'profile' as const, label: 'Profile & Account', icon: 'fa-user', shortLabel: 'Profile' },
   { id: 'integrations' as const, label: 'Integrations', icon: 'fa-plug', shortLabel: 'CRM' },
   { id: 'ai-personality' as const, label: 'AI Personality', icon: 'fa-brain', shortLabel: 'AI' },
+  { id: 'automation' as const, label: 'Follow-Up Automation', icon: 'fa-robot', shortLabel: 'Automation' },
   { id: 'billing' as const, label: 'Billing & Plans', icon: 'fa-credit-card', shortLabel: 'Billing' },
 ];

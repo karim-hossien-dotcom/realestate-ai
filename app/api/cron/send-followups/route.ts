@@ -7,6 +7,8 @@ import { isOnNationalDnc } from '@/app/lib/messaging/dnc-registry'
 import { checkMessageQuota } from '@/app/lib/billing/usage'
 import { recordOverage } from '@/app/lib/billing/overage'
 import { verifyCronSecret } from '@/app/lib/cron-auth'
+import { isInQuietHours, shiftToNextAllowedSlot, resolveQuietHours } from '@/app/lib/cadence/tcpa'
+import { resolveProfile } from '@/app/lib/cadence/scheduler'
 
 const BATCH_SIZE = 10
 
@@ -19,6 +21,8 @@ type FollowUp = {
   status: string
   sent_at: string | null
   created_at: string
+  approval_status: string | null
+  lead_timezone: string | null
 }
 
 type Lead = {
@@ -64,12 +68,20 @@ async function handler(request: NextRequest) {
       .eq('status', 'sending')
       .lt('scheduled_at', tenMinAgo)
 
-    // Fetch pending follow-ups that are due
+    // Auto-approve: any rows where approval_deadline has passed but still 'pending' approval
+    await supabase
+      .from('follow_ups')
+      .update({ approval_status: 'auto_approved' })
+      .eq('approval_status', 'pending')
+      .lte('approval_deadline', now)
+
+    // Fetch pending follow-ups that are due AND have been approved (or don't require approval)
     const { data: followUps, error: fetchError } = await supabase
       .from('follow_ups')
       .select('*')
       .eq('status', 'pending')
       .lte('scheduled_at', now)
+      .in('approval_status', ['auto_approved', 'approved'])
       .order('scheduled_at', { ascending: true })
       .limit(BATCH_SIZE)
 
@@ -121,6 +133,40 @@ async function handler(request: NextRequest) {
           await supabase.from('follow_ups').update({ status: 'failed' }).eq('id', followUp.id)
           results.failed++
           continue
+        }
+
+        // Quiet hours check: defer if current time is in quiet hours for the lead's timezone
+        try {
+          const automationProfile = resolveProfile(profile as Parameters<typeof resolveProfile>[0])
+          const leadPhone = lead.phone
+          const leadTimezone = followUp.lead_timezone || null
+          const quietHours = resolveQuietHours(
+            leadPhone,
+            automationProfile.followup_quiet_hours_start,
+            automationProfile.followup_quiet_hours_end
+          )
+          const nowDate = new Date()
+          if (
+            automationProfile.followup_tcpa_enabled &&
+            isInQuietHours(nowDate, leadTimezone, quietHours.start, quietHours.end, automationProfile.followup_skip_weekends)
+          ) {
+            const nextSlot = shiftToNextAllowedSlot(
+              nowDate, leadTimezone, quietHours.start, quietHours.end, automationProfile.followup_skip_weekends
+            )
+            await supabase
+              .from('follow_ups')
+              .update({
+                status: 'pending',
+                scheduled_at: nextSlot.toISOString(),
+                quiet_hours_deferred_to: nextSlot.toISOString(),
+              })
+              .eq('id', followUp.id)
+            results.skipped++
+            continue
+          }
+        } catch (qhErr) {
+          console.error(`[Cron] Quiet hours check failed for follow-up ${followUp.id}:`, qhErr)
+          // Non-fatal: continue processing even if quiet-hours check errors
         }
 
         // Check DNC list

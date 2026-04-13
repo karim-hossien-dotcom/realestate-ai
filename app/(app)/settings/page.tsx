@@ -15,6 +15,10 @@ import ProfileTab from '@/app/components/settings/ProfileTab';
 import CrmTab from '@/app/components/settings/CrmTab';
 import AiScriptTab from '@/app/components/settings/AiScriptTab';
 import BillingTab from '@/app/components/settings/BillingTab';
+import AutomationTab, {
+  type FollowupAutomationSettings,
+  type CustomCadenceTemplate,
+} from '@/app/components/settings/AutomationTab';
 
 const plans: PlanDef[] = [
   {
@@ -45,7 +49,7 @@ const plans: PlanDef[] = [
 ];
 
 const VALID_SECTIONS: SettingsSection[] = [
-  'profile', 'integrations', 'ai-personality', 'messaging', 'email', 'team', 'auto-reply', 'billing',
+  'profile', 'integrations', 'ai-personality', 'automation', 'messaging', 'email', 'team', 'auto-reply', 'billing',
 ];
 
 export default function SettingsPageWrapper() {
@@ -83,6 +87,32 @@ function SettingsPage() {
   const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  // Follow-Up Automation state
+  const DEFAULT_AUTOMATION: FollowupAutomationSettings = {
+    followup_automation_mode: 'full_auto',
+    followup_approval_window_hours: 6,
+    followup_default_template: 'standard',
+    followup_template_by_lead_type: {
+      buyer: 'aggressive',
+      seller: 'standard',
+      investor: 'standard',
+      landlord: 'standard',
+      tenant: 'gentle',
+    },
+    followup_quiet_hours_start: 8,
+    followup_quiet_hours_end: 21,
+    followup_tcpa_enabled: true,
+    followup_skip_weekends: false,
+    followup_max_touches: 8,
+  };
+  const [automationSettings, setAutomationSettings] = useState<FollowupAutomationSettings>(DEFAULT_AUTOMATION);
+  const [savedAutomationSettings, setSavedAutomationSettings] = useState<FollowupAutomationSettings>(DEFAULT_AUTOMATION);
+  const [customTemplates, setCustomTemplates] = useState<CustomCadenceTemplate[]>([]);
+  const [automationLoading, setAutomationLoading] = useState(false);
+  const [automationSaving, setAutomationSaving] = useState(false);
+  const [automationError, setAutomationError] = useState<string | null>(null);
+  const [automationSuccess, setAutomationSuccess] = useState<string | null>(null);
 
   // AI Personality state
   const [aiConfig, setAiConfig] = useState<AiConfig>({
@@ -123,6 +153,13 @@ function SettingsPage() {
   useEffect(() => {
     if (activeSection === 'ai-personality') {
       fetchAiConfig();
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection === 'automation') {
+      fetchAutomationSettings();
+      fetchCustomTemplates();
     }
   }, [activeSection]);
 
@@ -190,6 +227,83 @@ function SettingsPage() {
       setAiConfigLoading(false);
     }
   };
+
+  /* --- Automation fetchers --- */
+
+  const fetchAutomationSettings = async () => {
+    setAutomationLoading(true);
+    setAutomationError(null);
+    try {
+      const response = await fetch('/api/settings/followup-automation');
+      const data = await response.json();
+      if (data.ok && data.settings) {
+        setAutomationSettings(data.settings);
+        setSavedAutomationSettings(data.settings);
+      } else {
+        setAutomationError(data.error || 'Failed to load automation settings');
+      }
+    } catch {
+      setAutomationError('Failed to load automation settings');
+    } finally {
+      setAutomationLoading(false);
+    }
+  };
+
+  const fetchCustomTemplates = async () => {
+    try {
+      const response = await fetch('/api/cadence-templates');
+      const data = await response.json();
+      if (data.ok) setCustomTemplates(data.templates ?? []);
+    } catch { /* ignore */ }
+  };
+
+  /* --- Automation handlers --- */
+
+  const handleSaveAutomation = async () => {
+    setAutomationSaving(true);
+    setAutomationError(null);
+    setAutomationSuccess(null);
+    try {
+      const response = await fetch('/api/settings/followup-automation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(automationSettings),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setSavedAutomationSettings(data.settings);
+        setAutomationSuccess('Automation settings saved successfully!');
+        setTimeout(() => setAutomationSuccess(null), 3000);
+      } else {
+        setAutomationError(data.error || 'Failed to save');
+      }
+    } catch {
+      setAutomationError('Failed to save automation settings');
+    } finally {
+      setAutomationSaving(false);
+    }
+  };
+
+  const handleCreateTemplate = async (t: {
+    name: string;
+    description: string;
+    day_offsets: number[];
+  }) => {
+    const response = await fetch('/api/cadence-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(t),
+    });
+    const data = await response.json();
+    if (data.ok) {
+      setCustomTemplates((prev) => [data.template, ...prev]);
+    } else {
+      throw new Error(data.error || 'Failed to create template');
+    }
+  };
+
+  const automationHasChanges =
+    JSON.stringify(automationSettings) !== JSON.stringify(savedAutomationSettings);
 
   /* --- Profile handlers --- */
 
@@ -439,6 +553,21 @@ function SettingsPage() {
               onUpdateQuestion={handleUpdateQuestion}
               onRemoveQuestion={handleRemoveQuestion}
               onSave={handleSaveAiConfig}
+            />
+          )}
+
+          {activeSection === 'automation' && (
+            <AutomationTab
+              settings={automationSettings}
+              customTemplates={customTemplates}
+              loading={automationLoading}
+              saving={automationSaving}
+              error={automationError}
+              success={automationSuccess}
+              hasChanges={automationHasChanges}
+              onSettingsChange={setAutomationSettings}
+              onSave={handleSaveAutomation}
+              onCreateTemplate={handleCreateTemplate}
             />
           )}
 

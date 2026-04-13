@@ -141,3 +141,76 @@ export function buildFollowUpSchedule(
 
   return schedule
 }
+
+/**
+ * V2: Generate follow-ups for arbitrary day offsets (cadence-template aware).
+ * Returns map of dayOffset → message text.
+ */
+export async function generateFollowUpsForOffsets(
+  lead: { owner_name?: string | null; property_address?: string | null },
+  firstSms: string,
+  dayOffsets: number[],
+  options: {
+    contactEmail?: string
+    leadType?: 'buyer' | 'seller' | 'investor' | 'landlord' | 'tenant' | null
+    model?: string
+    temperature?: number
+  } = {}
+): Promise<Record<number, string>> {
+  const { contactEmail, leadType, model = 'gpt-4.1-mini', temperature = 0.4 } = options
+  const name = (lead.owner_name || '').trim() || 'there'
+  const address = (lead.property_address || '').trim() || 'your property'
+  const contactLine = contactEmail ? `They can reply to the text or email at ${contactEmail}.` : ''
+
+  const leadTypeGuidance: Record<string, string> = {
+    buyer: 'Lead is a BUYER. Focus on listings matching their interests, market opportunities, and quick check-ins.',
+    seller: 'Lead is a SELLER. Focus on market value, comparable sales, and CMA offers. Less aggressive — sellers research 6-12 months.',
+    investor: 'Lead is an INVESTOR. Focus on cap rates, deal flow, and ROI. Use data-driven language.',
+    landlord: 'Lead is a LANDLORD. Focus on tenant placement, property management, and rental market data.',
+    tenant: 'Lead is a TENANT. Focus on rental availability, neighborhood info, and quick scheduling for tours.',
+  }
+  const typeGuidance = leadType ? leadTypeGuidance[leadType] : 'Lead type unknown — keep messages generic.'
+
+  const offsetsList = dayOffsets.map(d => `day${d}`).join(', ')
+
+  const prompt = `You are an inside sales assistant for a commercial real estate agent.
+
+The agent already sent this initial SMS:
+"""${firstSms}"""
+
+Lead: ${name} | Property: ${address}
+${typeGuidance}
+
+TASK: Create ${dayOffsets.length} follow-up SMS messages for these days after first contact: ${offsetsList}.
+
+Guidelines:
+- Each message under 320 characters.
+- Friendly, professional, value-first (no generic "just checking in").
+- Each touch should bring something new: question, listing reference, market insight, soft ask.
+- Vary tone across the sequence: early = curious/helpful, mid = offer value, late = direct ask.
+- ${contactLine}
+- No prices, no legal advice, no links, no calendar invites.
+
+Return JSON object with these EXACT keys: ${offsetsList}
+Each value is the SMS text for that day.`
+
+  const response = await openai.chat.completions.create({
+    model,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: 'You are a helpful real estate ISA assistant.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature,
+  })
+
+  const content = response.choices[0].message.content || '{}'
+  const data = JSON.parse(content) as Record<string, string>
+
+  const result: Record<number, string> = {}
+  for (const offset of dayOffsets) {
+    const key = `day${offset}`
+    if (data[key]) result[offset] = data[key].trim()
+  }
+  return result
+}
