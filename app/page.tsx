@@ -173,13 +173,16 @@ function AuthModal({
    ═══════════════════════════════════════════════════════════ */
 
 import type { BentoItem } from '@/app/components/ui/bento-grid';
-import { Send, Brain, Clock, MessageCircle, Calendar, BarChart3, Quote } from 'lucide-react';
+import { Send, Brain, Clock, MessageCircle, Calendar, BarChart3, Quote, GitBranch, ShieldCheck, SlidersHorizontal, Repeat2 } from 'lucide-react';
 
 const BENTO_FEATURES: BentoItem[] = [
   { title: 'Multi-Channel Outreach', description: 'WhatsApp, SMS, and Email from one dashboard. AI personalizes every message to your lead\'s context.', icon: <Send className="w-4 h-4 text-blue-500" />, status: 'Live', tags: ['WhatsApp', 'SMS', 'Email'], hasPersistentHover: true },
   { title: 'AI Lead Scoring', description: 'Every lead gets a 0-100 score based on engagement, intent, and response patterns.', icon: <Brain className="w-4 h-4 text-emerald-500" />, meta: '0-100', tags: ['Scoring', 'AI'] },
-  { title: 'Automated Follow-Ups', description: 'AI generates and schedules follow-ups at the perfect time. Never lose a deal to silence.', icon: <Clock className="w-4 h-4 text-amber-500" />, status: 'Auto', tags: ['Scheduling'] },
-  { title: '24/7 AI Agent', description: 'Inbound agent qualifies leads, handles objections using KW scripts, and books meetings around the clock.', icon: <MessageCircle className="w-4 h-4 text-purple-500" />, status: 'Always On', tags: ['GPT-4o', 'Inbound'] },
+  { title: '8-Touch Sequences', description: 'Research-backed cadence that catches 95% of conversions. Based on a 400K-lead study — most agents quit at touch 5. Estate AI keeps going.', icon: <Repeat2 className="w-4 h-4 text-amber-500" />, status: 'Research-Backed', tags: ['Cadence', '12-Month'] },
+  { title: 'Lead-Type Smart Branching', description: 'Buyers get aggressive 8-touch. Sellers get gentle 90-day nurture. Tenants get short cycle. Investors get long-haul 12-month. Auto-applied on import.', icon: <GitBranch className="w-4 h-4 text-purple-500" />, status: 'Auto', tags: ['Buyer', 'Seller', 'Investor'] },
+  { title: 'TCPA Compliant', description: 'Auto-detects lead timezone. State-specific quiet hours for FL, OK, and more. Never send at 11pm by accident. Every message logged for compliance.', icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />, status: 'Compliant', tags: ['TCPA', 'Timezone', 'Quiet Hours'] },
+  { title: 'Your Pace, Your Control', description: 'Full Auto when you\'re slammed. Approval Required when you want to stay personal. Manual for high-value leads. Switch per-lead, any time.', icon: <SlidersHorizontal className="w-4 h-4 text-sky-500" />, status: '3 Modes', tags: ['Full Auto', 'Approval', 'Manual'] },
+  { title: '24/7 AI Agent', description: 'Inbound agent qualifies leads, handles objections using KW scripts, and books meetings around the clock.', icon: <MessageCircle className="w-4 h-4 text-blue-400" />, status: 'Always On', tags: ['GPT-4o', 'Inbound'] },
   { title: 'Smart Calendar', description: 'Sync with Google or Apple Calendar. AI books directly into your availability — no back and forth.', icon: <Calendar className="w-4 h-4 text-sky-500" />, tags: ['Google', 'Apple'] },
   { title: 'Real-Time Analytics', description: 'Track campaigns, conversion rates, and agent productivity. See what\'s working instantly.', icon: <BarChart3 className="w-4 h-4 text-rose-500" />, meta: 'Live', tags: ['Dashboard'] },
 ];
@@ -274,7 +277,7 @@ export default function LandingPage() {
 
           {/* Capability proof — real facts, not fake stats */}
           <div className="mt-16 flex items-center justify-center gap-6 sm:gap-10 text-center" style={{ animation: 'fadeInUp 0.6s ease-out 0.4s both' }}>
-            {[['<30s', 'AI response time'], ['3', 'Channels (WA, SMS, Email)'], ['24/7', 'Inbound AI agent'], ['0-100', 'Lead scoring']].map(([v, l]) => (
+            {[['<30s', 'AI response time'], ['3', 'Channels (WA, SMS, Email)'], ['8-touch', 'Research-backed cadence'], ['95%', 'Conversions after touch 6+']].map(([v, l]) => (
               <div key={l}>
                 <p className="text-xl sm:text-2xl font-bold text-white">{v}</p>
                 <p className="text-[11px] text-white/30 mt-0.5">{l}</p>
@@ -304,8 +307,8 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <p className="text-xs font-semibold text-blue-400 uppercase tracking-[0.2em] mb-3">Features</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Everything to close more deals</h2>
-            <p className="text-white/35 max-w-lg mx-auto">From lead capture to appointment booking — one platform, fully automated.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Industry-leading follow-up automation</h2>
+            <p className="text-white/35 max-w-xl mx-auto">From lead capture to 12-month nurture — with per-lead-type branching, TCPA-aware quiet hours, and 3 control modes no other CRM offers.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {BENTO_FEATURES.map((item, index) => (

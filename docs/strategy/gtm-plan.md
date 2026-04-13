@@ -7,6 +7,8 @@
 
 Estate AI enters a $8.6B real estate SaaS market growing at 42% CAGR. With $25.54/month in burn, a working product, one live paying client, and zero CAC spend, the window to acquire the first 10 customers is entirely execution-dependent — not capital-dependent. The strategy below is sequenced to reach $24,900 MRR (100 customers) within 12 months using a community-first, then paid-amplification approach. The WhatsApp-first differentiation and KW MAPS script integration are unique advantages no competitor currently combines.
 
+**Updated positioning (Apr 2026):** Estate AI is the only real estate CRM with per-lead-type cadence branching + TCPA-aware quiet hours (state-specific: FL, OK) + 3 automation control modes (Full Auto / Approval Required / Manual). Follow Up Boss, kvCORE, Lofty, and Sierra all use single-cadence one-size-fits-all sequences with no lead-type branching and no state-specific quiet hours enforcement. Our 8-touch cadence is backed by Greg Harrelson's 400K-lead study showing 95% of conversions happen after touch 6 — most CRMs don't push past touch 3 in practice.
+
 ---
 
 ## 1. Target Segments (Ranked by Fit)
