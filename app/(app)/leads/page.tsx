@@ -234,6 +234,31 @@ function LeadsPage() {
     fetchLeads();
   };
 
+  // Bulk set lead type
+  const handleBulkSetType = async (leadType: string) => {
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          updates: { lead_type: leadType || null },
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`Set ${data.updated} leads to ${leadType || 'unset'}`, 'success');
+        setLeads(prev => prev.map(l =>
+          selectedIds.has(l.id) ? { ...l, lead_type: (leadType || null) as Lead['lead_type'] } : l
+        ));
+      } else {
+        showToast(data.error || 'Update failed', 'error');
+      }
+    } catch {
+      showToast('Network error', 'error');
+    }
+  };
+
   // Selection handlers
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -452,6 +477,18 @@ function LeadsPage() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-sm text-[var(--text-secondary)]">{selectedIds.size} selected</span>
+              <select
+                defaultValue=""
+                onChange={(e) => { if (e.target.value) { handleBulkSetType(e.target.value === 'unset' ? '' : e.target.value); e.target.value = ''; } }}
+                className="px-3 py-1.5 text-sm border border-[var(--border)] rounded-lg bg-[var(--surface-elevated)] text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="" disabled>Set Type...</option>
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
+                <option value="investor">Investor</option>
+                <option value="landlord">Landlord</option>
+                <option value="unset">Clear Type</option>
+              </select>
               <button
                 onClick={handleBulkDelete}
                 className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"

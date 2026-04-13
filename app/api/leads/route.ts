@@ -105,7 +105,50 @@ export async function PATCH(request: Request) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  const parsed = await parseBody(request, updateLeadSchema)
+  const body = await request.json()
+
+  // Bulk update: { ids: [...], updates: { lead_type: "buyer" } }
+  if (Array.isArray(body.ids) && body.updates) {
+    const ids = body.ids as string[]
+    if (ids.length === 0 || ids.length > 500) {
+      return NextResponse.json({ ok: false, error: 'Provide 1-500 lead IDs' }, { status: 400 })
+    }
+
+    const allowedBulkFields = ['lead_type', 'status', 'score_category', 'tags'] as const
+    const updates: Record<string, unknown> = {}
+    for (const field of allowedBulkFields) {
+      if (body.updates[field] !== undefined) {
+        updates[field] = body.updates[field]
+      }
+    }
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ ok: false, error: 'No valid fields to update' }, { status: 400 })
+    }
+
+    updates.updated_at = new Date().toISOString()
+    const supabase = await createClient()
+
+    const { error: dbError } = await supabase
+      .from('leads')
+      .update(updates)
+      .in('id', ids)
+      .eq('user_id', auth.user.id)
+
+    if (dbError) {
+      await logActivity(auth.user.id, 'lead.bulk_update', `Failed bulk update ${ids.length} leads: ${dbError.message}`, 'failed')
+      return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 })
+    }
+
+    await logActivity(auth.user.id, 'lead.bulk_update', `Bulk updated ${ids.length} leads: ${JSON.stringify(updates)}`, 'success')
+    return NextResponse.json({ ok: true, updated: ids.length })
+  }
+
+  // Single update (existing flow)
+  const parsed = await parseBody(new Request(request.url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }), updateLeadSchema)
   if (!parsed.ok) return parsed.response
 
   const { id, ...updates } = parsed.data
