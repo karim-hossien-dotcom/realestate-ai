@@ -834,6 +834,23 @@ def _process_whatsapp_message(
             },
         )
 
+    # Cancel pending follow-ups — lead has replied, sequence should pause
+    if SUPABASE_AVAILABLE and user_id:
+        lead = find_lead_by_phone(user_id, wa_id)
+        lead_id = lead.get("id") if lead else None
+        if lead_id:
+            try:
+                supabase = get_supabase_client()
+                if supabase:
+                    supabase.table('follow_ups') \
+                        .update({'status': 'cancelled'}) \
+                        .eq('lead_id', str(lead_id)) \
+                        .eq('status', 'pending') \
+                        .execute()
+                    logger.info(f"[Follow-up] Cancelled pending follow-ups for lead {lead_id} ({wa_id}) — lead replied via WhatsApp")
+            except Exception as e:
+                logger.warning(f"Failed to cancel follow-ups for lead {lead_id}: {e}")
+
 
 def _handle_meeting_booking(
     user_id: str, wa_id: str, body: str, msg_id: str,
@@ -1126,6 +1143,21 @@ def webhook_inbound():
                     "success",
                     {"phone": wa_id, "message": body},
                 )
+                # Cancel pending follow-ups — lead has unsubscribed
+                lead = find_lead_by_phone(user_id, wa_id)
+                lead_id = lead.get("id") if lead else None
+                if lead_id:
+                    try:
+                        supabase = get_supabase_client()
+                        if supabase:
+                            supabase.table('follow_ups') \
+                                .update({'status': 'cancelled'}) \
+                                .eq('lead_id', str(lead_id)) \
+                                .eq('status', 'pending') \
+                                .execute()
+                            logger.info(f"[Follow-up] Cancelled pending follow-ups for lead {lead_id} ({wa_id}) — STOP received via WhatsApp")
+                    except Exception as e:
+                        logger.warning(f"Failed to cancel follow-ups for lead {lead_id} after STOP: {e}")
 
             _send_whatsapp_message(
                 wa_id,

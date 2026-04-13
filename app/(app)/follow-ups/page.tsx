@@ -10,6 +10,7 @@ type FollowUpItem = {
   id: string;
   leadId: string;
   phone: string | null;
+  email: string | null;
   ownerName: string | null;
   propertyAddress: string | null;
   daysSinceContact: number;
@@ -20,11 +21,24 @@ type FollowUpItem = {
   originalMessage: string;
 };
 
+type ScheduledFollowUp = {
+  id: string;
+  leadId: string;
+  leadName: string;
+  phone: string | null;
+  messageText: string;
+  scheduledAt: string;
+  status: 'pending' | 'sending' | 'sent' | 'failed' | 'cancelled';
+  sentAt: string | null;
+};
+
 type Stats = {
   total: number;
   no_response: number;
   needs_followup: number;
   replied: number;
+  interested: number;
+  not_interested: number;
 };
 
 const URGENCY_COLORS: Record<string, string> = {
@@ -60,15 +74,25 @@ const STATUS_LABELS: Record<string, string> = {
   not_interested: 'Not Interested',
 };
 
+const SCHEDULED_STATUS_STYLES: Record<string, string> = {
+  pending: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+  sending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300',
+  sent: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  failed: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+  cancelled: 'bg-gray-100 text-gray-500 dark:bg-gray-500/15 dark:text-gray-400',
+};
+
 export default function FollowUpsPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const [followups, setFollowups] = useState<FollowUpItem[]>([]);
+  const [scheduled, setScheduled] = useState<ScheduledFollowUp[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showScheduled, setShowScheduled] = useState(false);
 
   const fetchFollowups = useCallback(async () => {
     try {
@@ -76,6 +100,7 @@ export default function FollowUpsPage() {
       const data = await res.json();
       if (data.ok) {
         setFollowups(data.followups || []);
+        setScheduled(data.scheduled || []);
         setStats(data.stats || null);
         setError(null);
       } else {
@@ -110,24 +135,44 @@ export default function FollowUpsPage() {
     }
   };
 
+  const handleCancel = async (id: string) => {
+    try {
+      const res = await fetch(`/api/followups?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        setScheduled(prev => prev.map(s => s.id === id ? { ...s, status: 'cancelled' as const } : s));
+        showToast('Follow-up cancelled', 'success');
+      } else {
+        showToast(data.error || 'Cancel failed', 'error');
+      }
+    } catch {
+      showToast('Network error', 'error');
+    }
+  };
+
   const filteredFollowups = followups.filter((f) => {
     if (filterStatus === 'all') return true;
     return f.responseStatus === filterStatus;
   });
+
+  const pendingScheduled = scheduled.filter(s => s.status === 'pending');
+  const sentScheduled = scheduled.filter(s => s.status === 'sent');
 
   const filterTabs = [
     { key: 'all', label: 'All', count: stats?.total || followups.length },
     { key: 'no_response', label: 'No Response', count: stats?.no_response || 0 },
     { key: 'needs_followup', label: 'Needs Follow-Up', count: stats?.needs_followup || 0 },
     { key: 'replied', label: 'Replied', count: stats?.replied || 0 },
+    { key: 'interested', label: 'Interested', count: stats?.interested || 0 },
+    { key: 'not_interested', label: 'Not Interested', count: stats?.not_interested || 0 },
   ];
 
   if (loading) {
     return (
       <div className="p-6 space-y-6">
         <div className="h-8 bg-[var(--surface-elevated)] rounded w-48 animate-pulse"></div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
         </div>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map(i => (
@@ -158,9 +203,25 @@ export default function FollowUpsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-[var(--text-primary)]">Follow-Ups</h1>
-          <p className="text-sm text-[var(--text-secondary)]">Track and manage lead follow-up activities</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Track responses and manage scheduled follow-up sequences
+            {pendingScheduled.length > 0 && (
+              <span className="ml-2 text-blue-600 font-medium">{pendingScheduled.length} pending</span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowScheduled(prev => !prev)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+              showScheduled
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-elevated)]'
+            }`}
+          >
+            <i className="fas fa-calendar-alt mr-2"></i>
+            Scheduled ({pendingScheduled.length})
+          </button>
           <button
             onClick={handleBuild}
             disabled={building}
@@ -181,11 +242,70 @@ export default function FollowUpsPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           <StatCard label="Total" value={stats.total} icon="fa-clock" color="blue" />
           <StatCard label="No Response" value={stats.no_response} icon="fa-exclamation" color="red" />
           <StatCard label="Needs Follow-Up" value={stats.needs_followup} icon="fa-bell" color="yellow" />
-          <StatCard label="Replied" value={stats.replied} icon="fa-check" color="green" />
+          <StatCard label="Replied" value={stats.replied} icon="fa-reply" color="green" />
+          <StatCard label="Interested" value={stats.interested} icon="fa-star" color="blue" />
+          <StatCard label="Not Interested" value={stats.not_interested} icon="fa-times" color="red" />
+        </div>
+      )}
+
+      {/* Scheduled Follow-Ups Panel */}
+      {showScheduled && (
+        <div className="bg-[var(--surface)] border border-blue-500/30 rounded-lg overflow-hidden">
+          <div className="px-4 py-3 bg-blue-500/5 border-b border-blue-500/20">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <i className="fas fa-calendar-check mr-2 text-blue-500"></i>
+              Scheduled Follow-Ups — {pendingScheduled.length} pending, {sentScheduled.length} sent
+            </h2>
+          </div>
+          {pendingScheduled.length === 0 && sentScheduled.length === 0 ? (
+            <div className="p-6 text-center text-sm text-[var(--text-secondary)]">
+              No scheduled follow-ups. Click &ldquo;Build Follow-Ups&rdquo; or send a campaign to auto-generate them.
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)] max-h-96 overflow-y-auto">
+              {[...pendingScheduled, ...sentScheduled.slice(0, 10)].map((s) => {
+                const isUpcoming = s.status === 'pending';
+                const scheduledDate = new Date(s.scheduledAt);
+                const now = new Date();
+                const daysUntil = Math.ceil((scheduledDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                return (
+                  <div key={s.id} className="px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-elevated)] transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-medium text-[var(--text-primary)]">{s.leadName}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${SCHEDULED_STATUS_STYLES[s.status] || SCHEDULED_STATUS_STYLES.pending}`}>
+                          {s.status}
+                        </span>
+                        {isUpcoming && daysUntil > 0 && (
+                          <span className="text-[10px] text-[var(--text-secondary)]">in {daysUntil}d</span>
+                        )}
+                        {isUpcoming && daysUntil <= 0 && (
+                          <span className="text-[10px] text-amber-500 font-medium">due now</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] truncate">{s.messageText}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                        {isUpcoming ? 'Scheduled:' : 'Sent:'} {scheduledDate.toLocaleDateString()} {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    {isUpcoming && (
+                      <button
+                        onClick={() => handleCancel(s.id)}
+                        className="px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                        title="Cancel this follow-up"
+                      >
+                        <i className="fas fa-times mr-1"></i>Cancel
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -227,7 +347,6 @@ export default function FollowUpsPage() {
             return (
               <div key={fu.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                  {/* Left: info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <h3 className="text-sm font-semibold text-[var(--text-primary)]">{fu.ownerName || 'Unknown'}</h3>
@@ -240,6 +359,9 @@ export default function FollowUpsPage() {
                     </div>
                     {fu.phone && (
                       <p className="text-xs text-[var(--text-secondary)]"><i className="fas fa-phone mr-1"></i>{fu.phone}</p>
+                    )}
+                    {!fu.phone && fu.email && (
+                      <p className="text-xs text-[var(--text-secondary)]"><i className="fas fa-envelope mr-1"></i>{fu.email}</p>
                     )}
                     {fu.propertyAddress && (
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5"><i className="fas fa-map-marker-alt mr-1"></i>{fu.propertyAddress}</p>
@@ -258,8 +380,6 @@ export default function FollowUpsPage() {
                       </p>
                     )}
                   </div>
-
-                  {/* Right: actions */}
                   <div className="flex sm:flex-col gap-2 flex-shrink-0">
                     <button
                       onClick={() => router.push(`/conversations?leadId=${fu.leadId}`)}
@@ -292,14 +412,14 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
     red: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300',
   };
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">{label}</span>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
-          <i className={`fas ${icon} text-sm`}></i>
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{label}</span>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
+          <i className={`fas ${icon} text-xs`}></i>
         </div>
       </div>
-      <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
+      <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }

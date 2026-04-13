@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { verifyCronSecret } from '@/app/lib/cron-auth'
+import { generateFollowUpsForLead } from '@/app/lib/ai/followup-generator'
 
 const STALE_DAYS = 14 // Leads with no activity for this many days are considered stale
 
@@ -58,16 +59,44 @@ export async function GET(request: Request) {
       const hasFollowUp = new Set((existingFollowUps || []).map(f => f.lead_id))
 
       // Create follow-ups for leads that don't have one
-      const newFollowUps = leads
-        .filter(l => !hasFollowUp.has(l.id))
-        .map(lead => ({
+      const leadsNeedingFollowUps = leads.filter(l => !hasFollowUp.has(l.id))
+      const newFollowUps: Array<{
+        user_id: string
+        lead_id: string
+        channel: string
+        message_text: string
+        status: string
+        scheduled_at: string
+      }> = []
+
+      for (const lead of leadsNeedingFollowUps) {
+        const genericMessage = `Hi ${lead.owner_name || 'there'}, just checking in — are you still thinking about ${lead.property_address || 'your property'}? Happy to help whenever you're ready.`
+
+        let messageText = genericMessage
+        try {
+          const aiMessages = await generateFollowUpsForLead(
+            {
+              owner_name: lead.owner_name || undefined,
+              property_address: lead.property_address || undefined,
+            },
+            genericMessage
+          )
+          if (aiMessages.day14) {
+            messageText = aiMessages.day14
+          }
+        } catch (aiErr) {
+          console.error(`[Stale] AI personalization failed for lead ${lead.id}, using generic:`, aiErr)
+        }
+
+        newFollowUps.push({
           user_id: userId,
           lead_id: lead.id,
           channel: lead.phone ? 'whatsapp' : 'email',
-          message_text: `Hi ${lead.owner_name || 'there'}, just checking in — are you still thinking about ${lead.property_address || 'your property'}? Happy to help whenever you're ready.`,
+          message_text: messageText,
           status: 'pending',
           scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-        }))
+        })
+      }
 
       if (newFollowUps.length > 0) {
         const { error: insertError } = await supabase

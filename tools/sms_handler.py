@@ -33,6 +33,7 @@ try:
         check_messaging_quota,
         record_overage,
         create_follow_up,
+        get_supabase_client,
     )
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -178,6 +179,21 @@ def sms_inbound():
                 "success",
                 {"phone": from_number, "message": body, "channel": "sms"},
             )
+            # Cancel pending follow-ups — lead has unsubscribed
+            lead = find_lead_by_phone(user_id, from_number)
+            lead_id = lead.get("id") if lead else None
+            if lead_id:
+                try:
+                    supabase = get_supabase_client()
+                    if supabase:
+                        supabase.table('follow_ups') \
+                            .update({'status': 'cancelled'}) \
+                            .eq('lead_id', str(lead_id)) \
+                            .eq('status', 'pending') \
+                            .execute()
+                        logger.info(f"[Follow-up] Cancelled pending follow-ups for lead {lead_id} ({from_number}) — STOP received via SMS")
+                except Exception as e:
+                    logger.warning(f"Failed to cancel follow-ups for lead {lead_id} after STOP: {e}")
         _send_sms_message(
             from_number,
             "You're unsubscribed. You won't receive any further messages. Thank you for letting us know.",
@@ -313,5 +329,22 @@ def sms_inbound():
     if SUPABASE_AVAILABLE and user_id:
         intent = ai_result.get("intent", "other")
         log_activity(user_id, "message_reply", f"AI bot replied via SMS to {from_number} (intent: {intent}): {reply_text[:100]}", send_status, {"phone": from_number, "reply": reply_text, "intent": intent, "direction": "outbound", "channel": "sms"})
+
+    # Cancel pending follow-ups — lead has replied, sequence should pause
+    if SUPABASE_AVAILABLE and user_id:
+        lead = find_lead_by_phone(user_id, from_number)
+        lead_id = lead.get("id") if lead else None
+        if lead_id:
+            try:
+                supabase = get_supabase_client()
+                if supabase:
+                    supabase.table('follow_ups') \
+                        .update({'status': 'cancelled'}) \
+                        .eq('lead_id', str(lead_id)) \
+                        .eq('status', 'pending') \
+                        .execute()
+                    logger.info(f"[Follow-up] Cancelled pending follow-ups for lead {lead_id} ({from_number}) — lead replied via SMS")
+            except Exception as e:
+                logger.warning(f"Failed to cancel follow-ups for lead {lead_id}: {e}")
 
     return Response("", status=200, mimetype="text/plain")

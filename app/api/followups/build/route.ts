@@ -9,13 +9,12 @@ export async function POST() {
 
   const supabase = await createClient()
 
-  // Get leads with sms_text but no follow-ups scheduled
-  const { data: leads, error: leadsError } = await supabase
+  // Get leads with sms_text but no follow-ups scheduled (phone OR email)
+  const { data: allLeads, error: leadsError } = await supabase
     .from('leads')
-    .select('id, owner_name, property_address, phone, sms_text')
+    .select('id, owner_name, property_address, phone, email, sms_text')
     .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
-    .not('phone', 'is', null)
 
   if (leadsError) {
     return NextResponse.json(
@@ -23,6 +22,9 @@ export async function POST() {
       { status: 500 }
     )
   }
+
+  // Skip leads that have neither phone nor email
+  const leads = (allLeads || []).filter(l => l.phone || l.email)
 
   if (!leads || leads.length === 0) {
     return NextResponse.json({

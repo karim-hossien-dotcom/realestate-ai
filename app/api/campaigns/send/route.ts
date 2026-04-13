@@ -12,6 +12,7 @@ import { checkFeatureAccess, featureBlockedPayload } from '@/app/lib/billing/fea
 import { recordOverage } from '@/app/lib/billing/overage'
 import { generateOutreachMessage } from '@/app/lib/messaging/outreach-messages'
 import { fillTemplate } from '@/app/lib/messaging/campaign-templates'
+import { generateFollowUpsForLead, buildFollowUpSchedule } from '@/app/lib/ai/followup-generator'
 
 type SendResult = {
   phone: string
@@ -345,6 +346,85 @@ export async function POST(request: Request) {
     })
     .eq('id', campaign.id)
 
+  // Auto-create follow-ups for successfully sent leads
+  let followUpsCreated = 0
+  try {
+    // Collect lead IDs that were successfully sent and have a phone or email
+    const successLeadIds = results
+      .filter(r => r.ok && r.leadId)
+      .map(r => r.leadId as string)
+
+    if (successLeadIds.length > 0) {
+      // Fetch full lead data for successful leads (need phone/email/name/address)
+      const { data: successLeads } = await supabase
+        .from('leads')
+        .select('id, owner_name, property_address, phone, email')
+        .in('id', successLeadIds)
+        .eq('user_id', auth.user.id)
+
+      // Check which leads already have pending follow-ups (dedup)
+      const { data: existingFollowUps } = await supabase
+        .from('follow_ups')
+        .select('lead_id')
+        .in('lead_id', successLeadIds)
+        .eq('status', 'pending')
+
+      const leadsWithPendingFollowUps = new Set(
+        (existingFollowUps || []).map(f => f.lead_id)
+      )
+
+      // Only process leads without pending follow-ups and that have phone OR email
+      const leadsToSchedule = (successLeads || []).filter(
+        lead =>
+          !leadsWithPendingFollowUps.has(lead.id) &&
+          (lead.phone != null || lead.email != null)
+      )
+
+      for (const lead of leadsToSchedule) {
+        const firstSms = resolveMessageBody(lead as typeof leadsToSend[number]) ||
+          `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I reached out about your property at ${lead.property_address || 'your area'}.`
+
+        const followUpMessages = await generateFollowUpsForLead(
+          { owner_name: lead.owner_name ?? undefined, property_address: lead.property_address ?? undefined },
+          firstSms,
+          { contactEmail: lead.email ?? undefined }
+        )
+
+        const schedule = buildFollowUpSchedule(
+          lead.id,
+          {
+            owner_name: lead.owner_name ?? undefined,
+            property_address: lead.property_address ?? undefined,
+            phone: lead.phone ?? undefined,
+          },
+          followUpMessages
+        )
+
+        if (schedule.length > 0) {
+          const rows = schedule.map(item => ({
+            user_id: auth.user.id,
+            lead_id: item.leadId,
+            scheduled_at: item.scheduledAt.toISOString(),
+            message_text: item.messageText,
+            status: 'pending',
+            day_offset: item.dayOffset,
+          }))
+
+          const { error: insertError } = await supabase
+            .from('follow_ups')
+            .insert(rows)
+
+          if (!insertError) {
+            followUpsCreated += rows.length
+          }
+        }
+      }
+    }
+  } catch (followUpError) {
+    // Follow-up generation failure must not block the campaign send response
+    console.error('[campaigns/send] follow-up auto-create failed:', followUpError)
+  }
+
   // Log activity
   await logActivity(
     auth.user.id,
@@ -374,6 +454,7 @@ export async function POST(request: Request) {
     skipped,
     quotaTruncated,
     total: leadsToSend.length,
+    followUpsCreated,
     results,
     ...(quotaTruncated > 0 && {
       warning: `${quotaTruncated} leads were not contacted — your plan's message quota was reached. Upgrade for more capacity.`,

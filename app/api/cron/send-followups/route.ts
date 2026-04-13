@@ -56,6 +56,14 @@ async function handler(request: NextRequest) {
   try {
     const now = new Date().toISOString()
 
+    // Recover orphaned follow-ups stuck in 'sending' for over 10 minutes
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    await supabase
+      .from('follow_ups')
+      .update({ status: 'pending' })
+      .eq('status', 'sending')
+      .lt('scheduled_at', tenMinAgo)
+
     // Fetch pending follow-ups that are due
     const { data: followUps, error: fetchError } = await supabase
       .from('follow_ups')
