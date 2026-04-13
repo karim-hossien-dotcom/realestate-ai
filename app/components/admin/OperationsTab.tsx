@@ -100,20 +100,21 @@ function getNextRun(schedule: string): string {
 const CRON_SCHEDULES = [
   { name: 'send-followups', frequency: 'Every 5 min', endpoint: '/api/cron/send-followups', desc: 'Send scheduled follow-up messages', status: 'active', agent: 'Eng Ops' },
   { name: 'check-alerts', frequency: 'Every 30 min', endpoint: '/api/cron/check-alerts', desc: 'Monitor services + email on critical', status: 'active', agent: 'Eng Ops' },
+  { name: 'delivery-monitor', frequency: 'Every 30 min', endpoint: '/api/cron/delivery-monitor', desc: 'Verify WhatsApp/SMS delivery statuses', status: 'active', agent: 'Eng Ops' },
   { name: 'daily-ops', frequency: 'Daily (midnight)', endpoint: '/api/cron/daily-ops', desc: 'System health checks + daily reports + auto-create tasks', status: 'active', agent: 'Eng Ops' },
-  { name: 'refresh-lead-scores', frequency: 'Daily (2am)', endpoint: '/api/cron/refresh-lead-scores', desc: 'Recalculate all lead scores — time decay + activity', status: 'active', agent: 'Eng Ops' },
-  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'Security Reviewer' },
+  { name: 'refresh-lead-scores', frequency: 'Daily (3am)', endpoint: '/api/cron/refresh-lead-scores', desc: 'Recalculate all lead scores — time decay + activity', status: 'active', agent: 'Eng Ops' },
+  { name: 'weekly-ai-audit', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/weekly-ai-audit', desc: 'AI conversation quality + ops health metrics', status: 'active', agent: 'AI Improver' },
   { name: 'ai-improvement-report', frequency: 'Weekly (Sunday)', endpoint: '/api/cron/ai-improvement-report', desc: 'Analyze low-scoring convos, propose AI prompt improvements', status: 'active', agent: 'AI Improver' },
   { name: 'stale-lead-detection', frequency: 'Weekly (Monday)', endpoint: '/api/cron/stale-lead-detection', desc: 'Flag stale hot/warm leads, auto-create follow-ups', status: 'active', agent: 'Eng Ops' },
-  { name: 'competitor-pricing', frequency: 'Monthly (1st)', endpoint: '/api/cron/competitor-pricing', desc: 'Competitor pricing snapshot + positioning analysis', status: 'active', agent: 'Market Research' },
+  { name: 'competitor-pricing', frequency: 'Biweekly (1st & 15th)', endpoint: '/api/cron/competitor-pricing', desc: 'Competitor pricing + research findings for review', status: 'active', agent: 'Market Research' },
   { name: 'cost-report', frequency: 'Monthly (1st)', endpoint: '/api/cron/cost-report', desc: 'MRR, message volume, cost breakdown, margins', status: 'active', agent: 'Finance Ops' },
 ]
 
 const MANUAL_TASKS: Array<{ name: string; deadline?: string; frequency: string; desc: string; priority: string }> = [
-  { name: 'NAR REACH application', frequency: 'One-time', desc: 'Submit MLS data access application (overdue)', priority: 'P0' },
+  { name: '10DLC follow-up', frequency: 'Weekly (check)', desc: 'Check Twilio 10DLC registration status — resubmitted Mar 23', priority: 'P0' },
   { name: 'UX review', frequency: 'Monthly (1st)', desc: 'Full UX checklist — core flows, mobile, dark mode', priority: 'P2' },
-  { name: '10DLC follow-up', frequency: 'Weekly (check)', desc: 'Check Twilio 10DLC registration status', priority: 'P1' },
   { name: 'E&O insurance', frequency: 'One-time', desc: 'Get quotes and activate professional liability insurance', priority: 'P1' },
+  { name: 'Nadine lead dedup', frequency: 'One-time', desc: 'Mina Aziz and Boris Fidelman appear twice — need manual dedup', priority: 'P1' },
 ]
 
 const SKILLS = [

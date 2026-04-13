@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
+import { verifyCronSecret } from '@/app/lib/cron-auth'
 
-const CRON_SECRET = process.env.CRON_SECRET || ''
 const STALE_DAYS = 14 // Leads with no activity for this many days are considered stale
 
 /**
@@ -11,13 +11,8 @@ const STALE_DAYS = 14 // Leads with no activity for this many days are considere
  * Schedule: Weekly on Monday.
  */
 export async function GET(request: Request) {
-  if (CRON_SECRET) {
-    const { searchParams } = new URL(request.url)
-    const token = request.headers.get('x-cron-secret') || searchParams.get('secret')
-    if (token !== CRON_SECRET) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-    }
-  }
+  const authError = verifyCronSecret(request)
+  if (authError) return authError
 
   try {
     const supabase = createServiceClient()

@@ -6,6 +6,7 @@ import { sendSms } from '@/app/lib/messaging/sms'
 import { isOnNationalDnc } from '@/app/lib/messaging/dnc-registry'
 import { checkMessageQuota } from '@/app/lib/billing/usage'
 import { recordOverage } from '@/app/lib/billing/overage'
+import { verifyCronSecret } from '@/app/lib/cron-auth'
 
 const BATCH_SIZE = 10
 
@@ -46,14 +47,8 @@ type Profile = {
  * to prevent duplicate sends across overlapping cron invocations.
  */
 async function handler(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  const authHeader = request.headers.get('authorization')
-
-  const authorized = cronSecret && authHeader === `Bearer ${cronSecret}`
-
-  if (!authorized) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = verifyCronSecret(request)
+  if (authError) return authError
 
   const supabase = createServiceClient()
   const results = { processed: 0, sent: 0, failed: 0, skipped: 0, errors: [] as string[] }

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runWeeklyAudit } from '@/app/lib/ai-audit'
 import { sendEmail } from '@/app/lib/messaging/email'
+import { verifyCronSecret } from '@/app/lib/cron-auth'
 
 export async function GET(request: NextRequest) {
-  // Protect with CRON_SECRET
-  const { searchParams } = new URL(request.url)
-  const secret = searchParams.get('secret') || request.headers.get('x-cron-secret')
-
-  if (secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = verifyCronSecret(request)
+  if (authError) return authError
 
   try {
     const result = await runWeeklyAudit()

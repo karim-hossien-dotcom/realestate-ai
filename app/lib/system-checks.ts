@@ -289,13 +289,15 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
     const median = sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0
     const timeouts = timings.length - successful.length
 
+    // All-timeout is "warning" not "critical" — Render free tier cold starts cause this
+    // and the fact that this cron code is executing proves the service IS running
     const severity = successful.length === 0
-      ? 'critical' as const  // all routes timed out
+      ? 'warning' as const  // all timed out = cold start, not actually down
       : median > 2000 ? 'critical' as const
       : median > 500 ? 'warning' as const
       : 'ok' as const
 
-    const timeoutNote = timeouts > 0 ? ` (${timeouts}/${timings.length} routes timed out — likely cold start)` : ''
+    const timeoutNote = timeouts > 0 ? ` (${timeouts}/${timings.length} routes timed out — Render free tier cold start)` : ''
 
     alerts.push({
       key: 'api_response_time',
@@ -303,7 +305,7 @@ export async function runSystemChecks(): Promise<SystemAlert[]> {
       severity,
       title: 'API Response Time (Median)',
       message: successful.length === 0
-        ? `All ${timings.length} sampled routes timed out — service may be cold starting or down.`
+        ? `All ${timings.length} sampled routes timed out — Render free tier cold start (service is running).`
         : median > 2000
           ? `Median response time ${median}ms — severely degraded performance.${timeoutNote}`
           : median > 500

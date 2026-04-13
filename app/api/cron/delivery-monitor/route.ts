@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { sendEmail } from '@/app/lib/messaging/email'
+import { verifyCronSecret } from '@/app/lib/cron-auth'
 
 const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'karim@eywaconsulting.com'
-const CRON_SECRET = process.env.CRON_SECRET || ''
 
 /**
  * GET /api/cron/delivery-monitor
@@ -16,13 +16,8 @@ const CRON_SECRET = process.env.CRON_SECRET || ''
  * Run via cron every 30 minutes.
  */
 export async function GET(request: Request) {
-  if (CRON_SECRET) {
-    const { searchParams } = new URL(request.url)
-    const token = request.headers.get('x-cron-secret') || searchParams.get('secret')
-    if (token !== CRON_SECRET) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-    }
-  }
+  const authError = verifyCronSecret(request)
+  if (authError) return authError
 
   const supabase = createServiceClient()
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()

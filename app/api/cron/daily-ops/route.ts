@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runSystemChecks } from '@/app/lib/system-checks';
 import { createServiceClient } from '@/app/lib/supabase/server';
-
-const CRON_SECRET = process.env.CRON_SECRET || '';
+import { verifyCronSecret } from '@/app/lib/cron-auth';
 
 /**
  * GET|POST /api/cron/daily-ops
@@ -11,14 +10,8 @@ const CRON_SECRET = process.env.CRON_SECRET || '';
  * Protected by CRON_SECRET.
  */
 async function handler(request: NextRequest) {
-  // Auth
-  if (CRON_SECRET) {
-    const { searchParams } = new URL(request.url);
-    const token = request.headers.get('x-cron-secret') || searchParams.get('secret');
-    if (token !== CRON_SECRET) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   try {
     const supabase = createServiceClient();

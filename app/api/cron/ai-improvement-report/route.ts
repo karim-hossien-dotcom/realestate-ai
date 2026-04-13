@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import OpenAI from 'openai'
-
-const CRON_SECRET = process.env.CRON_SECRET || ''
+import { verifyCronSecret } from '@/app/lib/cron-auth'
 
 const ANALYSIS_PROMPT = `You are an AI behavior analyst reviewing conversations between an AI real estate agent and leads.
 
@@ -48,13 +47,8 @@ Rules:
  * Schedule: Weekly (after weekly-ai-audit runs).
  */
 export async function GET(request: Request) {
-  if (CRON_SECRET) {
-    const { searchParams } = new URL(request.url)
-    const token = request.headers.get('x-cron-secret') || searchParams.get('secret')
-    if (token !== CRON_SECRET) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-    }
-  }
+  const authError = verifyCronSecret(request)
+  if (authError) return authError
 
   try {
     const supabase = createServiceClient()
