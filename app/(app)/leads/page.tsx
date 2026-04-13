@@ -42,6 +42,7 @@ function LeadsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [leadTypeFilter, setLeadTypeFilter] = useState<string>('all');
   const [scoreFilters, setScoreFilters] = useState<Set<string>>(new Set());
   const [tagFilters, setTagFilters] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'last_contacted' | 'created_at'>('score');
@@ -125,6 +126,7 @@ function LeadsPage() {
   const filteredLeads = leads
     .filter((lead) => {
       if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+      if (leadTypeFilter !== 'all' && lead.lead_type !== leadTypeFilter) return false;
       if (scoreFilters.size > 0 && !scoreFilters.has(lead.score_category)) return false;
       if (tagFilters.size > 0) {
         const leadTags = lead.tags || [];
@@ -401,6 +403,19 @@ function LeadsPage() {
             ))}
           </select>
 
+          {/* Lead Type Filter */}
+          <select
+            value={leadTypeFilter}
+            onChange={(e) => setLeadTypeFilter(e.target.value)}
+            className="px-3 py-1.5 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface-elevated)] text-[var(--text-primary)] focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">All Types</option>
+            <option value="buyer">Buyer</option>
+            <option value="seller">Seller</option>
+            <option value="investor">Investor</option>
+            <option value="landlord">Landlord</option>
+          </select>
+
           {/* Sort */}
           <select
             value={sortBy}
@@ -517,7 +532,7 @@ function LeadsPage() {
           )}
 
           {/* Active filter summary + clear */}
-          {(scoreFilters.size > 0 || tagFilters.size > 0 || statusFilter !== 'all') && (
+          {(scoreFilters.size > 0 || tagFilters.size > 0 || statusFilter !== 'all' || leadTypeFilter !== 'all') && (
             <div className="flex items-center gap-2 ml-auto text-xs text-[var(--text-secondary)]">
               <span>{filteredLeads.length} of {leads.length} leads</span>
               <button
@@ -525,6 +540,7 @@ function LeadsPage() {
                   setScoreFilters(new Set());
                   setTagFilters(new Set());
                   setStatusFilter('all');
+                  setLeadTypeFilter('all');
                   setSearchQuery('');
                 }}
                 className="text-blue-400 hover:text-blue-300 cursor-pointer"

@@ -245,12 +245,11 @@ export async function POST(request: Request) {
         continue
       }
 
-      // WhatsApp send strategy (3 tiers):
-      // 1. Plain text — free, works within 24h conversation window
-      // 2. property_inquiry template (UTILITY) — no WABA payment needed
-      // 3. realestate_outreach template (MARKETING) — needs WABA payment
+      // Campaign = cold outreach — use approved template first.
+      // Plain text only works inside the 24h window (after lead replies).
+      // Meta silently drops plain text outside that window even though API returns 200.
 
-      // Prefer user template, then lead's pre-generated text, then smart personalization
+      // Build personalized body for template params
       let outreachBody = resolveMessageBody(lead) || lead.sms_text || ''
       if (!outreachBody && lead.id) {
         const { data: fullLead } = await supabase
@@ -276,27 +275,17 @@ export async function POST(request: Request) {
         outreachBody = `Hi ${lead.owner_name?.split(' ')[0] || 'there'}, I noticed your property at ${lead.property_address || 'your area'} and wanted to reach out. Would you be open to a quick conversation about your property's current market value?`
       }
 
-      // Try plain text first (works if lead has messaged in last 24h)
-      const textResult = await sendWhatsAppText({ to: contact, body: outreachBody })
-      if (textResult.ok) {
-        sendResult = { ok: true, messageId: textResult.messageId }
+      // Try approved template first (works outside 24h window for cold outreach)
+      const templateResult = await sendWhatsAppTemplate({
+        to: contact,
+        bodyParams: [outreachBody],
+      })
+      if (templateResult.ok) {
+        sendResult = { ok: true, messageId: templateResult.messageId }
       } else {
-        // Outside 24h window — try utility template (no payment required)
-        const utilityResult = await sendWhatsAppTemplate({
-          to: contact,
-          templateName: 'property_inquiry',
-          bodyParams: [outreachBody, agentName],
-        })
-        if (utilityResult.ok) {
-          sendResult = { ok: true, messageId: utilityResult.messageId }
-        } else {
-          // Last resort — marketing template
-          const marketingResult = await sendWhatsAppTemplate({
-            to: contact,
-            bodyParams: [outreachBody],
-          })
-          sendResult = { ok: marketingResult.ok, messageId: marketingResult.messageId, error: marketingResult.error }
-        }
+        // Template failed — fall back to plain text (works if lead replied within 24h)
+        const textResult = await sendWhatsAppText({ to: contact, body: outreachBody })
+        sendResult = { ok: textResult.ok, messageId: textResult.messageId, error: textResult.ok ? undefined : (templateResult.error || textResult.error) }
       }
     }
 

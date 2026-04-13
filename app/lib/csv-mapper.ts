@@ -15,6 +15,7 @@ export type LeadField =
   | 'status'
   | 'notes'
   | 'contact_preference'
+  | 'lead_type'
   | 'tags'
   | 'property_type'
   | 'property_interest'
@@ -45,7 +46,8 @@ export const MAPPABLE_FIELDS: { value: LeadField | '(skip)'; label: string }[] =
   { value: 'contact_preference', label: 'Contact Preference' },
   { value: 'tags', label: 'Tags' },
   { value: 'property_type', label: 'Property Type' },
-  { value: 'property_interest', label: 'Interest (Buyer/Seller/Investor)' },
+  { value: 'lead_type', label: 'Lead Type (Buyer/Seller/Investor/Landlord)' },
+  { value: 'property_interest', label: 'Interest / Intent (freeform)' },
   { value: 'budget_min', label: 'Budget Min / List Price' },
   { value: 'budget_max', label: 'Budget Max / Ask Price' },
   { value: 'location_preference', label: 'Location Preference' },
@@ -125,14 +127,17 @@ const HEADER_ALIASES: Record<LeadField, string[]> = {
     // Commercial
     'asset type', 'asset class',
   ],
-  property_interest: [
-    'interest', 'property interest', 'property_interest', 'intent',
-    'lead type', 'lead_type', 'buyer seller', 'buyer or seller',
+  lead_type: [
+    'lead type', 'lead_type', 'type of lead', 'buyer seller',
+    'buyer or seller', 'buying or selling', 'transaction type',
     // FUB
     'people type', 'contact type', 'role',
+  ],
+  property_interest: [
+    'interest', 'property interest', 'property_interest', 'intent',
     // Common CRM
     'looking to', 'goal', 'objective', 'motivation',
-    'buying or selling', 'transaction type', 'deal type',
+    'deal type',
   ],
   budget_min: [
     'budget min', 'budget_min', 'min budget', 'min price', 'price min',

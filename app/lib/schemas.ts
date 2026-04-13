@@ -10,6 +10,7 @@ export const createLeadSchema = z.object({
   contact_preference: z.enum(['sms', 'email', 'whatsapp', 'call']).default('sms'),
   status: z.enum(['new', 'contacted', 'interested', 'not_interested', 'closed']).default('new'),
   notes: z.string().max(2000).optional(),
+  lead_type: z.enum(['buyer', 'seller', 'investor', 'landlord']).nullish(),
   tags: z.array(z.string().max(50)).max(20).default([]),
 })
 
@@ -22,6 +23,7 @@ export const updateLeadSchema = z.object({
   contact_preference: z.enum(['sms', 'email', 'whatsapp', 'call']).optional(),
   status: z.enum(['new', 'contacted', 'interested', 'not_interested', 'closed']).optional(),
   notes: z.string().max(2000).optional(),
+  lead_type: z.enum(['buyer', 'seller', 'investor', 'landlord']).nullish(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   score: z.number().min(0).max(100).optional(),
   score_category: z.enum(['Hot', 'Warm', 'Cold', 'Dead']).optional(),

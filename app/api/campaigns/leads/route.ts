@@ -9,6 +9,7 @@ type Lead = {
   property_address: string
   sms_text: string
   email: string
+  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | null
   score: number
   score_category: string
   last_contacted: string | null
@@ -23,7 +24,7 @@ export async function GET() {
   // Get leads that have generated messages (sms_text)
   const { data: leads, error } = await supabase
     .from('leads')
-    .select('id, owner_name, phone, property_address, sms_text, email, score, score_category, last_contacted')
+    .select('id, owner_name, phone, property_address, sms_text, email, lead_type, score, score_category, last_contacted')
     .eq('user_id', auth.user.id)
     .not('sms_text', 'is', null)
     .not('phone', 'is', null)
@@ -43,6 +44,7 @@ export async function GET() {
     property_address: l.property_address || '',
     sms_text: l.sms_text || '',
     email: l.email || null,
+    lead_type: l.lead_type || null,
     score: l.score || 50,
     score_category: l.score_category || 'Warm',
     last_contacted: l.last_contacted || null,

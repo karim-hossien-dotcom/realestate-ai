@@ -16,6 +16,7 @@ type CampaignLead = {
   email: string | null;
   property_address: string | null;
   sms_text: string | null;
+  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | null;
   score: number;
   score_category: string;
   last_contacted: string | null;
@@ -68,6 +69,7 @@ function CampaignsPage() {
   const [hasPhoneOnly, setHasPhoneOnly] = useState(false);
   const [hasEmailOnly, setHasEmailOnly] = useState(false);
   const [hideContacted, setHideContacted] = useState(false);
+  const [leadTypeFilter, setLeadTypeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'address'>('score');
   const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
@@ -144,6 +146,7 @@ function CampaignsPage() {
   const filteredLeads = leads
     .filter((lead) => {
       if (scoreFilters.size > 0 && !scoreFilters.has(lead.score_category)) return false;
+      if (leadTypeFilter !== 'all' && lead.lead_type !== leadTypeFilter) return false;
       if (hasPhoneOnly && !lead.phone) return false;
       if (hasEmailOnly && !lead.email) return false;
       if (hideContacted && lead.last_contacted) return false;
@@ -362,6 +365,27 @@ function CampaignsPage() {
                 })}
               </div>
 
+              {/* Lead type filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-[var(--text-secondary)] mr-0.5">Type:</span>
+                {(['all', 'buyer', 'seller', 'investor', 'landlord'] as const).map(t => {
+                  const active = leadTypeFilter === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setLeadTypeFilter(t)}
+                      className={`px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer capitalize ${
+                        active
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
+                      }`}
+                    >
+                      {t === 'all' ? 'All' : t}
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* Contact toggles */}
               <div className="flex items-center gap-2">
                 <button
@@ -412,11 +436,11 @@ function CampaignsPage() {
             </div>
 
             {/* Active filter summary */}
-            {(scoreFilters.size > 0 || hasPhoneOnly || hasEmailOnly) && (
+            {(scoreFilters.size > 0 || hasPhoneOnly || hasEmailOnly || leadTypeFilter !== 'all') && (
               <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                 <span>Showing {filteredLeads.length} of {leads.length} leads</span>
                 <button
-                  onClick={() => { setScoreFilters(new Set()); setHasPhoneOnly(false); setHasEmailOnly(false); }}
+                  onClick={() => { setScoreFilters(new Set()); setHasPhoneOnly(false); setHasEmailOnly(false); setLeadTypeFilter('all'); }}
                   className="text-blue-400 hover:text-blue-300 cursor-pointer"
                 >
                   Clear filters

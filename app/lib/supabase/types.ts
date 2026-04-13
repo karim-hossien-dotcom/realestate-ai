@@ -36,6 +36,7 @@ export type Lead = {
   notes: string | null
   sms_text: string | null
   email_text: string | null
+  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | null
   tags: string[]
   score: number
   score_category: string
