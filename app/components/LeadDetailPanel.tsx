@@ -58,6 +58,11 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || `Failed to update lead (${res.status})`, 'error');
+        return;
+      }
       const data = await res.json();
       if (data.ok) {
         onUpdate({ ...lead, ...form, lead_type: (form.lead_type || null) as Lead['lead_type'] });
@@ -81,6 +86,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       if (data.ok) {
         onUpdate({ ...lead, status: newStatus });
@@ -100,6 +106,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
     setDeleting(true);
     try {
       const res = await fetch(`/api/leads?id=${lead.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       if (data.ok) {
         showToast('Lead deleted', 'success');
@@ -122,6 +129,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId: lead.id, action, ...payload }),
       });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       if (data.ok) {
         showToast(`Action "${action.replace(/_/g, ' ')}" completed`, 'success');

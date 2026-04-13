@@ -3,7 +3,7 @@ import { withAuth } from '@/app/lib/auth'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { z } from 'zod'
 
-const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID
 
 // ===== Validation Schemas =====
 

@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/app/lib/supabase/server'
 
+// Block in production
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handler = () => NextResponse.json({ ok: false, error: 'Not available in production' }, { status: 403 })
+  module.exports = { POST: handler, GET: handler }
+}
+
 const TEST_LEADS = [
   {
     owner_name: 'Ahmad Hassan',

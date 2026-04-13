@@ -98,3 +98,103 @@ services:
         value: Nadine Khalil
       - key: AGENT_BROKERAGE
         value: KW Commercial
+
+  # Cron Jobs
+  - type: cron
+    name: send-followups
+    runtime: node
+    plan: free
+    schedule: "*/5 * * * *"
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/send-followups
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: check-alerts
+    runtime: node
+    plan: free
+    schedule: "*/30 * * * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/check-alerts
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: daily-ops
+    runtime: node
+    plan: free
+    schedule: "0 5 * * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/daily-ops
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: refresh-lead-scores
+    runtime: node
+    plan: free
+    schedule: "0 7 * * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/refresh-lead-scores
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: delivery-monitor
+    runtime: node
+    plan: free
+    schedule: "*/30 * * * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/delivery-monitor
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: weekly-ai-audit
+    runtime: node
+    plan: free
+    schedule: "0 6 * * 0"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/weekly-ai-audit
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: stale-lead-detection
+    runtime: node
+    plan: free
+    schedule: "0 8 * * 1"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/stale-lead-detection
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: competitor-pricing
+    runtime: node
+    plan: free
+    schedule: "0 6 1 * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/competitor-pricing
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+
+  - type: cron
+    name: cost-report
+    runtime: node
+    plan: free
+    schedule: "0 7 1 * *"
+    buildCommand: echo "skip"
+    startCommand: curl -s -H "Authorization:Bearer $CRON_SECRET" https://realestate-ai-sxtp.onrender.com/api/cron/cost-report
+    envVars:
+      - key: CRON_SECRET
+        sync: false

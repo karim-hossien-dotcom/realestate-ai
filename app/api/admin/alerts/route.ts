@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { withAuth } from '@/app/lib/auth'
 import { runSystemChecks } from '@/app/lib/system-checks'
 
-const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID
 
 /**
  * GET /api/admin/alerts
@@ -12,7 +12,7 @@ export async function GET() {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
 
-  if (auth.user.id !== ADMIN_USER_ID) {
+  if (!ADMIN_USER_ID || auth.user.id !== ADMIN_USER_ID) {
     return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 })
   }
 

@@ -21,6 +21,20 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceClient();
 
+    // Validate that the user_id actually exists
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (!profile) {
+      return new NextResponse(renderPage('Invalid Link', 'This unsubscribe link is no longer valid. Please contact support@realestate-ai.app for assistance.'), {
+        status: 400,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
     // Add to DNC list (upsert to avoid duplicates)
     const { error } = await supabase
       .from('dnc_list')

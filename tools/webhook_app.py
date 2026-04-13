@@ -441,7 +441,11 @@ def _update_lead_from_qualification(
         try:
             client = get_supabase_client()
             if client:
-                client.table("leads").update(updates).eq("id", lead["id"]).execute()
+                user_id_val = lead.get("user_id")
+                q = client.table("leads").update(updates).eq("id", lead["id"])
+                if user_id_val:
+                    q = q.eq("user_id", user_id_val)
+                q.execute()
         except Exception as e:
             logger.error(f"Error updating lead from qualification: {e}")
 

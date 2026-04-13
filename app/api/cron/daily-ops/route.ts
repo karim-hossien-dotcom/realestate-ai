@@ -171,21 +171,21 @@ async function handler(request: NextRequest) {
       blockers: [],
     }, { onConflict: 'department,report_date' }).throwOnError();
 
-    // Auto-create project_tasks for critical/warning findings
-    // Only creates tasks that don't already exist (dedup by title + date)
-    const adminUserId = process.env.ADMIN_USER_ID || '';
+    // Auto-create project_tasks for critical findings
+    // Dedup by title regardless of date — don't recreate if a pending task with same title exists
+    const adminUserId = process.env.ADMIN_USER_ID;
     let tasksCreated = 0;
 
     if (adminUserId && critical.length > 0) {
       for (const alert of critical) {
         const title = `[CRON] ${alert.title}`;
-        // Check if task already exists today
+        // Check if a pending task with this title already exists (any date)
         const { data: existing } = await supabase
           .from('project_tasks')
           .select('id')
           .eq('user_id', adminUserId)
           .eq('title', title)
-          .gte('created_at', `${today}T00:00:00`)
+          .eq('status', 'pending')
           .limit(1);
 
         if (!existing?.length) {

@@ -3,7 +3,7 @@ import { createServiceClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 import { logActivity } from '@/app/lib/auth'
 
-const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID
 
 // Plan prices in dollars (monthly)
 const PLAN_PRICES: Record<string, number> = {
@@ -26,7 +26,7 @@ interface RevenueDataPoint {
 export async function GET() {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
-  if (auth.user.id !== ADMIN_USER_ID) {
+  if (!ADMIN_USER_ID || auth.user.id !== ADMIN_USER_ID) {
     return NextResponse.json({ ok: false, error: 'Admin only' }, { status: 403 })
   }
 

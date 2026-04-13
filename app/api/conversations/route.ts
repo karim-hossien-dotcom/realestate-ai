@@ -252,6 +252,7 @@ export async function POST(request: NextRequest) {
     .from('leads')
     .update({ last_contacted: new Date().toISOString() })
     .eq('id', lead.id)
+    .eq('user_id', auth.user.id)
 
   // Log activity
   await logActivity(

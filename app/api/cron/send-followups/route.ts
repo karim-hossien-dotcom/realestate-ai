@@ -48,12 +48,8 @@ type Profile = {
 async function handler(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
-  const { searchParams } = new URL(request.url)
-  const querySecret = searchParams.get('secret')
 
-  const authorized = cronSecret && (
-    authHeader === `Bearer ${cronSecret}` || querySecret === cronSecret
-  )
+  const authorized = cronSecret && authHeader === `Bearer ${cronSecret}`
 
   if (!authorized) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })

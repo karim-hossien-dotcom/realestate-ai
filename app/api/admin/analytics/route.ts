@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/app/lib/supabase/server'
 import { withAuth } from '@/app/lib/auth'
 
-const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID
 
 export async function GET(request: NextRequest) {
   const auth = await withAuth()
   if (!auth.ok) return auth.response
-  if (auth.user.id !== ADMIN_USER_ID) {
+  if (!ADMIN_USER_ID || auth.user.id !== ADMIN_USER_ID) {
     return NextResponse.json({ ok: false, error: 'Admin only' }, { status: 403 })
   }
 
