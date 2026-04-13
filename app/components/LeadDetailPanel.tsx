@@ -217,6 +217,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate, onDelete }: L
                 <option value="seller">Seller</option>
                 <option value="investor">Investor</option>
                 <option value="landlord">Landlord</option>
+                <option value="tenant">Tenant</option>
               </select>
             ) : (
               <span className="text-sm text-gray-900 dark:text-gray-100 capitalize">{lead.lead_type || 'Not Set'}</span>

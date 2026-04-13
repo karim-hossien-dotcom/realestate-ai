@@ -16,7 +16,7 @@ type CampaignLead = {
   email: string | null;
   property_address: string | null;
   sms_text: string | null;
-  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | null;
+  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | 'tenant' | null;
   score: number;
   score_category: string;
   last_contacted: string | null;
@@ -368,7 +368,7 @@ function CampaignsPage() {
               {/* Lead type filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-[var(--text-secondary)] mr-0.5">Type:</span>
-                {(['all', 'buyer', 'seller', 'investor', 'landlord'] as const).map(t => {
+                {(['all', 'buyer', 'seller', 'investor', 'landlord', 'tenant'] as const).map(t => {
                   const active = leadTypeFilter === t;
                   return (
                     <button

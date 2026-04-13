@@ -9,7 +9,7 @@ type Lead = {
   property_address: string
   sms_text: string
   email: string
-  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | null
+  lead_type: 'buyer' | 'seller' | 'investor' | 'landlord' | 'tenant' | null
   score: number
   score_category: string
   last_contacted: string | null

@@ -439,6 +439,7 @@ function LeadsPage() {
             <option value="seller">Seller</option>
             <option value="investor">Investor</option>
             <option value="landlord">Landlord</option>
+                <option value="tenant">Tenant</option>
           </select>
 
           {/* Sort */}
@@ -487,6 +488,7 @@ function LeadsPage() {
                 <option value="seller">Seller</option>
                 <option value="investor">Investor</option>
                 <option value="landlord">Landlord</option>
+                <option value="tenant">Tenant</option>
                 <option value="unset">Clear Type</option>
               </select>
               <button
