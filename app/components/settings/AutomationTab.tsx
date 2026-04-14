@@ -122,32 +122,107 @@ function TemplateSelect({
   );
 }
 
-// ─── Sub-component: Create Template Modal ────────────────────────────────────
+// ─── Sub-component: Visual Cadence Editor ────────────────────────────────────
 
-function CreateTemplateModal({
+function CadenceEditor({
+  offsets,
+  onChange,
+}: {
+  offsets: number[];
+  onChange: (next: number[]) => void;
+}) {
+  const updateOffset = (idx: number, value: number) => {
+    const next = [...offsets];
+    next[idx] = Math.max(1, Math.min(365, value));
+    next.sort((a, b) => a - b);
+    onChange(next);
+  };
+
+  const removeOffset = (idx: number) => {
+    if (offsets.length <= 1) return; // keep at least one
+    onChange(offsets.filter((_, i) => i !== idx));
+  };
+
+  const addOffset = () => {
+    const last = offsets[offsets.length - 1] || 0;
+    const next = [...offsets, last + 7].sort((a, b) => a - b);
+    onChange(next);
+  };
+
+  const lastDay = offsets[offsets.length - 1] || 0;
+  const totalTouches = offsets.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Day chips */}
+      <div className="flex flex-wrap gap-2 items-center">
+        {offsets.map((day, idx) => (
+          <div
+            key={idx}
+            className="group flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg px-2 py-1.5"
+          >
+            <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase">Day</span>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={day}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) updateOffset(idx, v);
+              }}
+              className="w-12 text-sm font-bold text-blue-700 dark:text-blue-300 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5"
+            />
+            {offsets.length > 1 && (
+              <button
+                onClick={() => removeOffset(idx)}
+                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs ml-0.5 transition-opacity"
+                title="Remove this touch"
+              >
+                <i className="fas fa-times-circle"></i>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={addOffset}
+          className="flex items-center gap-1 px-3 py-1.5 text-sm border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 rounded-lg transition-colors"
+        >
+          <i className="fas fa-plus text-xs"></i>Add touch
+        </button>
+      </div>
+
+      {/* Summary */}
+      <div className="text-xs text-gray-500 dark:text-gray-400">
+        <i className="fas fa-info-circle mr-1"></i>
+        {totalTouches} touch{totalTouches !== 1 ? 'es' : ''} over {lastDay} day{lastDay !== 1 ? 's' : ''}
+      </div>
+    </div>
+  );
+}
+
+// ─── Sub-component: Save Custom Template Modal ──────────────────────────────
+
+function SaveTemplateModal({
+  initialOffsets,
   onClose,
   onSubmit,
   submitting,
 }: {
+  initialOffsets: number[];
   onClose: () => void;
   onSubmit: (t: { name: string; description: string; day_offsets: number[] }) => Promise<void>;
   submitting: boolean;
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [rawOffsets, setRawOffsets] = useState('');
+  const [offsets, setOffsets] = useState<number[]>(initialOffsets);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setLocalError(null);
-    const offsets = rawOffsets
-      .split(',')
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n));
-
     if (!name.trim()) { setLocalError('Name is required.'); return; }
-    if (offsets.length === 0) { setLocalError('Enter at least one day offset.'); return; }
-
+    if (offsets.length === 0) { setLocalError('Add at least one touch.'); return; }
     await onSubmit({ name: name.trim(), description: description.trim(), day_offsets: offsets });
   };
 
@@ -155,18 +230,13 @@ function CreateTemplateModal({
     'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-lg p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            <i className="fas fa-plus-circle mr-2 text-blue-500"></i>New Cadence Template
+            <i className="fas fa-save mr-2 text-blue-500"></i>Save as Custom Template
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
-          >
-            &times;
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
 
         {localError && (
@@ -176,60 +246,26 @@ function CreateTemplateModal({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Template Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Hot Buyer Blitz"
-            className={inputClass}
-          />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template Name</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hot Buyer Blitz" className={inputClass} />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description <span className="text-gray-400 font-normal">(optional)</span>
           </label>
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. 5 touches in 10 days for hot buyers"
-            className={inputClass}
-          />
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Aggressive 5-touch in 2 weeks" className={inputClass} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Day Offsets (comma-separated)
-          </label>
-          <input
-            type="text"
-            value={rawOffsets}
-            onChange={(e) => setRawOffsets(e.target.value)}
-            placeholder="e.g. 1, 3, 5, 10, 14"
-            className={inputClass}
-          />
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            Days after initial contact. Must be ascending positive integers.
-          </p>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Touches</label>
+          <CadenceEditor offsets={offsets} onChange={setOffsets} />
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-medium"
-          >
-            {submitting ? 'Saving...' : 'Create Template'}
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
+          <button onClick={handleSubmit} disabled={submitting} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-medium">
+            {submitting ? 'Saving...' : 'Save Template'}
           </button>
         </div>
       </div>
@@ -253,6 +289,15 @@ export default function AutomationTab({
 }: AutomationTabProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creatingTemplate, setCreatingTemplate] = useState(false);
+  const [editorOffsets, setEditorOffsets] = useState<number[]>([]);
+
+  // Get the current default template's day offsets to seed the editor
+  const currentTemplateOffsets = (() => {
+    const builtin = CADENCE_TEMPLATES[settings.followup_default_template as keyof typeof CADENCE_TEMPLATES];
+    if (builtin) return builtin.dayOffsets;
+    const custom = customTemplates.find((t) => t.id === settings.followup_default_template);
+    return custom?.day_offsets || [1, 2, 4, 7, 10, 14, 21, 30];
+  })();
 
   const handleCreateTemplate = async (t: {
     name: string;
@@ -266,6 +311,11 @@ export default function AutomationTab({
     } finally {
       setCreatingTemplate(false);
     }
+  };
+
+  const openCustomEditor = () => {
+    setEditorOffsets(currentTemplateOffsets);
+    setShowCreateModal(true);
   };
 
   const set = <K extends keyof FollowupAutomationSettings>(
@@ -302,7 +352,8 @@ export default function AutomationTab({
   return (
     <>
       {showCreateModal && (
-        <CreateTemplateModal
+        <SaveTemplateModal
+          initialOffsets={editorOffsets}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateTemplate}
           submitting={creatingTemplate}
@@ -414,34 +465,52 @@ export default function AutomationTab({
 
         {/* ── Section 3: Default Cadence Template ────────────────────── */}
         <div className={cardClass}>
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <i className="fas fa-calendar-alt text-purple-500"></i> Default Cadence Template
-            </h3>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="text-xs px-3 py-1.5 border border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-            >
-              <i className="fas fa-plus mr-1"></i>New Template
-            </button>
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+            <i className="fas fa-calendar-alt text-purple-500"></i> Default Cadence Template
+          </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Used when no lead-type-specific template is configured.
           </p>
 
-          <TemplateSelect
-            value={settings.followup_default_template}
-            customTemplates={customTemplates}
-            onChange={(v) => set('followup_default_template', v)}
-          />
+          <div className="space-y-3">
+            <TemplateSelect
+              value={settings.followup_default_template}
+              customTemplates={customTemplates}
+              onChange={(v) => set('followup_default_template', v)}
+            />
 
-          {/* Preview pill */}
-          {settings.followup_default_template && (
-            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-              <i className="fas fa-info-circle mr-1"></i>
-              {cadencePreview(settings.followup_default_template, customTemplates)}
-            </p>
-          )}
+            {/* Visual cadence display */}
+            <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  Current Sequence
+                </span>
+                <button
+                  onClick={openCustomEditor}
+                  className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <i className="fas fa-edit mr-1"></i>Customize
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2 items-center">
+                {currentTemplateOffsets.map((day, idx) => (
+                  <div key={idx} className="flex flex-col items-center">
+                    <div className="bg-white dark:bg-gray-800 border-2 border-purple-300 dark:border-purple-700 rounded-lg px-3 py-2 min-w-[52px] text-center">
+                      <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Day</div>
+                      <div className="text-base font-bold text-purple-700 dark:text-purple-300">{day}</div>
+                    </div>
+                    {idx < currentTemplateOffsets.length - 1 && (
+                      <span className="text-xs text-gray-400 mt-1">↓</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                <i className="fas fa-info-circle mr-1"></i>
+                {currentTemplateOffsets.length} touches over {currentTemplateOffsets[currentTemplateOffsets.length - 1]} days. Click <strong>Customize</strong> to make your own version.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* ── Section 4: Per Lead-Type Cadences ──────────────────────── */}
