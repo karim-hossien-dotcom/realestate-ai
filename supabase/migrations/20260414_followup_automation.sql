@@ -3,7 +3,7 @@
 
 -- ── 1. Extend follow_ups table ──
 ALTER TABLE follow_ups
-  ADD COLUMN IF NOT EXISTS automation_mode text DEFAULT 'auto_approved'
+  ADD COLUMN IF NOT EXISTS automation_mode text DEFAULT 'full_auto'
     CHECK (automation_mode IN ('full_auto', 'approval_required', 'manual')),
   ADD COLUMN IF NOT EXISTS cadence_template text DEFAULT 'standard',
   ADD COLUMN IF NOT EXISTS approval_status text DEFAULT 'auto_approved'
