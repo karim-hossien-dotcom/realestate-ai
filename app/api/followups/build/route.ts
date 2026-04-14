@@ -43,14 +43,14 @@ export async function POST() {
     }, { status: 400 })
   }
 
-  // Dedup check: skip leads that already have follow-ups in the last 30 days
+  // Dedup check: only skip leads that have ACTIVE pending/sending follow-ups
+  // (don't skip leads with cancelled/failed/sent follow-ups — they may need a fresh sequence)
   const leadIds = leads.map(l => l.id)
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const { data: existingFollowUps } = await supabase
     .from('follow_ups')
     .select('lead_id')
     .in('lead_id', leadIds)
-    .gte('created_at', thirtyDaysAgo)
+    .in('status', ['pending', 'sending'])
 
   const leadsWithFollowUps = new Set((existingFollowUps || []).map(f => f.lead_id))
   const leadsNeedingFollowUps = leads.filter(l => !leadsWithFollowUps.has(l.id))

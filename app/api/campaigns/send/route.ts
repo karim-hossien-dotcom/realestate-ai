@@ -367,13 +367,12 @@ export async function POST(request: Request) {
           .in('id', successLeadIds)
           .eq('user_id', auth.user.id)
 
-        // Dedup: skip leads that already have follow-ups in the last 30 days
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        // Dedup: only skip leads with ACTIVE pending/sending follow-ups
         const { data: existingFollowUps } = await supabase
           .from('follow_ups')
           .select('lead_id')
           .in('lead_id', successLeadIds)
-          .gte('created_at', thirtyDaysAgo)
+          .in('status', ['pending', 'sending'])
 
         const leadsWithRecentFollowUps = new Set(
           (existingFollowUps || []).map(f => f.lead_id)
