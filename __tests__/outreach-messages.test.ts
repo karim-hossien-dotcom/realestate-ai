@@ -122,7 +122,7 @@ describe('generateOutreachMessage()', () => {
 
     it('falls back to cold for unknown status', () => {
       const msg = generateOutreachMessage({ ...base, status: 'new' })
-      expect(msg).toContain('noticed your property')
+      expect(msg).toContain('wanted to connect about')
     })
   })
 
@@ -138,9 +138,9 @@ describe('generateOutreachMessage()', () => {
       expect(msg).toContain('sold a building near')
     })
 
-    it('buyer + commercial mentions "commercial space"', () => {
+    it('buyer + commercial mentions commercial properties', () => {
       const msg = generateOutreachMessage({ ...base, propertyInterest: 'buy', propertyType: 'Commercial' })
-      expect(msg).toContain('commercial space')
+      expect(msg).toContain('commercial properties')
     })
 
     it('buyer + residential mentions "listings that match"', () => {
@@ -200,7 +200,7 @@ describe('generateOutreachMessage()', () => {
 
     it('cold without area is generic', () => {
       const msg = generateOutreachMessage({ ...base, propertyAddress: '100 1st Ave' })
-      expect(msg).toContain('noticed your property')
+      expect(msg).toContain('wanted to connect about')
     })
 
     it('cold with no address uses "your property"', () => {
